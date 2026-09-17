@@ -1,12 +1,18 @@
+import org.gradle.kotlin.dsl.support.serviceOf
+import org.gradle.process.ExecOperations
+
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidMultiplatformLibrary) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1" apply false
+}
+
+allprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 }
 
 tasks.register("devMobile") {
@@ -31,8 +37,8 @@ tasks.register("testMobile") {
     group = "verification"
     description = "Roda os testes de Android e iOS"
     dependsOn(
-            ":shared:testAndroidHostTest",
-            ":shared:iosSimulatorArm64Test",
+        ":shared:testAndroidHostTest",
+        ":shared:iosSimulatorArm64Test",
     )
 }
 
@@ -40,8 +46,8 @@ tasks.register("testWeb") {
     group = "verification"
     description = "Roda os testes de JS e Wasm"
     dependsOn(
-            ":shared:jsTest",
-            ":shared:wasmJsTest",
+        ":shared:jsTest",
+        ":shared:wasmJsTest",
     )
 }
 
@@ -51,30 +57,36 @@ tasks.register("testDesktop") {
     dependsOn(":shared:jvmTest")
 }
 
-
 tasks.register("checkCommitMessage") {
     group = "verification"
     description = "Valida se a mensagem do último commit segue Conventional Commits"
 
+    val execOps = serviceOf<ExecOperations>()
+
     doLast {
-        val commitMsg =
-            providers
-                .exec {
-                    commandLine("git", "log", "-1", "--pretty=%B")
-                }.standardOutput.asText
-                .get()
-                .trim()
+        val output = java.io.ByteArrayOutputStream()
+        execOps.exec {
+            commandLine("git", "log", "-1", "--pretty=%B")
+            standardOutput = output
+        }
+        val commitMsg = output.toString().trim()
+        val firstLine = commitMsg.lines().first()
+
+        if (firstLine.startsWith("Merge ")) {
+            println("Commit de merge detectado, pulando validação: \"$firstLine\"")
+            return@doLast
+        }
 
         val pattern = Regex("^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\\(.+\\))?: .{1,100}")
 
-        if (!pattern.matches(commitMsg.lines().first())) {
+        if (!pattern.matches(firstLine)) {
             throw GradleException(
-                "Mensagem de commit inválida: \"$commitMsg\"\n" +
+                "Mensagem de commit inválida: \"$firstLine\"\n" +
                     "Formato esperado: tipo(escopo opcional): descrição\n" +
                     "Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build",
             )
         }
-        println("Mensagem de commit válida: \"$commitMsg\"")
+        println("Mensagem de commit válida: \"$firstLine\"")
     }
 }
 
