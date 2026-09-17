@@ -7,12 +7,8 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1" apply false
 }
 
-allprojects {
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-}
 tasks.register("devMobile") {
     group = "application"
     description = "Builda e instala o app Android no dispositivo/emulador conectado"
@@ -35,8 +31,8 @@ tasks.register("testMobile") {
     group = "verification"
     description = "Roda os testes de Android e iOS"
     dependsOn(
-        ":shared:testAndroidHostTest",
-        ":shared:iosSimulatorArm64Test",
+            ":shared:testAndroidHostTest",
+            ":shared:iosSimulatorArm64Test",
     )
 }
 
@@ -44,8 +40,8 @@ tasks.register("testWeb") {
     group = "verification"
     description = "Roda os testes de JS e Wasm"
     dependsOn(
-        ":shared:jsTest",
-        ":shared:wasmJsTest",
+            ":shared:jsTest",
+            ":shared:wasmJsTest",
     )
 }
 
@@ -54,6 +50,7 @@ tasks.register("testDesktop") {
     description = "Roda os testes JVM (desktop)"
     dependsOn(":shared:jvmTest")
 }
+
 
 tasks.register("checkCommitMessage") {
     group = "verification"
@@ -85,4 +82,10 @@ tasks.register("lintAll") {
     group = "verification"
     description = "Formata e roda todos os linters do projeto"
     dependsOn(":androidApp:lintFix", "ktlintFormat")
+}
+
+tasks.register("lintCheck") {
+    group = "verification"
+    description = "Só verifica lint, sem alterar arquivos"
+    dependsOn(":androidApp:lint", "ktlintCheck")
 }
