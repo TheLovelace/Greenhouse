@@ -149,6 +149,7 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew :serverApp:jib \
+            --no-configuration-cache \
             -Djib.to.auth.username="$GHCR_USER" \
             -Djib.to.auth.password="$GHCR_TOKEN"
 
