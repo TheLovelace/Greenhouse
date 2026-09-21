@@ -105,6 +105,9 @@ jobs:
         id: setup-chrome
         uses: browser-actions/setup-chrome@v1
 
+      - name: Liberar sandbox do Chrome
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: Rodar testes web
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
