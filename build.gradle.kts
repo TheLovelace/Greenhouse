@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.process.ExecOperations
 
@@ -17,6 +18,25 @@ plugins {
 
 allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+}
+
+val envFileTest = rootProject.file(".env.test.local")
+
+fun loadEnvFile(file: File): Map<String, String> =
+    file
+        .readLines()
+        .filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
+        .associate {
+            val (key, value) = it.split("=", limit = 2)
+            key.trim() to value.trim()
+        }
+
+project(":shared") {
+    tasks.withType<Test>().configureEach {
+        if (envFileTest.exists()) {
+            environment(loadEnvFile(envFileTest))
+        }
+    }
 }
 
 tasks.register("devMobile") {
