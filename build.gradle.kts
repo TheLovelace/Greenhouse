@@ -8,7 +8,10 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.springBoot) apply false
+    alias(libs.plugins.kotlinSpring) apply false
     alias(libs.plugins.jib) apply false
+
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1" apply false
 }
 
