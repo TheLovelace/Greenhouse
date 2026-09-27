@@ -15,6 +15,9 @@ dependencies {
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.springdoc.openapi)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.test)
 }
