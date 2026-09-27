@@ -51,6 +51,7 @@ jobs:
     name: Testes Desktop (JVM)
     if: github.head_ref != 'develop' || github.base_ref != 'main'
     runs-on: ubuntu-latest
+    environment: test
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +65,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Rodar testes
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_CONN }}
+          MQTT_URL: ${{ secrets.MQTT_TEST }}
+          MQTT_PASSWORD: ${{ secrets.MQTT_TEST_PASSWORD }}
         run: ./gradlew testDesktop
 
   test-mobile:
