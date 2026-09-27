@@ -1,12 +1,22 @@
-
 plugins {
     alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.springBoot)
+    alias(libs.plugins.kotlinSpring)
     application
     alias(libs.plugins.jib)
 }
 
 application {
     mainClass.set("org.greenhouse.MainKt")
+}
+
+dependencies {
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
+
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.springdoc.openapi)
+
+    testImplementation(libs.spring.boot.starter.test)
 }
 
 val registryOwner: String? = System.getenv("REGISTRY_OWNER")?.lowercase()
@@ -66,7 +76,7 @@ tasks.register<Exec>("runTest") {
     }
 
     commandLine(
-        "docker", "run", "--rm",
+        "docker", "run", "-d", "--rm",
         "--name", "app-test",
         "-p", "8081:8080",
         "--env-file", envFileTest.absolutePath,
