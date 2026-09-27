@@ -1,6 +1,11 @@
 package org.greenhouse
 
-fun main() {
-    println("Greenhouse iniciadoooooooooooo!")
-}
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
 
+@SpringBootApplication
+class GreenhouseApplication
+
+fun main(args: Array<String>) {
+    runApplication<GreenhouseApplication>(*args)
+}
