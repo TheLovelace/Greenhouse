@@ -2,19 +2,19 @@ package org.greenhouse.integration.adapter
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
+import org.greenhouse.adapter.AuthenticationException
 import org.greenhouse.adapter.DatabaseConfig
+import org.greenhouse.adapter.DatabaseConnectionException
 
 class Test_Database_Config {
 
     /**
      * Testa a conexão quando a URL não é fornecida.
-     *
-     * TODO: substituir pela exceção específica de conexão com o banco.
      */
     @Test
     fun `deve falhar quando a URL nao for fornecida`() {
-        assertFails {
+        assertFailsWith<DatabaseConnectionException> {
             DatabaseConfig("")
                 .session { Unit }
         }
@@ -23,14 +23,16 @@ class Test_Database_Config {
     /**
      * Testa a conexão quando as credenciais fornecidas na URL são inválidas.
      *
-     * TODO: substituir pela exceção específica de conexão com o banco.
      */
     @Test
     fun `deve falhar quando houver erro de autenticacao`() {
-        val url = "jdbc:postgresql://localhost:5432/neondb?user=invalid&password=invalid"
+        val realUrl = System.getenv("DATABASE_URL")
+        val urlComCredenciaisInvalidas =
+            realUrl.replace(Regex("user=[^&]*"), "user=invalid")
+                .replace(Regex("password=[^&]*"), "password=invalid")
 
-        assertFails {
-            DatabaseConfig(url)
+        assertFailsWith<AuthenticationException> {
+            DatabaseConfig(urlComCredenciaisInvalidas)
                 .session { Unit }
         }
     }
