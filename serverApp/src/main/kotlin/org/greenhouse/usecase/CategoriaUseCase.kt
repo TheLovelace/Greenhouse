@@ -23,10 +23,29 @@ class CategoriaUseCase(
         categoriaRepository.buscarPorId(validarId(id))
             ?: throw NotFoundException("Categoria não encontrada")
 
-    fun atualizar(id: Long, categoria: Categoria): Categoria {
-        validar(categoria)
+    fun atualizar(id: Long, campos: Map<String, Any?>): Categoria {
         val idValidado = validarId(id)
-        return categoriaRepository.atualizar(idValidado, categoria.copy(id = idValidado))
+        val categoriaAtual = categoriaRepository.buscarPorId(idValidado)
+            ?: throw NotFoundException("Categoria não encontrada")
+
+        val camposPermitidos = setOf("id", "nome", "descricao", "ativo")
+        val camposDesconhecidos = campos.keys - camposPermitidos
+        if (camposDesconhecidos.isNotEmpty()) {
+            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        }
+        if (campos.keys.none { it != "id" }) {
+            throw BadRequestException("Informe ao menos um campo para atualizar")
+        }
+
+        val categoriaAtualizada =
+            categoriaAtual.copy(
+                nome = campos.texto("nome", categoriaAtual.nome),
+                descricao = campos.texto("descricao", categoriaAtual.descricao),
+                ativo = campos.booleano("ativo", categoriaAtual.ativo),
+            )
+        validar(categoriaAtualizada)
+
+        return categoriaRepository.atualizar(idValidado, categoriaAtualizada)
             ?: throw NotFoundException("Categoria não encontrada")
     }
 
@@ -47,5 +66,23 @@ class CategoriaUseCase(
             throw BadRequestException("O id da categoria deve ser maior que zero")
         }
         return id
+    }
+
+    private fun Map<String, Any?>.texto(
+        campo: String,
+        valorAtual: String,
+    ): String {
+        if (!containsKey(campo)) return valorAtual
+        return this[campo] as? String
+            ?: throw BadRequestException("O campo '$campo' deve ser texto")
+    }
+
+    private fun Map<String, Any?>.booleano(
+        campo: String,
+        valorAtual: Boolean,
+    ): Boolean {
+        if (!containsKey(campo)) return valorAtual
+        return this[campo] as? Boolean
+            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
     }
 }

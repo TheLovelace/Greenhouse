@@ -64,14 +64,14 @@ paths:
       tags:
         - Categoria
       summary: Atualizar categoria
-      description: Envia os campos nome e descricao, ativo pode ser omitido e assume true.
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Também aceita o objeto completo da categoria.
       operationId: atualizarCategoria
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Categoria'
+              $ref: '#/components/schemas/CategoriaPatch'
       responses:
         '200':
           description: Categoria atualizada
@@ -116,3 +116,23 @@ components:
         ativo:
           type: boolean
           default: true
+    CategoriaPatch:
+      type: object
+      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização.
+      additionalProperties: false
+      anyOf:
+        - required: [nome]
+        - required: [descricao]
+        - required: [ativo]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        nome:
+          type: string
+          maxLength: 100
+        descricao:
+          type: string
+        ativo:
+          type: boolean

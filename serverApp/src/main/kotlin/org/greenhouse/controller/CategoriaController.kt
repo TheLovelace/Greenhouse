@@ -33,8 +33,8 @@ class CategoriaController(
     @PatchMapping("/{id}")
     fun atualizar(
         @PathVariable id: Long,
-        @RequestBody categoria: Categoria,
-    ): Categoria = categoriaUseCase.atualizar(id, categoria)
+        @RequestBody campos: Map<String, Any?>,
+    ): Categoria = categoriaUseCase.atualizar(id, campos)
 
     @DeleteMapping("/{id}")
     fun excluir(@PathVariable id: Long): ResponseEntity<Unit> {
