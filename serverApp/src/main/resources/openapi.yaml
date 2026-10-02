@@ -4,146 +4,25 @@ info:
   version: 1.0.0
   description: API do backend Greenhouse.
 servers:
-  - url: /
-    description: Mesmo host da aplicação
+  - url: /api
+    description: Prefixo padrão da API
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
+  - name: Status
+    description: Verificação da disponibilidade da API e do banco de dados
 paths:
   /categoria:
-    post:
-      tags:
-        - Categoria
-      summary: Criar categoria
-      operationId: criarCategoria
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Categoria'
-      responses:
-        '201':
-          description: Categoria criada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Categoria'
-        '400':
-          $ref: '#/components/responses/ErroRequisicao'
-    get:
-      tags:
-        - Categoria
-      summary: Listar categorias
-      operationId: listarCategorias
-      responses:
-        '200':
-          description: Categorias cadastradas
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Categoria'
+    $ref: './openapi/categoria.yml#/paths/~1categoria'
   /categoria/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico da categoria
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
-    get:
-      tags:
-        - Categoria
-      summary: Buscar categoria por ID
-      operationId: buscarCategoriaPorId
-      responses:
-        '200':
-          description: Categoria encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Categoria'
-        '400':
-          $ref: '#/components/responses/ErroRequisicao'
-        '404':
-          $ref: '#/components/responses/RecursoNaoEncontrado'
-    patch:
-      tags:
-        - Categoria
-      summary: Atualizar categoria
-      description: Envia os campos nome e descricao; ativo pode ser omitido e assume true.
-      operationId: atualizarCategoria
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Categoria'
-      responses:
-        '200':
-          description: Categoria atualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Categoria'
-        '400':
-          $ref: '#/components/responses/ErroRequisicao'
-        '404':
-          $ref: '#/components/responses/RecursoNaoEncontrado'
-    delete:
-      tags:
-        - Categoria
-      summary: Excluir categoria
-      operationId: excluirCategoria
-      responses:
-        '204':
-          description: Categoria excluida
-        '400':
-          $ref: '#/components/responses/ErroRequisicao'
-        '404':
-          $ref: '#/components/responses/RecursoNaoEncontrado'
+    $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /status:
+    $ref: './openapi/status.yml#/paths/~1status'
 components:
   schemas:
     Categoria:
-      type: object
-      required:
-        - nome
-        - descricao
-      properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-          description: Gerado pelo banco, não é necessário enviar na criação.
-        nome:
-          type: string
-          maxLength: 100
-        descricao:
-          type: string
-        ativo:
-          type: boolean
-          default: true
+      $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Status:
+      $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-  responses:
-    ErroRequisicao:
-      description: Requisição inválida ou categoria com dados não processáveis
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Erro'
-    RecursoNaoEncontrado:
-      description: Categoria não encontrada
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Erro'
+      $ref: './openapi/status.yml#/components/schemas/Erro'
