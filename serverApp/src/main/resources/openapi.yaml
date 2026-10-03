@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: Greenhouse API
+  version: 1.0.0
+  description: API do backend Greenhouse.
+servers:
+  - url: /api
+    description: Prefixo padrão da API
+tags:
+  - name: Categoria
+    description: Operações de cadastro e consulta de categorias
+  - name: Status
+    description: Verificação da disponibilidade da API e do banco de dados
+paths:
+  /categoria:
+    $ref: './openapi/categoria.yml#/paths/~1categoria'
+  /categoria/{id}:
+    $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /status:
+    $ref: './openapi/status.yml#/paths/~1status'
+components:
+  schemas:
+    Categoria:
+      $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Status:
+      $ref: './openapi/status.yml#/components/schemas/Status'
+    Erro:
+      $ref: './openapi/status.yml#/components/schemas/Erro'
