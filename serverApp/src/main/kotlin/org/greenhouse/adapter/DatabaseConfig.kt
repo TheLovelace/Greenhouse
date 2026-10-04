@@ -5,10 +5,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
 import javax.sql.DataSource
 
-class DatabaseConfig(dataSource: DataSource) {
+class DatabaseConfig(url: String) {
     private val database =
         try {
-            Database.connect(dataSource)
+            Database.connect(url)
         } catch (e: Exception) {
             throw mapException(e)
         }
