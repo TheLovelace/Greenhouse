@@ -1,0 +1,59 @@
+package org.greenhouse.integration.categoria
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import org.greenhouse.adapter.BadRequestException
+import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.integration.fixture.CategoriaFixture
+
+class TestCategoriaGet {
+
+    @Test
+    fun `deve buscar categoria pelo id`() {
+        val fixture = CategoriaFixture()
+        var id: Long? = null
+
+        try {
+            val criada = fixture.novaCategoria()
+            id = criada.id
+
+            assertEquals(criada, fixture.useCase.buscarPorId(criada.id!!))
+        } finally {
+            fixture.limpar(id)
+        }
+    }
+
+    @Test
+    fun `deve listar categorias`() {
+        val fixture = CategoriaFixture()
+        var id: Long? = null
+
+        try {
+            val criada = fixture.novaCategoria()
+            id = criada.id
+
+            assertEquals(true, fixture.useCase.listar().any { it.id == criada.id })
+        } finally {
+            fixture.limpar(id)
+        }
+    }
+
+    @Test
+    fun `deve rejeitar id invalido`() {
+        val fixture = CategoriaFixture()
+
+        assertFailsWith<BadRequestException> {
+            fixture.useCase.buscarPorId(0)
+        }
+    }
+
+    @Test
+    fun `deve lancar not found para categoria inexistente`() {
+        val fixture = CategoriaFixture()
+
+        assertFailsWith<NotFoundException> {
+            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+        }
+    }
+}

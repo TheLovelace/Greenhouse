@@ -75,6 +75,10 @@ kotlin {
             implementation(libs.kotlin.test)
         }
 
+        jvmTest.dependencies {
+            implementation(project(":serverApp"))
+        }
+
         jsMain.dependencies {
             implementation(libs.wrappers.browser)
         }
