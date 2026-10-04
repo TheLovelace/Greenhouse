@@ -3,11 +3,12 @@ package org.greenhouse.adapter
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
+import javax.sql.DataSource
 
-class DatabaseConfig(url: String) {
+class DatabaseConfig(dataSource: DataSource) {
     private val database =
         try {
-            Database.connect(url)
+            Database.connect(dataSource)
         } catch (e: Exception) {
             throw mapException(e)
         }

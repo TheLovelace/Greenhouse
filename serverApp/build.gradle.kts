@@ -20,6 +20,10 @@ dependencies {
     implementation(libs.exposed.jdbc)
     implementation(libs.postgresql)
 
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+
     testImplementation(libs.spring.boot.starter.test)
 }
 
