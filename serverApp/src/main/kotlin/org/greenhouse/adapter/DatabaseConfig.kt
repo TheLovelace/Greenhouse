@@ -3,7 +3,6 @@ package org.greenhouse.adapter
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.SQLException
-import javax.sql.DataSource
 
 class DatabaseConfig(url: String) {
     private val database =
