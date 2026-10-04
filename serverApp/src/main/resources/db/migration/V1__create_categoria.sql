@@ -1,0 +1,6 @@
+CREATE TABLE categoria (
+    id BIGSERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE,
+    descricao TEXT NOT NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE
+);
