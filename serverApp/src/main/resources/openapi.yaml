@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
+  - name: Cliente
+    description: Operações de cadastro, consulta e gerenciamento de status de clientes
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
 paths:
@@ -16,12 +18,18 @@ paths:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
   /categoria/{id}:
     $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /cliente:
+    $ref: './openapi/cliente.yml#/paths/~1cliente'
+  /cliente/{id}:
+    $ref: './openapi/cliente.yml#/paths/~1cliente~1%7Bid%7D'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
 components:
   schemas:
     Categoria:
       $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Cliente:
+      $ref: './openapi/cliente.yml#/components/schemas/Cliente'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
