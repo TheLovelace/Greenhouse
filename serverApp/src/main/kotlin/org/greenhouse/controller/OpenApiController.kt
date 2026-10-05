@@ -22,7 +22,7 @@ class OpenApiController {
     fun openApiFragment(@PathVariable fileName: String): ResponseEntity<Resource> {
         val resourcePath =
             when (fileName) {
-                "categoria", "status" -> "openapi/$fileName.yml"
+                "categoria", "cliente", "status" -> "openapi/$fileName.yml"
                 else -> throw NotFoundException("Documento OpenAPI não encontrado")
             }
 
