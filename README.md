@@ -2,8 +2,6 @@
 
 O Greenhouse é um sistema multiplataforma para gerenciamento de uma floricultura. A aplicação permite administrar a gestão da floricultura em uma única plataforma.
 
-`feat/crud-desconto`
-
 <br>
 
 ## Tecnologias
