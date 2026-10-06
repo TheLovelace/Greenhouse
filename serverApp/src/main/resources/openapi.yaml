@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
+  - name: Desconto
+    description: Cadastro e consulta de descontos
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
 paths:
@@ -16,12 +18,20 @@ paths:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
   /categoria/{id}:
     $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /desconto:
+    $ref: './openapi/desconto.yml#/paths/~1desconto'
+  /desconto/{id}:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
+  /desconto/{id}/status:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
 components:
   schemas:
     Categoria:
       $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Desconto:
+      $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
