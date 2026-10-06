@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import org.springframework.stereotype.Repository
 
 private object Descontos : Table("desconto") {
@@ -59,6 +60,58 @@ class DescontoRepository(
                 .where { Descontos.id eq id }
                 .singleOrNull()
                 ?.toDesconto()
+        }
+
+    fun atualizar(
+        id: Long,
+        desconto: Desconto,
+    ): Desconto? =
+        databaseConfig.session {
+            val linhasAtualizadas =
+                Descontos.update(
+                    { Descontos.id eq id },
+                ) {
+                    it[titulo] = desconto.titulo
+                    it[descricao] = desconto.descricao
+                    it[tipo] = desconto.tipo.name
+                    it[valor] = desconto.valor
+                    it[dataInicio] = desconto.dataInicio
+                    it[dataFim] = desconto.dataFim
+                    it[ativo] = desconto.ativo
+                }
+
+            if (linhasAtualizadas == 0) {
+                null
+            } else {
+                Descontos
+                    .selectAll()
+                    .where { Descontos.id eq id }
+                    .single()
+                    .toDesconto()
+            }
+        }
+
+    fun atualizarStatus(
+        id: Long,
+        ativo: Boolean,
+    ): Desconto? =
+        databaseConfig.session {
+            val linhasAtualizadas =
+                Descontos.update(
+                    { Descontos.id eq id },
+                ) {
+                    it[Descontos.ativo] = ativo
+                }
+
+            if (linhasAtualizadas == 0) {
+                null
+            } else {
+                Descontos
+                    .selectAll()
+                    .where { Descontos.id eq id }
+                    .single()
+                    .toDesconto()
+            }
         }
 
     private fun ResultRow.toDesconto() =

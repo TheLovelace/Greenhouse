@@ -22,6 +22,8 @@ paths:
     $ref: './openapi/desconto.yml#/paths/~1desconto'
   /desconto/{id}:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
+  /desconto/{id}/status:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
 components:

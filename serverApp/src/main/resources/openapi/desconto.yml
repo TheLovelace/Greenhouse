@@ -61,8 +61,114 @@ paths:
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    patch:
+      tags:
+        - Desconto
+      summary: Atualizar desconto
+      description: Atualiza os dados do desconto. O campo ativo não pode ser alterado nesta operação; use PATCH /desconto/{id}/status. Campos omitidos mantêm os valores atuais; descricao, dataInicio e dataFim podem ser enviados como null. O campo id, se enviado, é ignorado.
+      operationId: atualizarDesconto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DescontoPatch'
+      responses:
+        '200':
+          description: Desconto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desconto'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+  /desconto/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico do desconto
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    patch:
+      tags:
+        - Desconto
+      summary: Ativar ou inativar desconto
+      description: Altera somente o status ativo do desconto, preservando seus dados e vínculos históricos.
+      operationId: atualizarStatusDesconto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarStatusDesconto'
+      responses:
+        '200':
+          description: Status do desconto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desconto'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
+    AtualizarStatusDesconto:
+      type: object
+      required:
+        - ativo
+      properties:
+        ativo:
+          type: boolean
+          description: Envie true para ativar ou false para inativar.
+    DescontoPatch:
+      type: object
+      description: Aceita qualquer combinação de campos editáveis; campos omitidos mantêm o valor atual.
+      additionalProperties: false
+      anyOf:
+        - required: [titulo]
+        - required: [descricao]
+        - required: [tipo]
+        - required: [valor]
+        - required: [dataInicio]
+        - required: [dataFim]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Ignorado na atualização.
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 150
+        descricao:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+          enum:
+            - PERCENTUAL
+            - VALOR_FIXO
+        valor:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          description: NUMERIC(12,2); para PERCENTUAL deve ser menor ou igual a 100.
+        dataInicio:
+          type: string
+          format: date-time
+          nullable: true
+        dataFim:
+          type: string
+          format: date-time
+          nullable: true
     DescontoCadastro:
       type: object
       required:

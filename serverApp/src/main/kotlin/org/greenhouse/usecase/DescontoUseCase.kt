@@ -8,6 +8,8 @@ import org.greenhouse.entity.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 
 private val VALOR_MAXIMO_DESCONTO = BigDecimal("9999999999.99")
 
@@ -24,6 +26,46 @@ class DescontoUseCase(
 
     fun buscarPorId(id: Long): Desconto =
         descontoRepository.buscarPorId(validarId(id))
+            ?: throw NotFoundException("Desconto não encontrado")
+
+    fun atualizar(
+        id: Long,
+        campos: Map<String, Any?>,
+    ): Desconto {
+        val idValidado = validarId(id)
+        val descontoAtual =
+            descontoRepository.buscarPorId(idValidado)
+                ?: throw NotFoundException("Desconto não encontrado")
+
+        val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim")
+        val camposDesconhecidos = campos.keys - camposPermitidos
+        if (camposDesconhecidos.isNotEmpty()) {
+            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        }
+        if (campos.keys.none { it != "id" }) {
+            throw BadRequestException("Informe ao menos um campo para atualizar")
+        }
+
+        val descontoAtualizado =
+            descontoAtual.copy(
+                titulo = campos.texto("titulo", descontoAtual.titulo),
+                descricao = campos.textoOpcional("descricao", descontoAtual.descricao),
+                tipo = campos.tipo("tipo", descontoAtual.tipo),
+                valor = campos.valor("valor", descontoAtual.valor),
+                dataInicio = campos.data("dataInicio", descontoAtual.dataInicio),
+                dataFim = campos.data("dataFim", descontoAtual.dataFim),
+            )
+        validar(descontoAtualizado)
+
+        return descontoRepository.atualizar(idValidado, descontoAtualizado)
+            ?: throw NotFoundException("Desconto não encontrado")
+    }
+
+    fun atualizarStatus(
+        id: Long,
+        ativo: Boolean,
+    ): Desconto =
+        descontoRepository.atualizarStatus(validarId(id), ativo)
             ?: throw NotFoundException("Desconto não encontrado")
 
     private fun validarId(id: Long): Long {
@@ -56,6 +98,73 @@ class DescontoUseCase(
             desconto.dataFim.isBefore(desconto.dataInicio)
         ) {
             throw UnprocessableEntityException("A data final não pode ser anterior à data inicial")
+        }
+    }
+
+    private fun Map<String, Any?>.texto(
+        campo: String,
+        valorAtual: String,
+    ): String {
+        if (!containsKey(campo)) return valorAtual
+        return this[campo] as? String
+            ?: throw BadRequestException("O campo '$campo' deve ser texto")
+    }
+
+    private fun Map<String, Any?>.textoOpcional(
+        campo: String,
+        valorAtual: String?,
+    ): String? {
+        if (!containsKey(campo)) return valorAtual
+        val valorInformado = this[campo] ?: return null
+        return valorInformado as? String
+            ?: throw BadRequestException("O campo '$campo' deve ser texto ou null")
+    }
+
+    private fun Map<String, Any?>.tipo(
+        campo: String,
+        valorAtual: TipoDesconto,
+    ): TipoDesconto {
+        if (!containsKey(campo)) return valorAtual
+        val tipoInformado =
+            this[campo] as? String
+                ?: throw BadRequestException("O campo '$campo' deve ser PERCENTUAL ou VALOR_FIXO")
+        return try {
+            TipoDesconto.valueOf(tipoInformado)
+        } catch (e: IllegalArgumentException) {
+            throw UnprocessableEntityException("O tipo do desconto deve ser PERCENTUAL ou VALOR_FIXO", e)
+        }
+    }
+
+    private fun Map<String, Any?>.valor(
+        campo: String,
+        valorAtual: BigDecimal,
+    ): BigDecimal {
+        if (!containsKey(campo)) return valorAtual
+        val valorInformado = this[campo]
+        if (valorInformado !is Number) {
+            throw BadRequestException("O campo '$campo' deve ser numérico")
+        }
+        return try {
+            BigDecimal(valorInformado.toString())
+        } catch (e: NumberFormatException) {
+            throw BadRequestException("O campo '$campo' deve ser numérico", e)
+        }
+    }
+
+    private fun Map<String, Any?>.data(
+        campo: String,
+        valorAtual: OffsetDateTime?,
+    ): OffsetDateTime? {
+        if (!containsKey(campo)) return valorAtual
+        val dataInformada = this[campo]
+        if (dataInformada == null) return null
+        val texto =
+            dataInformada as? String
+                ?: throw BadRequestException("O campo '$campo' deve ser uma data ISO-8601 ou null")
+        return try {
+            OffsetDateTime.parse(texto)
+        } catch (e: DateTimeParseException) {
+            throw BadRequestException("O campo '$campo' deve ser uma data ISO-8601 válida", e)
         }
     }
 }
