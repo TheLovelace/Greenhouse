@@ -1,0 +1,60 @@
+paths:
+  /estoque/{produtoId}:
+    parameters:
+      - name: produtoId
+        in: path
+        required: true
+        description: Identificador numérico do produto
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    get:
+      tags:
+        - Estoque
+      summary: Consultar posição de estoque por produto
+      description: Retorna o saldo atual do estoque. A quantidade disponível é calculada como quantidade física menos quantidade reservada. A quantidade mínima é um limite separado. Produtos sem registro de estoque retornam quantidades zeradas; o histórico de movimentações não é somado novamente.
+      operationId: buscarPosicaoEstoque
+      responses:
+        '200':
+          description: Posição atual do estoque
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstoquePosicao'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+components:
+  schemas:
+    EstoquePosicao:
+      type: object
+      required:
+        - produtoId
+        - quantidadeFisica
+        - quantidadeReservada
+        - quantidadeDisponivel
+        - quantidadeMinima
+      properties:
+        produtoId:
+          type: integer
+          format: int64
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeReservada:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeDisponivel:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Quantidade física menos quantidade reservada.
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Limite mínimo cadastrado para o produto, separado da quantidade disponível.
