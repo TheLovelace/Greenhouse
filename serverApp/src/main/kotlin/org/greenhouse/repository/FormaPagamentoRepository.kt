@@ -1,88 +1,40 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.FormaPagamento
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.greenhouse.model.FormaPagamento
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 
-private object FormasPagamento : Table("forma_pagamento") {
-    val id = long("id").autoIncrement()
-    val nome = varchar("nome", 50)
-    val ativo = bool("ativo").default(true)
+interface FormaPagamentoRepository : JpaRepository<FormaPagamento, Long> {
+    @Query("SELECT f FROM FormaPagamento f ORDER BY f.id")
+    fun listar(): List<FormaPagamento>
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query("SELECT f FROM FormaPagamento f WHERE f.id = :id")
+    fun buscarPorId(@Param("id") id: Long): FormaPagamento?
 
-@Repository
-class FormaPagamentoRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
-    fun criar(formaPagamento: FormaPagamento): FormaPagamento =
-        databaseConfig.session {
-            val id =
-                FormasPagamento.insert {
-                    it[nome] = formaPagamento.nome
-                    it[ativo] = formaPagamento.ativo
-                }[FormasPagamento.id]
+    fun criar(formaPagamento: FormaPagamento): FormaPagamento = save(formaPagamento)
 
-            formaPagamento.copy(id = id)
-        }
+    @Transactional
+    fun atualizar(id: Long, formaPagamento: FormaPagamento): FormaPagamento? {
+        if (atualizarCampos(id, formaPagamento.nome, formaPagamento.ativo) == 0) return null
+        return buscarPorId(id)
+    }
 
-    fun listar(): List<FormaPagamento> =
-        databaseConfig.session {
-            FormasPagamento
-                .selectAll()
-                .orderBy(FormasPagamento.id)
-                .map { it.toFormaPagamento() }
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE FormaPagamento f SET f.nome = :nome, f.ativo = :ativo WHERE f.id = :id")
+    fun atualizarCampos(
+        @Param("id") id: Long,
+        @Param("nome") nome: String,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 
-    fun buscarPorId(id: Long): FormaPagamento? =
-        databaseConfig.session {
-            FormasPagamento
-                .selectAll()
-                .where { FormasPagamento.id eq id }
-                .singleOrNull()
-                ?.toFormaPagamento()
-        }
+    fun inativar(id: Long): Boolean = inativarPorId(id) > 0
 
-    fun atualizar(
-        id: Long,
-        formaPagamento: FormaPagamento,
-    ): FormaPagamento? =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                FormasPagamento.update({ FormasPagamento.id eq id }) {
-                    it[nome] = formaPagamento.nome
-                    it[ativo] = formaPagamento.ativo
-                }
-
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                FormasPagamento
-                    .selectAll()
-                    .where { FormasPagamento.id eq id }
-                    .single()
-                    .toFormaPagamento()
-            }
-        }
-
-    fun inativar(id: Long): Boolean =
-        databaseConfig.session {
-            FormasPagamento.update({ FormasPagamento.id eq id }) {
-                it[ativo] = false
-            } > 0
-        }
-
-    private fun ResultRow.toFormaPagamento() =
-        FormaPagamento(
-            id = this[FormasPagamento.id],
-            nome = this[FormasPagamento.nome],
-            ativo = this[FormasPagamento.ativo],
-        )
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE FormaPagamento f SET f.ativo = false WHERE f.id = :id")
+    fun inativarPorId(@Param("id") id: Long): Int
 }

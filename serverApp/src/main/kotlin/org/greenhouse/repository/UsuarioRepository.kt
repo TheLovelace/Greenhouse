@@ -1,87 +1,63 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Usuario
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.greenhouse.model.Usuario
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 
-// Mapeamento auxiliar do Funcionario apenas para o Join do Primeiro Acesso
-private object Funcionarios : Table("funcionario") {
-    val id = long("id").autoIncrement()
-    val nome = varchar("nome", 150)
-    val cpf = varchar("cpf", 11)
-    val telefone = varchar("telefone", 20).nullable()
-    val email = varchar("email", 150).nullable()
-    val cargo = varchar("cargo", 100).nullable()
-    val ativo = bool("ativo").default(true)
+interface UsuarioRepository : JpaRepository<Usuario, Long> {
+    @Query("SELECT u FROM Usuario u WHERE u.login = :login")
+    fun buscarPorLogin(@Param("login") login: String): Usuario?
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query(
+        value = """
+            SELECT u.*
+            FROM usuario u
+            INNER JOIN funcionario f ON f.id = u.funcionario_id
+            WHERE f.cpf = :cpf AND f.email = :email
+        """,
+        nativeQuery = true,
+    )
+    fun buscarPorCpfEEmail(
+        @Param("cpf") cpf: String,
+        @Param("email") email: String,
+    ): Usuario?
 
-private object Usuarios : Table("usuario") {
-    val id = long("id").autoIncrement()
-    val funcionarioId = long("funcionario_id").references(Funcionarios.id)
-    val login = varchar("login", 100)
-    val senhaHash = varchar("senha_hash", 255)
-    val perfil = varchar("perfil", 20)
-    val ativo = bool("ativo").default(true)
-    val primeiroAcessoFeito = bool("primeiro_acesso_feito").default(false)
-
-    override val primaryKey = PrimaryKey(id)
-}
-
-@Repository
-class UsuarioRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
-
-    fun buscarPorLogin(login: String): Usuario? =
-        databaseConfig.session {
-            Usuarios.selectAll()
-                .where { Usuarios.login eq login }
-                .singleOrNull()
-                ?.toUsuario()
-        }
-
-    fun buscarPorCpfEEmail(cpf: String, email: String): Usuario? =
-        databaseConfig.session {
-            (Usuarios innerJoin Funcionarios)
-                .selectAll()
-                .where { (Funcionarios.cpf eq cpf) and (Funcionarios.email eq email) }
-                .singleOrNull()
-                ?.toUsuario()
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Usuario u SET u.senhaHash = :senhaHash WHERE u.id = :id")
+    fun atualizarSenhaQuery(
+        @Param("id") usuarioId: Long,
+        @Param("senhaHash") novaSenhaHash: String,
+    ): Int
 
     fun atualizarSenha(usuarioId: Long, novaSenhaHash: String): Boolean =
-        databaseConfig.session {
-            Usuarios.update({ Usuarios.id eq usuarioId }) {
-                it[senhaHash] = novaSenhaHash
-            } > 0
-        }
+        atualizarSenhaQuery(usuarioId, novaSenhaHash) > 0
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE Usuario u
+        SET u.senhaHash = :senhaHash, u.primeiroAcessoFeito = true
+        WHERE u.id = :id AND u.primeiroAcessoFeito = false
+        """,
+    )
+    fun concluirPrimeiroAcessoQuery(
+        @Param("id") usuarioId: Long,
+        @Param("senhaHash") novaSenhaHash: String,
+    ): Int
 
     fun concluirPrimeiroAcesso(usuarioId: Long, novaSenhaHash: String): Boolean =
-        databaseConfig.session {
-            Usuarios.update({
-                (Usuarios.id eq usuarioId) and (Usuarios.primeiroAcessoFeito eq false)
-            }) {
-                it[senhaHash] = novaSenhaHash
-                it[primeiroAcessoFeito] = true
-            } > 0
-        }
+        concluirPrimeiroAcessoQuery(usuarioId, novaSenhaHash) > 0
 
-    private fun ResultRow.toUsuario() =
-        Usuario(
-            id = this[Usuarios.id],
-            funcionarioId = this[Usuarios.funcionarioId],
-            login = this[Usuarios.login],
-            senhaHash = this[Usuarios.senhaHash],
-            perfil = this[Usuarios.perfil],
-            ativo = this[Usuarios.ativo],
-            primeiroAcessoFeito = this[Usuarios.primeiroAcessoFeito],
-        )
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Usuario u SET u.ativo = :ativo WHERE u.funcionarioId = :funcionarioId")
+    fun atualizarAtivoPorFuncionario(
+        @Param("funcionarioId") funcionarioId: Long,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 }

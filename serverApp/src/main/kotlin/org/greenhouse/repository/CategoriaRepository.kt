@@ -1,84 +1,47 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Categoria
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.greenhouse.model.Categoria
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 
-private object Categorias : Table("categoria") {
-    val id = long("id").autoIncrement()
-    val nome = varchar("nome", 100)
-    val descricao = text("descricao")
-    val ativo = bool("ativo").default(true)
+interface CategoriaRepository : JpaRepository<Categoria, Long> {
+    @Query("SELECT c FROM Categoria c")
+    fun listar(): List<Categoria>
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query("SELECT c FROM Categoria c WHERE c.id = :id")
+    fun buscarPorId(@Param("id") id: Long): Categoria?
 
-@Repository
-class CategoriaRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
+    fun criar(categoria: Categoria): Categoria = save(categoria)
 
-    fun criar(categoria: Categoria): Categoria =
-        databaseConfig.session {
-            val id =
-                Categorias.insert {
-                    it[nome] = categoria.nome
-                    it[descricao] = categoria.descricao
-                    it[ativo] = categoria.ativo
-                }[Categorias.id]
+    @Transactional
+    fun atualizar(id: Long, categoria: Categoria): Categoria? {
+        if (atualizarCampos(id, categoria.nome, categoria.descricao, categoria.ativo) == 0) return null
+        return buscarPorId(id)
+    }
 
-            categoria.copy(id = id)
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE Categoria c
+        SET c.nome = :nome, c.descricao = :descricao, c.ativo = :ativo
+        WHERE c.id = :id
+        """,
+    )
+    fun atualizarCampos(
+        @Param("id") id: Long,
+        @Param("nome") nome: String,
+        @Param("descricao") descricao: String,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 
-    fun listar(): List<Categoria> =
-        databaseConfig.session {
-            Categorias.selectAll().map { it.toCategoria() }
-        }
+    fun excluir(id: Long): Boolean = excluirPorId(id) > 0
 
-    fun buscarPorId(id: Long): Categoria? =
-        databaseConfig.session {
-            Categorias.selectAll()
-                .where { Categorias.id eq id }
-                .singleOrNull()
-                ?.toCategoria()
-        }
-
-    fun atualizar(id: Long, categoria: Categoria): Categoria? =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                Categorias.update({ Categorias.id eq id }) {
-                    it[nome] = categoria.nome
-                    it[descricao] = categoria.descricao
-                    it[ativo] = categoria.ativo
-                }
-
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                Categorias.selectAll()
-                    .where { Categorias.id eq id }
-                    .single()
-                    .toCategoria()
-            }
-        }
-
-    fun excluir(id: Long): Boolean =
-        databaseConfig.session {
-            Categorias.deleteWhere { Categorias.id eq id } > 0
-        }
-
-    private fun ResultRow.toCategoria() =
-        Categoria(
-            id = this[Categorias.id],
-            nome = this[Categorias.nome],
-            descricao = this[Categorias.descricao],
-            ativo = this[Categorias.ativo],
-        )
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Categoria c WHERE c.id = :id")
+    fun excluirPorId(@Param("id") id: Long): Int
 }
