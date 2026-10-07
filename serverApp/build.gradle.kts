@@ -24,8 +24,16 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation(libs.androidx.constraintlayout.core)
 
     testImplementation(libs.spring.boot.starter.test)
+
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // Biblioteca JJWT para criar, assinar e extrair dados dos tokens JWT
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 }
 
 val registryOwner: String? = System.getenv("REGISTRY_OWNER")?.lowercase()
