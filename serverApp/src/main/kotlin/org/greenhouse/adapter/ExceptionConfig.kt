@@ -17,9 +17,9 @@ class DatabaseConnectionException(cause: Throwable? = null) :
     )
 
 /** 401 - Credenciais inválidas ou ausentes. */
-class AuthenticationException(cause: Throwable? = null) :
+class AuthenticationException(message: String = "Falha de autenticação", cause: Throwable? = null) :
     AppException(
-        message = "Falha de autenticação",
+        message = message,
         statusCode = HttpStatus.UNAUTHORIZED,
         cause = cause,
     )

@@ -77,6 +77,7 @@ kotlin {
 
         jvmTest.dependencies {
             implementation(project(":serverApp"))
+            implementation(libs.exposed.jdbc)
         }
 
         jsMain.dependencies {
