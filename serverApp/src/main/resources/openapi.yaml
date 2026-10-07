@@ -18,6 +18,10 @@ paths:
     $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
+  /auth/login:
+    $ref: 'openapi/auth.yml#/paths/~1auth~1login'
+  /auth/primeiro-acesso:
+    $ref: 'openapi/auth.yml#/paths/~1auth~1primeiro-acesso'
 components:
   schemas:
     Categoria:
