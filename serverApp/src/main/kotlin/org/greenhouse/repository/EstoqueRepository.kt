@@ -149,19 +149,16 @@ class EstoqueRepository(
 
             if (estoque == null) {
                 EstoquesTable.insert {
-                    it[produtoId] = movimentacao.produtoId
-                    it[quantidadeFisica] = novaQuantidadeFisica.toInt()
-                    it[quantidadeReservada] = 0
-                    it[quantidadeMinima] = 0
+                    it[EstoquesTable.produtoId] = movimentacao.produtoId
+                    it[EstoquesTable.quantidadeFisica] = novaQuantidadeFisica.toInt()
+                    it[EstoquesTable.quantidadeReservada] = 0
+                    it[EstoquesTable.quantidadeMinima] = 0
                 }
             } else {
                 EstoquesTable.update(
-                    {
-                        EstoquesTable.produtoId eq movimentacao.produtoId
-                    },
+                    { EstoquesTable.produtoId eq movimentacao.produtoId },
                 ) {
-                    it[quantidadeFisica] =
-                        novaQuantidadeFisica.toInt()
+                    it[EstoquesTable.quantidadeFisica] = novaQuantidadeFisica.toInt()
                 }
             }
 
