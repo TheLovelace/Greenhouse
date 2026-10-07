@@ -1,0 +1,5 @@
+CREATE TABLE forma_pagamento (
+    id BIGSERIAL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL UNIQUE,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE
+);
