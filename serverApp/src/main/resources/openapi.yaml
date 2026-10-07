@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
+  - name: Cliente
+    description: Operações de cadastro, consulta e gerenciamento de status de clientes
   - name: Desconto
     description: Cadastro e consulta de descontos
   - name: Produto
@@ -20,6 +22,10 @@ paths:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
   /categoria/{id}:
     $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /cliente:
+    $ref: './openapi/cliente.yml#/paths/~1cliente'
+  /cliente/{id}:
+    $ref: './openapi/cliente.yml#/paths/~1cliente~1%7Bid%7D'
   /desconto:
     $ref: './openapi/desconto.yml#/paths/~1desconto'
   /desconto/{id}:
@@ -36,6 +42,8 @@ components:
   schemas:
     Categoria:
       $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Cliente:
+      $ref: './openapi/cliente.yml#/components/schemas/Cliente'
     Desconto:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     Produto:
