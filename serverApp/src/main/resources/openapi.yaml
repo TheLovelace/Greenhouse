@@ -15,6 +15,8 @@ tags:
     description: Cadastro e consulta de descontos
   - name: Fornecedor
     description: Operações de cadastro e consulta de fornecedores
+  - name: Forma de Pagamento
+    description: Cadastro, consulta e gerenciamento de formas de pagamento
   - name: Estoque
     description: Consulta da posição de estoque por produto
   - name: Produto
@@ -46,6 +48,10 @@ paths:
     $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
   /fornecedor/{id}:
     $ref: './openapi/fornecedor.yml#/paths/~1fornecedor~1%7Bid%7D'
+  /forma-pagamento:
+    $ref: './openapi/forma-pagamento.yml#/paths/~1forma-pagamento'
+  /forma-pagamento/{id}:
+    $ref: './openapi/forma-pagamento.yml#/paths/~1forma-pagamento~1%7Bid%7D'
   /produto:
     $ref: './openapi/produto.yml#/paths/~1produto'
   /produto/{id}:
@@ -70,6 +76,10 @@ components:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     Fornecedor:
       $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
+    FormaPagamento:
+      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamento'
+    FormaPagamentoPatch:
+      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoPatch'
     EstoquePosicao:
       $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
     Funcionario:

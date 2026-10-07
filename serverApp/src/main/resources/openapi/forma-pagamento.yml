@@ -1,0 +1,166 @@
+paths:
+  /forma-pagamento:
+    post:
+      tags:
+        - Forma de Pagamento
+      summary: Criar forma de pagamento
+      operationId: criarFormaPagamento
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormaPagamento'
+      responses:
+        '201':
+          description: Forma de pagamento criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamento'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+    get:
+      tags:
+        - Forma de Pagamento
+      summary: Listar formas de pagamento
+      operationId: listarFormasPagamento
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Formas de pagamento cadastradas, ativas e inativas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormaPagamento'
+        '401':
+          description: Token JWT ausente ou inválido
+  /forma-pagamento/{id}:
+    get:
+      tags:
+        - Forma de Pagamento
+      summary: Buscar forma de pagamento por ID
+      operationId: buscarFormaPagamentoPorId
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      responses:
+        '200':
+          description: Forma de pagamento encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamento'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    patch:
+      tags:
+        - Forma de Pagamento
+      summary: Atualizar forma de pagamento
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. O campo id, se enviado, é ignorado.
+      operationId: atualizarFormaPagamento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormaPagamentoPatch'
+      responses:
+        '200':
+          description: Forma de pagamento atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamento'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Forma de Pagamento
+      summary: Inativar forma de pagamento
+      description: Define ativo como false sem remover o registro, preservando pagamentos relacionados.
+      operationId: inativarFormaPagamento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      responses:
+        '204':
+          description: Forma de pagamento inativada
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+
+components:
+  parameters:
+    FormaPagamentoId:
+      name: id
+      in: path
+      required: true
+      description: Identificador numérico da forma de pagamento
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    FormaPagamento:
+      type: object
+      required:
+        - nome
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Gerado pelo banco, não é necessário enviar na criação.
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '.*\S.*'
+          example: Cartão de Crédito
+        ativo:
+          type: boolean
+          default: true
+    FormaPagamentoPatch:
+      type: object
+      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização.
+      additionalProperties: false
+      anyOf:
+        - required: [nome]
+        - required: [ativo]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '.*\S.*'
+        ativo:
+          type: boolean
