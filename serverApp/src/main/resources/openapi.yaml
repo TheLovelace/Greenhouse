@@ -13,6 +13,8 @@ tags:
     description: Operações de cadastro, consulta e gerenciamento de status de clientes
   - name: Desconto
     description: Cadastro e consulta de descontos
+  - name: Fornecedor
+    description: Operações de cadastro e consulta de fornecedores
   - name: Estoque
     description: Consulta da posição de estoque por produto
   - name: Produto
@@ -38,6 +40,12 @@ paths:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1%7BprodutoId%7D'
   /estoque/movimentacoes:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1movimentacoes'
+  /desconto/{id}/status:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
+  /fornecedor:
+    $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
+  /fornecedor/{id}:
+    $ref: './openapi/fornecedor.yml#/paths/~1fornecedor~1%7Bid%7D'
   /produto:
     $ref: './openapi/produto.yml#/paths/~1produto'
   /produto/{id}:
@@ -60,6 +68,8 @@ components:
       $ref: './openapi/cliente.yml#/components/schemas/Cliente'
     Desconto:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
+    Fornecedor:
+      $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
     EstoquePosicao:
       $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
     Funcionario:
