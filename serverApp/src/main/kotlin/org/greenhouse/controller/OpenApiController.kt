@@ -23,6 +23,7 @@ class OpenApiController {
         val resourcePath =
             when (fileName) {
                 "categoria", "desconto", "fornecedor", "status" -> "openapi/$fileName.yml"
+                "categoria", "cliente", "desconto", "produto", "estoque", "status", "fornecedor", "auth" -> "openapi/$fileName.yml"
                 else -> throw NotFoundException("Documento OpenAPI não encontrado")
             }
 

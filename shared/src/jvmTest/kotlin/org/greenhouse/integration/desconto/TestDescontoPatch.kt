@@ -3,7 +3,7 @@ package org.greenhouse.integration.desconto
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.TipoDesconto
+import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
 import java.time.OffsetDateTime
@@ -92,19 +92,25 @@ class TestDescontoPatch {
     }
 
     @Test
-    fun `deve rejeitar campo de status e tipos incorretos`() {
+    fun `deve aceitar atualizar status e rejeitar campos e tipos incorretos`() {
         val fixture = DescontoFixture()
         val id = fixture.novoDesconto()
 
         try {
+            val inativado = fixture.useCase.atualizar(id, mapOf("ativo" to false))
+            assertEquals(false, inativado.ativo)
+
+            val reativado = fixture.useCase.atualizar(id, mapOf("ativo" to true))
+            assertEquals(true, reativado.ativo)
+
             assertFailsWith<BadRequestException> {
                 fixture.useCase.atualizar(id, mapOf("campo" to "valor"))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("ativo" to false))
+                fixture.useCase.atualizar(id, mapOf("titulo" to 123))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("titulo" to 123))
+                fixture.useCase.atualizar(id, mapOf("ativo" to "false"))
             }
             assertFailsWith<BadRequestException> {
                 fixture.useCase.atualizar(id, mapOf("dataInicio" to "data inválida"))
