@@ -18,7 +18,7 @@ class TestCategoriaGet {
             val criada = fixture.novaCategoria()
             id = criada.id
 
-            assertEquals(criada, fixture.useCase.buscarPorId(criada.id!!))
+            assertEquals(criada, fixture.service.buscarPorId(criada.id!!))
         } finally {
             fixture.limpar(id)
         }
@@ -33,7 +33,7 @@ class TestCategoriaGet {
             val criada = fixture.novaCategoria()
             id = criada.id
 
-            assertEquals(true, fixture.useCase.listar().any { it.id == criada.id })
+            assertEquals(true, fixture.service.listar().any { it.id == criada.id })
         } finally {
             fixture.limpar(id)
         }
@@ -44,7 +44,7 @@ class TestCategoriaGet {
         val fixture = CategoriaFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
     }
 
@@ -53,7 +53,7 @@ class TestCategoriaGet {
         val fixture = CategoriaFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

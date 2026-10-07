@@ -1,17 +1,15 @@
-package org.greenhouse.security
+package org.greenhouse.integration.security
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.config.WebConfig
-import org.greenhouse.controller.FormaPagamentoController
-import org.greenhouse.controller.OpenApiController
-import org.greenhouse.entity.FormaPagamento
-import org.greenhouse.usecase.FormaPagamentoUseCase
+import org.greenhouse.GreenhouseApplication
+import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.security.JwtService
+import org.greenhouse.service.FormaPagamentoService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -22,9 +20,18 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@WebMvcTest(controllers = [FormaPagamentoController::class, OpenApiController::class])
-@Import(SecurityConfig::class, JwtAuthenticationFilter::class, JwtService::class, WebConfig::class)
-class FormaPagamentoSecurityTest {
+@SpringBootTest(
+    classes = [GreenhouseApplication::class],
+    properties = [
+        "spring.autoconfigure.exclude=" +
+            "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+    ],
+)
+@AutoConfigureMockMvc
+class FormaPagamentoSecurityTest : SpringBootWebTest() {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
@@ -32,10 +39,7 @@ class FormaPagamentoSecurityTest {
     private lateinit var jwtService: JwtService
 
     @MockitoBean
-    private lateinit var formaPagamentoUseCase: FormaPagamentoUseCase
-
-    @MockitoBean
-    private lateinit var databaseConfig: DatabaseConfig
+    private lateinit var formaPagamentoService: FormaPagamentoService
 
     private val formaPagamento = FormaPagamento(id = 1, nome = "PIX")
 
@@ -61,19 +65,19 @@ class FormaPagamentoSecurityTest {
     fun `tokens validos de ADMIN e FUNCIONARIO autorizam todas as operacoes`() {
         Mockito
             .doReturn(formaPagamento)
-            .`when`(formaPagamentoUseCase)
+            .`when`(formaPagamentoService)
             .criar(Mockito.any(FormaPagamento::class.java) ?: formaPagamento)
         Mockito
             .doReturn(listOf(formaPagamento))
-            .`when`(formaPagamentoUseCase)
+            .`when`(formaPagamentoService)
             .listar()
         Mockito
             .doReturn(formaPagamento)
-            .`when`(formaPagamentoUseCase)
+            .`when`(formaPagamentoService)
             .buscarPorId(1)
         Mockito
             .doReturn(formaPagamento)
-            .`when`(formaPagamentoUseCase)
+            .`when`(formaPagamentoService)
             .atualizar(Mockito.anyLong(), Mockito.anyMap<String, Any?>() ?: emptyMap())
 
         val expectedStatuses = listOf(201, 200, 200, 200, 204)

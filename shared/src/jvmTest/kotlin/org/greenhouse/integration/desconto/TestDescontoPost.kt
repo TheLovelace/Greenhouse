@@ -1,7 +1,7 @@
 package org.greenhouse.integration.desconto
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Desconto
+import org.greenhouse.dto.DescontoDTO as Desconto
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
@@ -41,7 +41,7 @@ class TestDescontoPost {
             assertEquals(dataFim.toInstant(), assertNotNull(criado.dataFim).toInstant())
             assertEquals(true, criado.ativo)
 
-            val persistido = fixture.useCase.buscarPorId(id)
+            val persistido = fixture.service.buscarPorId(id)
             assertEquals(criado.id, persistido.id)
             assertEquals(criado.titulo, persistido.titulo)
             assertEquals(criado.descricao, persistido.descricao)
@@ -87,10 +87,10 @@ class TestDescontoPost {
         val fixture = DescontoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(descontoValido(titulo = " "))
+            fixture.service.criar(descontoValido(titulo = " "))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(descontoValido(titulo = "a".repeat(151)))
+            fixture.service.criar(descontoValido(titulo = "a".repeat(151)))
         }
     }
 
@@ -99,18 +99,18 @@ class TestDescontoPost {
         val fixture = DescontoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(descontoValido(valor = BigDecimal.ZERO))
+            fixture.service.criar(descontoValido(valor = BigDecimal.ZERO))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(descontoValido(valor = BigDecimal("100.01")))
+            fixture.service.criar(descontoValido(valor = BigDecimal("100.01")))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 descontoValido(tipo = TipoDesconto.VALOR_FIXO, valor = BigDecimal("0.01").negate()),
             )
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(descontoValido(valor = BigDecimal("10.001")))
+            fixture.service.criar(descontoValido(valor = BigDecimal("10.001")))
         }
     }
 
@@ -119,7 +119,7 @@ class TestDescontoPost {
         val fixture = DescontoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 descontoValido(
                     dataInicio = OffsetDateTime.parse("2026-02-01T00:00:00Z"),
                     dataFim = OffsetDateTime.parse("2026-01-31T23:59:59Z"),

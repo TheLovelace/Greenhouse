@@ -14,10 +14,10 @@ class TestProdutoDelete {
         val criado = fixture.novoProduto()
         val id = criado.id!!
 
-        fixture.useCase.excluir(id)
+        fixture.service.excluir(id)
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(id)
+            fixture.service.buscarPorId(id)
         }
     }
 
@@ -32,7 +32,7 @@ class TestProdutoDelete {
             fixture.adicionarEstoque(criado.id!!)
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.excluir(criado.id!!)
+                fixture.service.excluir(criado.id!!)
             }
         } finally {
             fixture.limpar(id)
@@ -44,7 +44,7 @@ class TestProdutoDelete {
         val fixture = ProdutoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.excluir(Long.MAX_VALUE)
+            fixture.service.excluir(Long.MAX_VALUE)
         }
     }
 }

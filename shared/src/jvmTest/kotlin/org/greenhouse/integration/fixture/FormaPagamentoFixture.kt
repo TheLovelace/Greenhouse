@@ -1,9 +1,8 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.FormaPagamento
+import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
 import org.greenhouse.repository.FormaPagamentoRepository
-import org.greenhouse.usecase.FormaPagamentoUseCase
+import org.greenhouse.service.FormaPagamentoService
 import java.sql.DriverManager
 import java.util.UUID
 
@@ -12,9 +11,9 @@ class FormaPagamentoFixture {
         requireNotNull(System.getenv("DATABASE_URL")) {
             "A variável DATABASE_URL é necessária para os testes de integração"
         }
-    private val repository = FormaPagamentoRepository(DatabaseConfig(databaseUrl))
+    private val repository = SpringTestContext.bean<FormaPagamentoRepository>()
     private val idsCriados = mutableListOf<Long>()
-    val useCase = FormaPagamentoUseCase(repository)
+    val service = SpringTestContext.bean<FormaPagamentoService>()
 
     fun novaFormaPagamento(
         nome: String = "Forma ${UUID.randomUUID()}",
@@ -23,7 +22,7 @@ class FormaPagamentoFixture {
     ): FormaPagamento = criarFormaPagamento(FormaPagamento(id = id, nome = nome, ativo = ativo))
 
     fun criarFormaPagamento(formaPagamento: FormaPagamento): FormaPagamento =
-        useCase
+        service
             .criar(formaPagamento)
             .also { criada ->
                 idsCriados.add(requireNotNull(criada.id) { "O banco não retornou o ID da forma de pagamento" })

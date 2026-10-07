@@ -1,11 +1,15 @@
-package org.greenhouse.usecase
+package org.greenhouse.unit.service
 
 import org.greenhouse.adapter.AuthenticationException
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.entity.Usuario
+import org.greenhouse.dto.UsuarioDTO as Usuario
+import org.greenhouse.mapper.UsuarioMapper
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
+import org.greenhouse.service.AuthService
+import org.greenhouse.service.LoginRequest
+import org.greenhouse.service.PrimeiroAcessoRequest
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -13,17 +17,18 @@ import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
-class AuthUseCaseTest {
+class AuthServiceTest {
 
     private val usuarioRepository = Mockito.mock(UsuarioRepository::class.java)
     private val jwtService = JwtService("test-key-which-is-longer-than-thirty-two-characters", 60_000)
-    private val useCase = AuthUseCase(usuarioRepository, jwtService)
+    private val usuarioMapper = UsuarioMapper()
+    private val service = AuthService(usuarioRepository, jwtService, usuarioMapper)
     private val encoder = BCryptPasswordEncoder()
 
     @Test
     fun `login legado da conta existente e migra credencial depois do sucesso`() {
         val senhaLegada = "senha-admin-legada"
-        Mockito.doReturn(usuario(senhaHash = senhaLegada))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = senhaLegada)))
             .`when`(usuarioRepository)
             .buscarPorLogin("admin")
         var storedHash: String? = null
@@ -33,7 +38,7 @@ class AuthUseCaseTest {
         }.`when`(usuarioRepository)
             .atualizarSenha(eq(7L), Mockito.anyString() ?: "")
 
-        val result = useCase.login(LoginRequest("admin", senhaLegada))
+        val result = service.login(LoginRequest("admin", senhaLegada))
 
         assertTrue(jwtService.validarToken(result.token))
         Mockito.verify(usuarioRepository).atualizarSenha(eq(7L), Mockito.anyString() ?: "")
@@ -43,11 +48,11 @@ class AuthUseCaseTest {
     @Test
     fun `credencial legada longa continua funcionando sem truncar nem atualizar`() {
         val senhaLegada = "a".repeat(73)
-        Mockito.doReturn(usuario(senhaHash = senhaLegada))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = senhaLegada)))
             .`when`(usuarioRepository)
             .buscarPorLogin("admin")
 
-        useCase.login(LoginRequest("admin", senhaLegada))
+        service.login(LoginRequest("admin", senhaLegada))
 
         Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
     }
@@ -55,23 +60,23 @@ class AuthUseCaseTest {
     @Test
     fun `login BCrypt valida credencial sem regravar hash`() {
         val senha = "senha-segura"
-        Mockito.doReturn(usuario(senhaHash = encoder.encode(senha)))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = encoder.encode(senha))))
             .`when`(usuarioRepository)
             .buscarPorLogin("admin")
 
-        useCase.login(LoginRequest("admin", senha))
+        service.login(LoginRequest("admin", senha))
 
         Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
     }
 
     @Test
     fun `credencial legada incorreta nao modifica armazenamento`() {
-        Mockito.doReturn(usuario(senhaHash = "senha-correta"))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = "senha-correta")))
             .`when`(usuarioRepository)
             .buscarPorLogin("admin")
 
         assertThrows(AuthenticationException::class.java) {
-            useCase.login(LoginRequest("admin", "senha-incorreta"))
+            service.login(LoginRequest("admin", "senha-incorreta"))
         }
         Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
     }
@@ -79,19 +84,19 @@ class AuthUseCaseTest {
     @Test
     fun `login bloqueia conta pendente mesmo com placeholder correto`() {
         val pendente = usuario(senhaHash = "!FIRST_ACCESS_REQUIRED!", primeiroAcessoFeito = false)
-        Mockito.doReturn(pendente)
+        Mockito.doReturn(usuarioMapper.toModel(pendente))
             .`when`(usuarioRepository)
             .buscarPorLogin("novo")
 
         assertThrows(AuthenticationException::class.java) {
-            useCase.login(LoginRequest("novo", "!FIRST_ACCESS_REQUIRED!"))
+            service.login(LoginRequest("novo", "!FIRST_ACCESS_REQUIRED!"))
         }
         Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
     }
 
     @Test
     fun `primeiro acesso armazena BCrypt e conclui flag atomicamente`() {
-        Mockito.doReturn(usuario(primeiroAcessoFeito = false))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(primeiroAcessoFeito = false)))
             .`when`(usuarioRepository)
             .buscarPorCpfEEmail("12345678901", "user@example.com")
         var storedHash: String? = null
@@ -101,7 +106,7 @@ class AuthUseCaseTest {
         }.`when`(usuarioRepository)
             .concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
 
-        useCase.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
+        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
 
         Mockito.verify(usuarioRepository).concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
         assertTrue(encoder.matches("nova-senha", storedHash ?: ""))
@@ -112,7 +117,7 @@ class AuthUseCaseTest {
         val senhaMultibyte = "á".repeat(37)
 
         assertThrows(BadRequestException::class.java) {
-            useCase.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
         }
         Mockito.verifyNoInteractions(usuarioRepository)
     }
@@ -120,7 +125,7 @@ class AuthUseCaseTest {
     @Test
     fun `primeiro acesso aceita senha de exatamente 72 bytes UTF-8`() {
         val senhaMultibyte = "á".repeat(36)
-        Mockito.doReturn(usuario(primeiroAcessoFeito = false))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(primeiroAcessoFeito = false)))
             .`when`(usuarioRepository)
             .buscarPorCpfEEmail("12345678901", "user@example.com")
         var storedHash: String? = null
@@ -130,7 +135,7 @@ class AuthUseCaseTest {
         }.`when`(usuarioRepository)
             .concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
 
-        useCase.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
+        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
 
         Mockito.verify(usuarioRepository).concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
         assertTrue(encoder.matches(senhaMultibyte, storedHash ?: ""))
@@ -138,12 +143,12 @@ class AuthUseCaseTest {
 
     @Test
     fun `primeiro acesso rejeita reutilizacao apos conclusao`() {
-        Mockito.doReturn(usuario(primeiroAcessoFeito = true))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(primeiroAcessoFeito = true)))
             .`when`(usuarioRepository)
             .buscarPorCpfEEmail("12345678901", "user@example.com")
 
         assertThrows(BadRequestException::class.java) {
-            useCase.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
         }
         Mockito.verify(usuarioRepository, Mockito.never())
             .concluirPrimeiroAcesso(Mockito.anyLong(), Mockito.anyString() ?: "")
@@ -151,14 +156,14 @@ class AuthUseCaseTest {
 
     @Test
     fun `login admin legado mantem perfil ADMIN`() {
-        Mockito.doReturn(usuario(senhaHash = "senha-admin"))
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = "senha-admin")))
             .`when`(usuarioRepository)
             .buscarPorLogin("admin")
         Mockito.doAnswer { true }
             .`when`(usuarioRepository)
             .atualizarSenha(eq(7L), Mockito.anyString() ?: "")
 
-        val token = useCase.login(LoginRequest("admin", "senha-admin")).token
+        val token = service.login(LoginRequest("admin", "senha-admin")).token
 
         assertTrue(jwtService.validarToken(token))
         assertTrue(jwtService.extrairPerfil(token) == "ADMIN")
@@ -171,7 +176,7 @@ class AuthUseCaseTest {
             .buscarPorCpfEEmail("12345678901", "missing@example.com")
 
         assertThrows(NotFoundException::class.java) {
-            useCase.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "missing@example.com", "nova-senha"))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "missing@example.com", "nova-senha"))
         }
     }
 

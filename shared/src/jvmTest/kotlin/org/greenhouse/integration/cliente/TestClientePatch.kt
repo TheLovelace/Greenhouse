@@ -19,7 +19,7 @@ class TestClientePatch {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            val atualizado = fixture.useCase.atualizar(criado.id!!, mapOf("nome" to "Nome Atualizado"))
+            val atualizado = fixture.service.atualizar(criado.id!!, mapOf("nome" to "Nome Atualizado"))
 
             assertEquals(criado.id, atualizado.id)
             assertEquals("Nome Atualizado", atualizado.nome)
@@ -40,7 +40,7 @@ class TestClientePatch {
             id = criado.id
             val idCliente = criado.id!!
 
-            val atualizado = fixture.useCase.atualizar(
+            val atualizado = fixture.service.atualizar(
                 idCliente,
                 mapOf(
                     "id" to idCliente,
@@ -70,10 +70,10 @@ class TestClientePatch {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            val inativado = fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to false))
+            val inativado = fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
             assertEquals(false, inativado.ativo)
 
-            val reativado = fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to true))
+            val reativado = fixture.service.atualizar(criado.id!!, mapOf("ativo" to true))
             assertEquals(true, reativado.ativo)
         } finally {
             fixture.limpar(id)
@@ -92,7 +92,7 @@ class TestClientePatch {
             )
             id = criado.id
 
-            val atualizado = fixture.useCase.atualizar(
+            val atualizado = fixture.service.atualizar(
                 criado.id!!,
                 mapOf("cpf" to null, "email" to null),
             )
@@ -114,7 +114,7 @@ class TestClientePatch {
             val criado = fixture.novoCliente(cpf = cpf)
             id = criado.id
 
-            val atualizado = fixture.useCase.atualizar(criado.id!!, mapOf("cpf" to cpf))
+            val atualizado = fixture.service.atualizar(criado.id!!, mapOf("cpf" to cpf))
 
             assertEquals(cpf, atualizado.cpf)
         } finally {
@@ -134,7 +134,7 @@ class TestClientePatch {
             idB = fixture.novoCliente().id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(idB!!, mapOf("cpf" to cpf))
+                fixture.service.atualizar(idB!!, mapOf("cpf" to cpf))
             }
         } finally {
             fixture.limpar(idA)
@@ -152,7 +152,7 @@ class TestClientePatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(criado.id!!, mapOf("endereco" to "Rua X"))
+                fixture.service.atualizar(criado.id!!, mapOf("endereco" to "Rua X"))
             }
         } finally {
             fixture.limpar(id)
@@ -169,7 +169,7 @@ class TestClientePatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(criado.id!!, emptyMap())
+                fixture.service.atualizar(criado.id!!, emptyMap())
             }
         } finally {
             fixture.limpar(id)
@@ -186,7 +186,7 @@ class TestClientePatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to "false"))
+                fixture.service.atualizar(criado.id!!, mapOf("ativo" to "false"))
             }
         } finally {
             fixture.limpar(id)
@@ -198,7 +198,7 @@ class TestClientePatch {
         val fixture = ClienteFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.atualizar(0, mapOf("nome" to "Nome"))
+            fixture.service.atualizar(0, mapOf("nome" to "Nome"))
         }
     }
 
@@ -207,7 +207,7 @@ class TestClientePatch {
         val fixture = ClienteFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("nome" to "Nome"))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("nome" to "Nome"))
         }
     }
 }

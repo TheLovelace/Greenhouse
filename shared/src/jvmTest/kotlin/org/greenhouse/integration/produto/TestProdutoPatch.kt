@@ -20,7 +20,7 @@ class TestProdutoPatch {
             val criado = fixture.novoProduto()
             id = criado.id
 
-            val atualizado = fixture.useCase.atualizar(criado.id!!, mapOf("nome" to "Rosa branca"))
+            val atualizado = fixture.service.atualizar(criado.id!!, mapOf("nome" to "Rosa branca"))
 
             assertEquals(criado.id, atualizado.id)
             assertEquals("Rosa branca", atualizado.nome)
@@ -41,7 +41,7 @@ class TestProdutoPatch {
             id = criado.id
 
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("codigo" to null, "descricao" to null, "preco" to BigDecimal("20.00")),
                 )
@@ -64,10 +64,10 @@ class TestProdutoPatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to "false"))
+                fixture.service.atualizar(criado.id!!, mapOf("ativo" to "false"))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(criado.id!!, mapOf("preco" to BigDecimal("-1.00")))
+                fixture.service.atualizar(criado.id!!, mapOf("preco" to BigDecimal("-1.00")))
             }
         } finally {
             fixture.limpar(id)
@@ -79,7 +79,7 @@ class TestProdutoPatch {
         val fixture = ProdutoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("nome" to "Rosa branca"))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("nome" to "Rosa branca"))
         }
     }
 }

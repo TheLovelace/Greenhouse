@@ -1,7 +1,7 @@
 package org.greenhouse.integration.formaPagamento
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.FormaPagamento
+import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
 import org.greenhouse.integration.fixture.FormaPagamentoFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,10 +41,10 @@ class TestFormaPagamentoPost {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(FormaPagamento(nome = " "))
+            fixture.service.criar(FormaPagamento(nome = " "))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(FormaPagamento(nome = "a".repeat(51)))
+            fixture.service.criar(FormaPagamento(nome = "a".repeat(51)))
         }
     }
 }
