@@ -1,117 +1,67 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Desconto
+import org.greenhouse.model.Desconto
 import org.greenhouse.enums.TipoDesconto
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.time.OffsetDateTime
 
-private object Descontos : Table("desconto") {
-    val id = long("id").autoIncrement()
-    val titulo = varchar("titulo", 150)
-    val descricao = text("descricao").nullable()
-    val tipo = varchar("tipo", 20)
-    val valor = decimal("valor", 12, 2)
-    val dataInicio = timestampWithTimeZone("data_inicio").nullable()
-    val dataFim = timestampWithTimeZone("data_fim").nullable()
-    val ativo = bool("ativo").default(true)
+interface DescontoRepository : JpaRepository<Desconto, Long> {
+    @Query("SELECT d FROM Desconto d ORDER BY d.id")
+    fun listar(): List<Desconto>
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query("SELECT d FROM Desconto d WHERE d.id = :id")
+    fun buscarPorId(@Param("id") id: Long): Desconto?
 
-@Repository
-class DescontoRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
-    fun criar(desconto: Desconto): Desconto =
-        databaseConfig.session {
-            val id =
-                Descontos.insert {
-                    it[titulo] = desconto.titulo
-                    it[descricao] = desconto.descricao
-                    it[tipo] = desconto.tipo.name
-                    it[valor] = desconto.valor
-                    it[dataInicio] = desconto.dataInicio
-                    it[dataFim] = desconto.dataFim
-                    it[ativo] = desconto.ativo
-                }[Descontos.id]
+    fun criar(desconto: Desconto): Desconto = save(desconto)
 
-            desconto.copy(id = id)
+    @Transactional
+    fun atualizar(id: Long, desconto: Desconto): Desconto? {
+        if (atualizarCampos(
+                id,
+                desconto.titulo,
+                desconto.descricao,
+                desconto.tipo,
+                desconto.valor,
+                desconto.dataInicio,
+                desconto.dataFim,
+                desconto.ativo,
+            ) == 0
+        ) {
+            return null
         }
+        return buscarPorId(id)
+    }
 
-    fun listar(): List<Desconto> =
-        databaseConfig.session {
-            Descontos
-                .selectAll()
-                .orderBy(Descontos.id)
-                .map { it.toDesconto() }
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE Desconto d
+        SET d.titulo = :titulo, d.descricao = :descricao, d.tipo = :tipo,
+            d.valor = :valor, d.dataInicio = :dataInicio, d.dataFim = :dataFim, d.ativo = :ativo
+        WHERE d.id = :id
+        """,
+    )
+    fun atualizarCampos(
+        @Param("id") id: Long,
+        @Param("titulo") titulo: String,
+        @Param("descricao") descricao: String?,
+        @Param("tipo") tipo: TipoDesconto,
+        @Param("valor") valor: BigDecimal,
+        @Param("dataInicio") dataInicio: OffsetDateTime?,
+        @Param("dataFim") dataFim: OffsetDateTime?,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 
-    fun buscarPorId(id: Long): Desconto? =
-        databaseConfig.session {
-            Descontos
-                .selectAll()
-                .where { Descontos.id eq id }
-                .singleOrNull()
-                ?.toDesconto()
-        }
+    fun inativar(id: Long): Boolean = inativarPorId(id) > 0
 
-    fun atualizar(
-        id: Long,
-        desconto: Desconto,
-    ): Desconto? =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                Descontos.update(
-                    { Descontos.id eq id },
-                ) {
-                    it[titulo] = desconto.titulo
-                    it[descricao] = desconto.descricao
-                    it[tipo] = desconto.tipo.name
-                    it[valor] = desconto.valor
-                    it[dataInicio] = desconto.dataInicio
-                    it[dataFim] = desconto.dataFim
-                    it[ativo] = desconto.ativo
-                }
-
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                Descontos
-                    .selectAll()
-                    .where { Descontos.id eq id }
-                    .single()
-                    .toDesconto()
-            }
-        }
-
-    fun inativar(id: Long): Boolean =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                Descontos.update(
-                    { Descontos.id eq id },
-                ) {
-                    it[Descontos.ativo] = false
-                }
-
-            linhasAtualizadas > 0
-        }
-
-    private fun ResultRow.toDesconto() =
-        Desconto(
-            id = this[Descontos.id],
-            titulo = this[Descontos.titulo],
-            descricao = this[Descontos.descricao],
-            tipo = TipoDesconto.valueOf(this[Descontos.tipo]),
-            valor = this[Descontos.valor],
-            dataInicio = this[Descontos.dataInicio],
-            dataFim = this[Descontos.dataFim],
-            ativo = this[Descontos.ativo],
-        )
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Desconto d SET d.ativo = false WHERE d.id = :id")
+    fun inativarPorId(@Param("id") id: Long): Int
 }

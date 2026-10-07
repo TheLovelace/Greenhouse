@@ -13,10 +13,10 @@ class TestFornecedorDelete {
         val criado = fixture.novoFornecedor()
         val id = criado.id!!
 
-        fixture.useCase.excluir(id)
+        fixture.service.excluir(id)
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(id)
+            fixture.service.buscarPorId(id)
         }
     }
 
@@ -25,7 +25,7 @@ class TestFornecedorDelete {
         val fixture = FornecedorFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.excluir(Long.MAX_VALUE)
+            fixture.service.excluir(Long.MAX_VALUE)
         }
     }
 }

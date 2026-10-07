@@ -18,7 +18,7 @@ class TestFormaPagamentoPatch {
             val criada = fixture.novaFormaPagamento()
             val id = requireNotNull(criada.id)
             val novoNome = "Editada-${UUID.randomUUID()}"
-            val atualizada = fixture.useCase.atualizar(id, mapOf("nome" to novoNome))
+            val atualizada = fixture.service.atualizar(id, mapOf("nome" to novoNome))
 
             assertEquals(criada.id, atualizada.id)
             assertEquals(novoNome, atualizada.nome)
@@ -35,23 +35,23 @@ class TestFormaPagamentoPatch {
         try {
             val criada = fixture.novaFormaPagamento()
             val id = requireNotNull(criada.id)
-            val inativada = fixture.useCase.atualizar(id, mapOf("ativo" to false))
+            val inativada = fixture.service.atualizar(id, mapOf("ativo" to false))
 
             assertEquals(false, inativada.ativo)
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("campo" to "valor"))
+                fixture.service.atualizar(id, mapOf("campo" to "valor"))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("nome" to 123))
+                fixture.service.atualizar(id, mapOf("nome" to 123))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("ativo" to "false"))
+                fixture.service.atualizar(id, mapOf("ativo" to "false"))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(id, mapOf("nome" to "  "))
+                fixture.service.atualizar(id, mapOf("nome" to "  "))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("id" to 10))
+                fixture.service.atualizar(id, mapOf("id" to 10))
             }
         } finally {
             fixture.limpar()
@@ -63,7 +63,7 @@ class TestFormaPagamentoPatch {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("nome" to "PIX"))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("nome" to "PIX"))
         }
     }
 }

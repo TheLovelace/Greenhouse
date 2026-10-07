@@ -13,10 +13,10 @@ class TestCategoriaDelete {
         val criada = fixture.novaCategoria()
         val id = criada.id!!
 
-        fixture.useCase.excluir(id)
+        fixture.service.excluir(id)
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(id)
+            fixture.service.buscarPorId(id)
         }
     }
 
@@ -25,7 +25,7 @@ class TestCategoriaDelete {
         val fixture = CategoriaFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.excluir(Long.MAX_VALUE)
+            fixture.service.excluir(Long.MAX_VALUE)
         }
     }
 }

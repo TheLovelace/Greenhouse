@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Funcionario
-import org.greenhouse.usecase.FuncionarioUseCase
+import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import org.greenhouse.service.FuncionarioService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/funcionario")
 class FuncionarioController(
-    private val funcionarioUseCase: FuncionarioUseCase,
+    private val funcionarioUseCase: FuncionarioService,
 ) {
 
     @PostMapping

@@ -15,7 +15,7 @@ class TestFormaPagamentoGet {
         try {
             val criada = fixture.novaFormaPagamento()
 
-            assertEquals(criada, fixture.useCase.buscarPorId(criada.id!!))
+            assertEquals(criada, fixture.service.buscarPorId(criada.id!!))
         } finally {
             fixture.limpar()
         }
@@ -28,7 +28,7 @@ class TestFormaPagamentoGet {
         try {
             val ativa = fixture.novaFormaPagamento()
             val inativa = fixture.novaFormaPagamento(ativo = false)
-            val listadas = fixture.useCase.listar()
+            val listadas = fixture.service.listar()
 
             assertEquals(true, listadas.any { it.id == ativa.id && it.ativo })
             assertEquals(true, listadas.any { it.id == inativa.id && !it.ativo })
@@ -42,10 +42,10 @@ class TestFormaPagamentoGet {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.FormaPagamento
-import org.greenhouse.usecase.FormaPagamentoUseCase
+import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.service.FormaPagamentoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/forma-pagamento")
 class FormaPagamentoController(
-    private val formaPagamentoUseCase: FormaPagamentoUseCase,
+    private val formaPagamentoUseCase: FormaPagamentoService,
 ) {
     @PostMapping
     fun criar(

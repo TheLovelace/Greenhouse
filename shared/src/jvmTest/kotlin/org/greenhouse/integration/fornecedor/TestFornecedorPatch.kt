@@ -21,7 +21,7 @@ class TestFornecedorPatch {
             id = criado.id
 
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("nome" to "Novo fornecedor"),
                 )
@@ -50,7 +50,7 @@ class TestFornecedorPatch {
             val idFornecedor = criado.id!!
 
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     idFornecedor,
                     mapOf(
                         "id" to idFornecedor,
@@ -89,7 +89,7 @@ class TestFornecedorPatch {
             id = criado.id
 
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("telefone" to null),
                 )
@@ -110,7 +110,7 @@ class TestFornecedorPatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("ativo" to "false"),
                 )
@@ -130,7 +130,7 @@ class TestFornecedorPatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("endereco" to "Rua teste"),
                 )
@@ -150,7 +150,7 @@ class TestFornecedorPatch {
             id = criado.id
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     criado.id!!,
                     mapOf("cnpj" to "123"),
                 )
@@ -165,7 +165,7 @@ class TestFornecedorPatch {
         val fixture = FornecedorFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(
+            fixture.service.atualizar(
                 Long.MAX_VALUE,
                 mapOf("nome" to "Novo fornecedor"),
             )

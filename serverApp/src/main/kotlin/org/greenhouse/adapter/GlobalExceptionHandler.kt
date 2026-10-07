@@ -2,9 +2,11 @@ package org.greenhouse.adapter
 
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.dao.DataAccessException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.servlet.NoHandlerFoundException
+import jakarta.persistence.PersistenceException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -29,4 +31,12 @@ class GlobalExceptionHandler {
         ResponseEntity
             .status(e.statusCode)
             .body(mapOf("error" to e.message))
+
+    @ExceptionHandler(DataAccessException::class)
+    fun handleDatabaseException(e: DataAccessException): ResponseEntity<Map<String, String?>> =
+        handleAppException(DatabaseConnectionException(cause = e))
+
+    @ExceptionHandler(PersistenceException::class)
+    fun handlePersistenceException(e: PersistenceException): ResponseEntity<Map<String, String?>> =
+        handleAppException(DatabaseConnectionException(cause = e))
 }

@@ -20,7 +20,7 @@ class TestFornecedorGet {
 
             assertEquals(
                 criado,
-                fixture.useCase.buscarPorId(criado.id!!),
+                fixture.service.buscarPorId(criado.id!!),
             )
         } finally {
             fixture.limpar(id)
@@ -38,7 +38,7 @@ class TestFornecedorGet {
 
             assertEquals(
                 true,
-                fixture.useCase.listar().any { it.id == criado.id },
+                fixture.service.listar().any { it.id == criado.id },
             )
         } finally {
             fixture.limpar(id)
@@ -50,7 +50,7 @@ class TestFornecedorGet {
         val fixture = FornecedorFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
     }
 
@@ -59,7 +59,7 @@ class TestFornecedorGet {
         val fixture = FornecedorFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

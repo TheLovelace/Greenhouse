@@ -6,7 +6,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Cliente
+import org.greenhouse.dto.ClienteDTO as Cliente
 import org.greenhouse.integration.fixture.ClienteFixture
 
 class TestClientePost {
@@ -33,7 +33,7 @@ class TestClientePost {
         var id: Long? = null
 
         try {
-            val criado = fixture.useCase.criar(
+            val criado = fixture.service.criar(
                 Cliente(id = -1, nome = "Cliente com id", telefone = "11999990000", ativo = false),
             )
             id = criado.id
@@ -65,7 +65,7 @@ class TestClientePost {
         val fixture = ClienteFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(Cliente(nome = "   ", telefone = "11999990000"))
+            fixture.service.criar(Cliente(nome = "   ", telefone = "11999990000"))
         }
     }
 
@@ -74,7 +74,7 @@ class TestClientePost {
         val fixture = ClienteFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(Cliente(nome = "a".repeat(151), telefone = "11999990000"))
+            fixture.service.criar(Cliente(nome = "a".repeat(151), telefone = "11999990000"))
         }
     }
 
@@ -83,7 +83,7 @@ class TestClientePost {
         val fixture = ClienteFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(Cliente(nome = "Cliente sem telefone", telefone = " "))
+            fixture.service.criar(Cliente(nome = "Cliente sem telefone", telefone = " "))
         }
     }
 
@@ -92,7 +92,7 @@ class TestClientePost {
         val fixture = ClienteFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(Cliente(nome = "Cliente telefone longo", telefone = "1".repeat(21)))
+            fixture.service.criar(Cliente(nome = "Cliente telefone longo", telefone = "1".repeat(21)))
         }
     }
 

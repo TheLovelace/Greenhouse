@@ -14,9 +14,9 @@ class TestFormaPagamentoDelete {
         try {
             val criada = fixture.novaFormaPagamento()
             val id = requireNotNull(criada.id)
-            fixture.useCase.excluir(id)
+            fixture.service.excluir(id)
 
-            assertEquals(criada.copy(ativo = false), fixture.useCase.buscarPorId(id))
+            assertEquals(criada.copy(ativo = false), fixture.service.buscarPorId(id))
         } finally {
             fixture.limpar()
         }
@@ -27,7 +27,7 @@ class TestFormaPagamentoDelete {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.excluir(Long.MAX_VALUE)
+            fixture.service.excluir(Long.MAX_VALUE)
         }
     }
 }

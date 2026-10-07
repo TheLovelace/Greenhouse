@@ -20,21 +20,21 @@ class TestEstoqueHistorico {
                     quantidadeMinima = 1,
                 )
             val primeira =
-                fixture.useCase.registrarMovimentacao(
+                fixture.service.registrarMovimentacao(
                     produtoId = produtoId,
                     tipo = TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
                     quantidade = 2,
                     observacao = "Primeiro ajuste",
                 )
             val segunda =
-                fixture.useCase.registrarMovimentacao(
+                fixture.service.registrarMovimentacao(
                     produtoId = produtoId,
                     tipo = TipoMovimentacaoEstoque.PERDA,
                     quantidade = 1,
                     observacao = "Perda registrada",
                 )
 
-            val historico = fixture.useCase.listarMovimentacoes()
+            val historico = fixture.service.listarMovimentacoes()
             val primeiraNoHistorico = historico.single { it.id == primeira.id }
             val segundaNoHistorico = historico.single { it.id == segunda.id }
 

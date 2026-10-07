@@ -20,7 +20,7 @@ class TestDescontoPatch {
         try {
             val id = fixture.novoDesconto()
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     id,
                     mapOf(
                         "titulo" to "Título atualizado",
@@ -33,7 +33,7 @@ class TestDescontoPatch {
             assertEquals(TipoDesconto.PERCENTUAL, atualizado.tipo)
             assertEquals(BigDecimal("10.00"), atualizado.valor)
 
-            val consultado = fixture.useCase.buscarPorId(id)
+            val consultado = fixture.service.buscarPorId(id)
             assertEquals("Título atualizado", consultado.titulo)
             assertEquals(true, consultado.ativo)
             assertEquals(id, consultado.id)
@@ -53,7 +53,7 @@ class TestDescontoPatch {
                     dataFim = OffsetDateTime.parse("2026-12-31T23:59:59Z"),
                 )
             val atualizado =
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     id,
                     mapOf(
                         "descricao" to null,
@@ -75,7 +75,7 @@ class TestDescontoPatch {
         val fixture = DescontoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("titulo" to "Atualizado"))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("titulo" to "Atualizado"))
         }
     }
 
@@ -84,10 +84,10 @@ class TestDescontoPatch {
         val fixture = DescontoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.atualizar(0, mapOf("titulo" to "Atualizado"))
+            fixture.service.atualizar(0, mapOf("titulo" to "Atualizado"))
         }
         assertFailsWith<BadRequestException> {
-            fixture.useCase.atualizar(1, mapOf("id" to 10))
+            fixture.service.atualizar(1, mapOf("id" to 10))
         }
     }
 
@@ -97,23 +97,23 @@ class TestDescontoPatch {
         val id = fixture.novoDesconto()
 
         try {
-            val inativado = fixture.useCase.atualizar(id, mapOf("ativo" to false))
+            val inativado = fixture.service.atualizar(id, mapOf("ativo" to false))
             assertEquals(false, inativado.ativo)
 
-            val reativado = fixture.useCase.atualizar(id, mapOf("ativo" to true))
+            val reativado = fixture.service.atualizar(id, mapOf("ativo" to true))
             assertEquals(true, reativado.ativo)
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("campo" to "valor"))
+                fixture.service.atualizar(id, mapOf("campo" to "valor"))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("titulo" to 123))
+                fixture.service.atualizar(id, mapOf("titulo" to 123))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("ativo" to "false"))
+                fixture.service.atualizar(id, mapOf("ativo" to "false"))
             }
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(id, mapOf("dataInicio" to "data inválida"))
+                fixture.service.atualizar(id, mapOf("dataInicio" to "data inválida"))
             }
         } finally {
             fixture.limpar()
@@ -127,16 +127,16 @@ class TestDescontoPatch {
 
         try {
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(id, mapOf("titulo" to " "))
+                fixture.service.atualizar(id, mapOf("titulo" to " "))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(id, mapOf("tipo" to "INVALIDO"))
+                fixture.service.atualizar(id, mapOf("tipo" to "INVALIDO"))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(id, mapOf("valor" to BigDecimal("100.01")))
+                fixture.service.atualizar(id, mapOf("valor" to BigDecimal("100.01")))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.useCase.atualizar(
+                fixture.service.atualizar(
                     id,
                     mapOf(
                         "dataInicio" to "2026-02-01T00:00:00Z",
