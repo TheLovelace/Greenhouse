@@ -35,20 +35,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/Categoria'
   /categoria/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico da categoria
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
     get:
       tags:
         - Categoria
       summary: Buscar categoria por ID
       operationId: buscarCategoriaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '200':
           description: Categoria encontrada
@@ -66,6 +66,15 @@ paths:
       summary: Atualizar categoria
       description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Também aceita o objeto completo da categoria.
       operationId: atualizarCategoria
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       requestBody:
         required: true
         content:
@@ -88,6 +97,15 @@ paths:
         - Categoria
       summary: Excluir categoria
       operationId: excluirCategoria
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '204':
           description: Categoria excluida

@@ -35,20 +35,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/Produto'
   /produto/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico do produto
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
     get:
       tags:
         - Produto
       summary: Buscar produto por ID
       operationId: buscarProdutoPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '200':
           description: Produto encontrado
@@ -66,6 +66,15 @@ paths:
       summary: Atualizar produto
       description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Também aceita o objeto completo do produto.
       operationId: atualizarProduto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       requestBody:
         required: true
         content:
@@ -88,6 +97,15 @@ paths:
         - Produto
       summary: Excluir produto
       operationId: excluirProduto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '204':
           description: Produto excluído
