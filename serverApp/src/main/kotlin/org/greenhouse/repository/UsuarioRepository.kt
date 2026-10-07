@@ -30,6 +30,7 @@ private object Usuarios : Table("usuario") {
     val senhaHash = varchar("senha_hash", 255)
     val perfil = varchar("perfil", 20)
     val ativo = bool("ativo").default(true)
+    val primeiroAcessoFeito = bool("primeiro_acesso_feito").default(false)
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -63,6 +64,16 @@ class UsuarioRepository(
             } > 0
         }
 
+    fun concluirPrimeiroAcesso(usuarioId: Long, novaSenhaHash: String): Boolean =
+        databaseConfig.session {
+            Usuarios.update({
+                (Usuarios.id eq usuarioId) and (Usuarios.primeiroAcessoFeito eq false)
+            }) {
+                it[senhaHash] = novaSenhaHash
+                it[primeiroAcessoFeito] = true
+            } > 0
+        }
+
     private fun ResultRow.toUsuario() =
         Usuario(
             id = this[Usuarios.id],
@@ -71,5 +82,6 @@ class UsuarioRepository(
             senhaHash = this[Usuarios.senhaHash],
             perfil = this[Usuarios.perfil],
             ativo = this[Usuarios.ativo],
+            primeiroAcessoFeito = this[Usuarios.primeiroAcessoFeito],
         )
 }

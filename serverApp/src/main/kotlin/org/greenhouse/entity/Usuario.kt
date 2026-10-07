@@ -6,5 +6,6 @@ data class Usuario(
     val login: String,
     val senhaHash: String,
     val perfil: String,
-    val ativo: Boolean = true
+    val ativo: Boolean = true,
+    val primeiroAcessoFeito: Boolean = false,
 )

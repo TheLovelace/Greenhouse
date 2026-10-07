@@ -3,7 +3,7 @@
 
 -- =========================================================
 -- 1. HISTÓRICO DO FLYWAY
--- Esperado: V1 até V22, todas com success = true.
+-- Esperado: V1 até V23, todas com success = true.
 -- =========================================================
 SELECT
     installed_rank,
@@ -24,9 +24,9 @@ SELECT
     MAX(CASE WHEN version ~ '^[0-9]+$' THEN version::INTEGER END) AS ultima_versao
 FROM flyway_schema_history;
 
--- Verifica especificamente se V1..V22 estão presentes e bem-sucedidas.
+-- Verifica especificamente se V1..V23 estão presentes e bem-sucedidas.
 WITH esperadas AS (
-    SELECT generate_series(1, 22) AS versao
+    SELECT generate_series(1, 23) AS versao
 ), aplicadas AS (
     SELECT version::INTEGER AS versao, success
     FROM flyway_schema_history
@@ -42,6 +42,23 @@ SELECT
 FROM esperadas e
 LEFT JOIN aplicadas a USING (versao)
 ORDER BY e.versao;
+
+-- Verifica a flag de primeiro acesso adicionada em V23.
+SELECT
+    CASE
+        WHEN EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'usuario'
+              AND column_name = 'primeiro_acesso_feito'
+              AND data_type = 'boolean'
+              AND is_nullable = 'NO'
+              AND column_default = 'false'
+        )
+        THEN 'OK'
+        ELSE 'FALTANDO/INCORRETO'
+    END AS primeiro_acesso_feito;
 
 -- =========================================================
 -- 2. TABELAS ESPERADAS
@@ -195,14 +212,14 @@ ORDER BY e.index_name;
 
 -- =========================================================
 -- 6. RESULTADO FINAL RESUMIDO
--- Esperado: 22 migrations, versão 22 e zero falhas.
+-- Esperado: 23 migrations, versão 23 e zero falhas.
 -- =========================================================
 SELECT
     CASE
-        WHEN COUNT(*) FILTER (WHERE version ~ '^[0-9]+$' AND success) = 22
+        WHEN COUNT(*) FILTER (WHERE version ~ '^[0-9]+$' AND success) = 23
          AND COUNT(*) FILTER (WHERE NOT success) = 0
-         AND MAX(CASE WHEN version ~ '^[0-9]+$' THEN version::INTEGER END) = 22
-        THEN 'OK - migrations V1 a V22 aplicadas com sucesso'
+         AND MAX(CASE WHEN version ~ '^[0-9]+$' THEN version::INTEGER END) = 23
+        THEN 'OK - migrations V1 a V23 aplicadas com sucesso'
         ELSE 'ATENCAO - revisar flyway_schema_history'
     END AS resultado
 FROM flyway_schema_history;

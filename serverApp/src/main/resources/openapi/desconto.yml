@@ -36,20 +36,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/Desconto'
   /desconto/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico do desconto
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
     get:
       tags:
         - Desconto
       summary: Buscar desconto por ID
       operationId: buscarDescontoPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do desconto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '200':
           description: Desconto encontrado
@@ -67,6 +67,15 @@ paths:
       summary: Atualizar desconto
       description: Atualiza os dados do desconto, incluindo o status ativo. Campos omitidos mantêm os valores atuais; descricao, dataInicio e dataFim podem ser enviados como null. O campo id, se enviado, é ignorado.
       operationId: atualizarDesconto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do desconto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       requestBody:
         required: true
         content:
@@ -90,6 +99,15 @@ paths:
       summary: Inativar desconto
       description: Inativa o desconto sem apagar o registro nem seus vínculos históricos.
       operationId: excluirDesconto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do desconto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '204':
           description: Desconto inativado

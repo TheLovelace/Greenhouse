@@ -19,6 +19,8 @@ tags:
     description: Consulta da posição de estoque por produto
   - name: Produto
     description: Operações de cadastro e consulta de produtos
+  - name: Funcionário
+    description: Cadastro, consulta e gerenciamento de funcionários
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
 paths:
@@ -50,6 +52,10 @@ paths:
     $ref: './openapi/produto.yml#/paths/~1produto~1%7Bid%7D'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
+  /funcionario:
+    $ref: './openapi/funcionario.yml#/paths/~1'
+  /funcionario/{id}:
+    $ref: './openapi/funcionario.yml#/paths/~1%7Bid%7D'
   /auth/login:
     $ref: 'openapi/auth.yml#/paths/~1auth~1login'
   /auth/primeiro-acesso:
@@ -66,6 +72,12 @@ components:
       $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
     EstoquePosicao:
       $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
+    Funcionario:
+      $ref: './openapi/funcionario.yml#/components/schemas/Funcionario'
+    FuncionarioCreate:
+      $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioCreate'
+    FuncionarioPatch:
+      $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioPatch'
     MovimentacaoEstoque:
       $ref: './openapi/estoque.yml#/components/schemas/MovimentacaoEstoque'
     Produto:
@@ -74,3 +86,8 @@ components:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
       $ref: './openapi/status.yml#/components/schemas/Erro'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

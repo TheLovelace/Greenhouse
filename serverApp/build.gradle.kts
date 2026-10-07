@@ -36,6 +36,10 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 val registryOwner: String? = System.getenv("REGISTRY_OWNER")?.lowercase()
 val imageName: String =
     if (registryOwner != null) "ghcr.io/$registryOwner/app" else "app"
