@@ -18,7 +18,7 @@ tags:
   - name: Forma de Pagamento
     description: Cadastro, consulta e gerenciamento de formas de pagamento
   - name: Estoque
-    description: Consulta da posição de estoque por produto
+    description: Operações de movimentação e consulta de estoque
   - name: Produto
     description: Operações de cadastro e consulta de produtos
   - name: Funcionário
@@ -42,8 +42,6 @@ paths:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1%7BprodutoId%7D'
   /estoque/movimentacoes:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1movimentacoes'
-  /desconto/{id}/status:
-    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
   /fornecedor:
     $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
   /fornecedor/{id}:

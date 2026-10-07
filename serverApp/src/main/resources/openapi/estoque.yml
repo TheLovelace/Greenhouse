@@ -42,9 +42,9 @@ paths:
     get:
       tags:
         - Estoque
-      summary: Consultar posição de estoque por produto
+      summary: Consultar informações de estoque por produto
       description: Retorna o saldo atual do estoque. A quantidade disponível é calculada como quantidade física menos quantidade reservada. A quantidade mínima é um limite separado. Produtos sem registro de estoque retornam quantidades zeradas; o histórico de movimentações não é somado novamente.
-      operationId: buscarPosicaoEstoque
+      operationId: consultarEstoquePorProduto
       parameters:
         - name: produtoId
           in: path
@@ -56,7 +56,7 @@ paths:
             minimum: 1
       responses:
         '200':
-          description: Posição atual do estoque
+          description: Informações de estoque do produto
           content:
             application/json:
               schema:
