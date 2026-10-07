@@ -2,12 +2,11 @@ package org.greenhouse.repository
 
 import org.greenhouse.adapter.DatabaseConfig
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.EstoquePosicao
+import org.greenhouse.entity.Estoque
 import org.greenhouse.entity.MovimentacaoEstoque
 import org.greenhouse.enums.TipoMovimentacaoEstoque
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
@@ -58,7 +57,7 @@ class EstoqueRepository(
                 ).map { it.toMovimentacaoEstoque() }
         }
 
-    fun buscarPosicaoPorProdutoId(produtoId: Long): EstoquePosicao? =
+    fun buscarPosicaoPorProdutoId(produtoId: Long): Estoque? =
         databaseConfig.session {
             val produtoExiste =
                 Produtos
@@ -79,7 +78,7 @@ class EstoqueRepository(
                 val quantidadeReservada = estoque?.get(Estoques.quantidadeReservada) ?: 0
                 val quantidadeMinima = estoque?.get(Estoques.quantidadeMinima) ?: 0
 
-                EstoquePosicao(
+                Estoque(
                     produtoId = produtoId,
                     quantidadeFisica = quantidadeFisica,
                     quantidadeReservada = quantidadeReservada,

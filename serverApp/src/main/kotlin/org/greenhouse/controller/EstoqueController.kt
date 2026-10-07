@@ -1,6 +1,6 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.EstoquePosicao
+import org.greenhouse.entity.Estoque
 import org.greenhouse.entity.MovimentacaoEstoque
 import org.greenhouse.usecase.EstoqueUseCase
 import org.springframework.http.HttpStatus
@@ -20,7 +20,7 @@ class EstoqueController(
     @GetMapping("/{produtoId}")
     fun buscarPosicaoPorProdutoId(
         @PathVariable produtoId: Long,
-    ): EstoquePosicao = estoqueUseCase.buscarPosicaoPorProdutoId(produtoId)
+    ): Estoque = estoqueUseCase.buscarPosicaoPorProdutoId(produtoId)
 
     @GetMapping("/movimentacoes")
     fun listarMovimentacoes(): List<MovimentacaoEstoque> = estoqueUseCase.listarMovimentacoes()

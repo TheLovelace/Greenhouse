@@ -1,6 +1,6 @@
 package org.greenhouse.entity
 
-data class EstoquePosicao(
+data class Estoque(
     val produtoId: Long,
     val quantidadeFisica: Int,
     val quantidadeReservada: Int,
