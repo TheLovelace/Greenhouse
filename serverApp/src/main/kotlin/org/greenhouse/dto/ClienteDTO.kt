@@ -1,6 +1,6 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
-data class Cliente(
+data class ClienteDTO(
     val id: Long? = null,
     val nome: String,
     val telefone: String,

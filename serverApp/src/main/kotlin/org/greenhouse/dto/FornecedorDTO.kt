@@ -1,6 +1,6 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
-data class Fornecedor(
+data class FornecedorDTO(
     val id: Long? = null,
     val nome: String,
     val cnpj: String? = null,
