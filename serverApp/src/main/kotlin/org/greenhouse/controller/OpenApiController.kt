@@ -27,7 +27,7 @@ class OpenApiController {
                 "desconto",
                 "produto",
                 "estoque",
-                "status",
+                "pedido", "status",
                 "fornecedor",
                 "funcionario",
                 "forma-pagamento",
