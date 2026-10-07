@@ -4,6 +4,7 @@ import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.integration.fixture.FormaPagamentoFixture
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -16,10 +17,11 @@ class TestFormaPagamentoPatch {
         try {
             val criada = fixture.novaFormaPagamento()
             val id = requireNotNull(criada.id)
-            val atualizada = fixture.useCase.atualizar(id, mapOf("nome" to "PIX"))
+            val novoNome = "Editada-${UUID.randomUUID()}"
+            val atualizada = fixture.useCase.atualizar(id, mapOf("nome" to novoNome))
 
             assertEquals(criada.id, atualizada.id)
-            assertEquals("PIX", atualizada.nome)
+            assertEquals(novoNome, atualizada.nome)
             assertEquals(criada.ativo, atualizada.ativo)
         } finally {
             fixture.limpar()
