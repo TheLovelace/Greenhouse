@@ -11,6 +11,8 @@ tags:
     description: Operações de cadastro e consulta de categorias
   - name: Desconto
     description: Cadastro e consulta de descontos
+  - name: Fornecedor
+    description: Operações de cadastro e consulta de fornecedores
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
 paths:
@@ -24,6 +26,10 @@ paths:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
   /desconto/{id}/status:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
+  /fornecedor:
+    $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
+  /fornecedor/{id}:
+    $ref: './openapi/fornecedor.yml#/paths/~1fornecedor~1%7Bid%7D'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
 components:
@@ -32,6 +38,8 @@ components:
       $ref: './openapi/categoria.yml#/components/schemas/Categoria'
     Desconto:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
+    Fornecedor:
+      $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
