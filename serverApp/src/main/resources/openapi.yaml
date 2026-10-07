@@ -9,6 +9,12 @@ servers:
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
+  - name: Cliente
+    description: Operações de cadastro, consulta e gerenciamento de status de clientes
+  - name: Desconto
+    description: Cadastro e consulta de descontos
+  - name: Produto
+    description: Operações de cadastro e consulta de produtos
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
 paths:
@@ -16,6 +22,20 @@ paths:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
   /categoria/{id}:
     $ref: './openapi/categoria.yml#/paths/~1categoria~1%7Bid%7D'
+  /cliente:
+    $ref: './openapi/cliente.yml#/paths/~1cliente'
+  /cliente/{id}:
+    $ref: './openapi/cliente.yml#/paths/~1cliente~1%7Bid%7D'
+  /desconto:
+    $ref: './openapi/desconto.yml#/paths/~1desconto'
+  /desconto/{id}:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
+  /desconto/{id}/status:
+    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
+  /produto:
+    $ref: './openapi/produto.yml#/paths/~1produto'
+  /produto/{id}:
+    $ref: './openapi/produto.yml#/paths/~1produto~1%7Bid%7D'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
   /auth/login:
@@ -26,6 +46,12 @@ components:
   schemas:
     Categoria:
       $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+    Cliente:
+      $ref: './openapi/cliente.yml#/components/schemas/Cliente'
+    Desconto:
+      $ref: './openapi/desconto.yml#/components/schemas/Desconto'
+    Produto:
+      $ref: './openapi/produto.yml#/components/schemas/Produto'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
