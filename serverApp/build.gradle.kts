@@ -2,8 +2,17 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.springBoot)
     alias(libs.plugins.kotlinSpring)
+    alias(libs.plugins.kotlinJpa)
     application
     alias(libs.plugins.jib)
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+}
+
+noArg {
+    annotation("jakarta.persistence.Entity")
 }
 
 application {
@@ -16,14 +25,11 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation(libs.springdoc.openapi)
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
-    implementation(libs.exposed.java.time)
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation(libs.postgresql)
 
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
-    implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation(libs.androidx.constraintlayout.core)
 
     testImplementation(libs.spring.boot.starter.test)
