@@ -1,32 +1,35 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Categoria
+import org.greenhouse.dto.CategoriaDTO as Categoria
+import org.greenhouse.mapper.CategoriaMapper
 import org.greenhouse.repository.CategoriaRepository
 import org.springframework.stereotype.Service
 
 @Service
-class CategoriaUseCase(
+class CategoriaService(
     private val categoriaRepository: CategoriaRepository,
+    private val categoriaMapper: CategoriaMapper,
 ) {
 
     fun criar(categoria: Categoria): Categoria {
         validar(categoria)
-        return categoriaRepository.criar(categoria.copy(id = null))
+        val model = categoriaMapper.toModel(categoria.copy(id = null))
+        return categoriaMapper.toDto(categoriaRepository.criar(model))
     }
 
-    fun listar(): List<Categoria> = categoriaRepository.listar()
+    fun listar(): List<Categoria> = categoriaRepository.listar().map(categoriaMapper::toDto)
 
     fun buscarPorId(id: Long): Categoria =
         categoriaRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Categoria não encontrada")
+            ?.let(categoriaMapper::toDto) ?: throw NotFoundException("Categoria não encontrada")
 
     fun atualizar(id: Long, campos: Map<String, Any?>): Categoria {
         val idValidado = validarId(id)
         val categoriaAtual = categoriaRepository.buscarPorId(idValidado)
-            ?: throw NotFoundException("Categoria não encontrada")
+            ?.let(categoriaMapper::toDto) ?: throw NotFoundException("Categoria não encontrada")
 
         val camposPermitidos = setOf("id", "nome", "descricao", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
@@ -45,8 +48,8 @@ class CategoriaUseCase(
             )
         validar(categoriaAtualizada)
 
-        return categoriaRepository.atualizar(idValidado, categoriaAtualizada)
-            ?: throw NotFoundException("Categoria não encontrada")
+        return categoriaRepository.atualizar(idValidado, categoriaMapper.toModel(categoriaAtualizada))
+            ?.let(categoriaMapper::toDto) ?: throw NotFoundException("Categoria não encontrada")
     }
 
     fun excluir(id: Long) {

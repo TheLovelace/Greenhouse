@@ -1,34 +1,37 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Fornecedor
+import org.greenhouse.dto.FornecedorDTO as Fornecedor
+import org.greenhouse.mapper.FornecedorMapper
 import org.greenhouse.repository.FornecedorRepository
 import org.springframework.stereotype.Service
 
 @Service
-class FornecedorUseCase(
+class FornecedorService(
     private val fornecedorRepository: FornecedorRepository,
+    private val fornecedorMapper: FornecedorMapper,
 ) {
 
     fun criar(fornecedor: Fornecedor): Fornecedor {
         validar(fornecedor)
-        return fornecedorRepository.criar(fornecedor.copy(id = null))
+        val model = fornecedorMapper.toModel(fornecedor.copy(id = null))
+        return fornecedorMapper.toDto(fornecedorRepository.criar(model))
     }
 
-    fun listar(): List<Fornecedor> = fornecedorRepository.listar()
+    fun listar(): List<Fornecedor> = fornecedorRepository.listar().map(fornecedorMapper::toDto)
 
     fun buscarPorId(id: Long): Fornecedor =
         fornecedorRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Fornecedor não encontrado")
+            ?.let(fornecedorMapper::toDto) ?: throw NotFoundException("Fornecedor não encontrado")
 
     fun atualizar(id: Long, campos: Map<String, Any?>): Fornecedor {
         val idValidado = validarId(id)
 
         val fornecedorAtual =
             fornecedorRepository.buscarPorId(idValidado)
-                ?: throw NotFoundException("Fornecedor não encontrado")
+                ?.let(fornecedorMapper::toDto) ?: throw NotFoundException("Fornecedor não encontrado")
 
         val camposPermitidos =
             setOf(
@@ -65,8 +68,8 @@ class FornecedorUseCase(
 
         validar(fornecedorAtualizado)
 
-        return fornecedorRepository.atualizar(idValidado, fornecedorAtualizado)
-            ?: throw NotFoundException("Fornecedor não encontrado")
+        return fornecedorRepository.atualizar(idValidado, fornecedorMapper.toModel(fornecedorAtualizado))
+            ?.let(fornecedorMapper::toDto) ?: throw NotFoundException("Fornecedor não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -76,6 +79,11 @@ class FornecedorUseCase(
     }
 
     private fun validar(fornecedor: Fornecedor) {
+        val cnpj = fornecedor.cnpj
+        val telefone = fornecedor.telefone
+        val email = fornecedor.email
+        val contato = fornecedor.contato
+
         if (fornecedor.nome.length > 150) {
             throw UnprocessableEntityException(
                 "O nome do fornecedor deve ter no máximo 150 caracteres",
@@ -83,27 +91,27 @@ class FornecedorUseCase(
         }
 
         if (
-            fornecedor.cnpj != null &&
-            !fornecedor.cnpj.matches(Regex("^[0-9]{14}$"))
+            cnpj != null &&
+            !cnpj.matches(Regex("^[0-9]{14}$"))
         ) {
             throw UnprocessableEntityException(
                 "O CNPJ deve conter exatamente 14 números",
             )
         }
 
-        if (fornecedor.telefone != null && fornecedor.telefone.length > 20) {
+        if (telefone != null && telefone.length > 20) {
             throw UnprocessableEntityException(
                 "O telefone deve ter no máximo 20 caracteres",
             )
         }
 
-        if (fornecedor.email != null && fornecedor.email.length > 150) {
+        if (email != null && email.length > 150) {
             throw UnprocessableEntityException(
                 "O email deve ter no máximo 150 caracteres",
             )
         }
 
-        if (fornecedor.contato != null && fornecedor.contato.length > 150) {
+        if (contato != null && contato.length > 150) {
             throw UnprocessableEntityException(
                 "O contato deve ter no máximo 150 caracteres",
             )
