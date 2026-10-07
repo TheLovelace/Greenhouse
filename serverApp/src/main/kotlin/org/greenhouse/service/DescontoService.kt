@@ -1,9 +1,10 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Desconto
+import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.mapper.DescontoMapper
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.springframework.stereotype.Service
@@ -14,19 +15,21 @@ import java.time.format.DateTimeParseException
 private val VALOR_MAXIMO_DESCONTO = BigDecimal("9999999999.99")
 
 @Service
-class DescontoUseCase(
+class DescontoService(
     private val descontoRepository: DescontoRepository,
+    private val descontoMapper: DescontoMapper,
 ) {
     fun criar(desconto: Desconto): Desconto {
         validar(desconto)
-        return descontoRepository.criar(desconto.copy(id = null))
+        val model = descontoMapper.toModel(desconto.copy(id = null))
+        return descontoMapper.toDto(descontoRepository.criar(model))
     }
 
-    fun listar(): List<Desconto> = descontoRepository.listar()
+    fun listar(): List<Desconto> = descontoRepository.listar().map(descontoMapper::toDto)
 
     fun buscarPorId(id: Long): Desconto =
         descontoRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Desconto não encontrado")
+            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
 
     fun atualizar(
         id: Long,
@@ -35,7 +38,7 @@ class DescontoUseCase(
         val idValidado = validarId(id)
         val descontoAtual =
             descontoRepository.buscarPorId(idValidado)
-                ?: throw NotFoundException("Desconto não encontrado")
+                ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
 
         val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
@@ -58,8 +61,8 @@ class DescontoUseCase(
             )
         validar(descontoAtualizado)
 
-        return descontoRepository.atualizar(idValidado, descontoAtualizado)
-            ?: throw NotFoundException("Desconto não encontrado")
+        return descontoRepository.atualizar(idValidado, descontoMapper.toModel(descontoAtualizado))
+            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -93,10 +96,9 @@ class DescontoUseCase(
         ) {
             throw UnprocessableEntityException("O valor deve respeitar o formato NUMERIC(12,2)")
         }
-        if (desconto.dataInicio != null &&
-            desconto.dataFim != null &&
-            desconto.dataFim.isBefore(desconto.dataInicio)
-        ) {
+        val dataInicio = desconto.dataInicio
+        val dataFim = desconto.dataFim
+        if (dataInicio != null && dataFim != null && dataFim.isBefore(dataInicio)) {
             throw UnprocessableEntityException("A data final não pode ser anterior à data inicial")
         }
     }

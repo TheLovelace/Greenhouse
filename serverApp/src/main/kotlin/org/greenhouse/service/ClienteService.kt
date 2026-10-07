@@ -1,15 +1,17 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Cliente
+import org.greenhouse.dto.ClienteDTO as Cliente
+import org.greenhouse.mapper.ClienteMapper
 import org.greenhouse.repository.ClienteRepository
 import org.springframework.stereotype.Service
 
 @Service
-class ClienteUseCase(
+class ClienteService(
     private val clienteRepository: ClienteRepository,
+    private val clienteMapper: ClienteMapper,
 ) {
 
     fun criar(cliente: Cliente): Cliente {
@@ -22,7 +24,8 @@ class ClienteUseCase(
             )
         validar(clienteNormalizado)
         validarCpfUnico(clienteNormalizado.cpf)
-        return clienteRepository.criar(clienteNormalizado)
+        val model = clienteMapper.toModel(clienteNormalizado)
+        return clienteMapper.toDto(clienteRepository.criar(model))
     }
 
     fun listar(
@@ -34,16 +37,16 @@ class ClienteUseCase(
             nome?.takeIf { it.isNotBlank() },
             telefone?.takeIf { it.isNotBlank() },
             ativo,
-        )
+        ).map(clienteMapper::toDto)
 
     fun buscarPorId(id: Long): Cliente =
         clienteRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Cliente não encontrado")
+            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
 
     fun atualizar(id: Long, campos: Map<String, Any?>): Cliente {
         val idValidado = validarId(id)
         val clienteAtual = clienteRepository.buscarPorId(idValidado)
-            ?: throw NotFoundException("Cliente não encontrado")
+            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
 
         val camposPermitidos = setOf("id", "nome", "telefone", "whatsapp", "cpf", "email", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
@@ -68,8 +71,8 @@ class ClienteUseCase(
             validarCpfUnico(clienteAtualizado.cpf, ignorarId = idValidado)
         }
 
-        return clienteRepository.atualizar(idValidado, clienteAtualizado)
-            ?: throw NotFoundException("Cliente não encontrado")
+        return clienteRepository.atualizar(idValidado, clienteMapper.toModel(clienteAtualizado))
+            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
     }
 
     private fun validar(cliente: Cliente) {
@@ -105,7 +108,7 @@ class ClienteUseCase(
         ignorarId: Long? = null,
     ) {
         cpf ?: return
-        val existente = clienteRepository.buscarPorCpf(cpf)
+        val existente = clienteRepository.buscarPorCpf(cpf)?.let(clienteMapper::toDto)
         if (existente != null && existente.id != ignorarId) {
             throw BadRequestException("CPF já cadastrado para outro cliente")
         }

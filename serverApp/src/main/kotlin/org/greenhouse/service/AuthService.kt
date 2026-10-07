@@ -1,9 +1,10 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.AuthenticationException
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.ServerException
+import org.greenhouse.mapper.UsuarioMapper
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -11,16 +12,18 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 
 @Service
-class AuthUseCase(
+class AuthService(
     private val usuarioRepository: UsuarioRepository,
-    private val jwtService: JwtService
+    private val jwtService: JwtService,
+    private val usuarioMapper: UsuarioMapper,
 ) {
 
     private val passwordEncoder = BCryptPasswordEncoder()
     private val bcryptHashRegex = Regex("^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$")
 
     fun login(request: LoginRequest): TokenResponse {
-        val usuario = usuarioRepository.buscarPorLogin(request.login)
+        val usuario =
+            usuarioRepository.buscarPorLogin(request.login)?.let(usuarioMapper::toDto)
             ?: throw AuthenticationException("Credenciais inválidas")
 
         if (!usuario.ativo) {
@@ -67,7 +70,8 @@ class AuthUseCase(
             throw BadRequestException("A nova senha deve ter no máximo 72 bytes em UTF-8")
         }
 
-        val usuario = usuarioRepository.buscarPorCpfEEmail(request.cpf, request.email)
+        val usuario =
+            usuarioRepository.buscarPorCpfEEmail(request.cpf, request.email)?.let(usuarioMapper::toDto)
             ?: throw NotFoundException("Dados de validação incorretos ou usuário não encontrado")
 
         if (!usuario.ativo) {

@@ -1,35 +1,38 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Produto
+import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.mapper.ProdutoMapper
 import org.greenhouse.repository.ProdutoRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
 @Service
-class ProdutoUseCase(
+class ProdutoService(
     private val produtoRepository: ProdutoRepository,
+    private val produtoMapper: ProdutoMapper,
 ) {
 
     fun criar(produto: Produto): Produto {
         validar(produto)
         validarCodigoDisponivel(produto.codigo)
-        return produtoRepository.criar(produto.copy(id = null))
+        val model = produtoMapper.toModel(produto.copy(id = null))
+        return produtoMapper.toDto(produtoRepository.criar(model))
     }
 
-    fun listar(): List<Produto> = produtoRepository.listar()
+    fun listar(): List<Produto> = produtoRepository.listar().map(produtoMapper::toDto)
 
     fun buscarPorId(id: Long): Produto =
         produtoRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Produto não encontrado")
+            ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
 
     fun atualizar(id: Long, campos: Map<String, Any?>): Produto {
         val idValidado = validarId(id)
         val produtoAtual =
             produtoRepository.buscarPorId(idValidado)
-                ?: throw NotFoundException("Produto não encontrado")
+                ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
 
         val camposPermitidos = setOf("id", "codigo", "nome", "descricao", "preco", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
@@ -51,8 +54,8 @@ class ProdutoUseCase(
         validar(produtoAtualizado)
         validarCodigoDisponivel(produtoAtualizado.codigo, ignorarId = idValidado)
 
-        return produtoRepository.atualizar(idValidado, produtoAtualizado)
-            ?: throw NotFoundException("Produto não encontrado")
+        return produtoRepository.atualizar(idValidado, produtoMapper.toModel(produtoAtualizado))
+            ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -71,7 +74,8 @@ class ProdutoUseCase(
     }
 
     private fun validar(produto: Produto) {
-        if (produto.codigo != null && produto.codigo.length > 50) {
+        val codigo = produto.codigo
+        if (codigo != null && codigo.length > 50) {
             throw UnprocessableEntityException("O código do produto deve ter no máximo 50 caracteres")
         }
         if (produto.nome.length > 150) {

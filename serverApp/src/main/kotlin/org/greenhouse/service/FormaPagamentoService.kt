@@ -1,26 +1,29 @@
-package org.greenhouse.usecase
+package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.FormaPagamento
+import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.mapper.FormaPagamentoMapper
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.springframework.stereotype.Service
 
 @Service
-class FormaPagamentoUseCase(
+class FormaPagamentoService(
     private val formaPagamentoRepository: FormaPagamentoRepository,
+    private val formaPagamentoMapper: FormaPagamentoMapper,
 ) {
     fun criar(formaPagamento: FormaPagamento): FormaPagamento {
         validar(formaPagamento)
-        return formaPagamentoRepository.criar(formaPagamento.copy(id = null))
+        val model = formaPagamentoMapper.toModel(formaPagamento.copy(id = null))
+        return formaPagamentoMapper.toDto(formaPagamentoRepository.criar(model))
     }
 
-    fun listar(): List<FormaPagamento> = formaPagamentoRepository.listar()
+    fun listar(): List<FormaPagamento> = formaPagamentoRepository.listar().map(formaPagamentoMapper::toDto)
 
     fun buscarPorId(id: Long): FormaPagamento =
         formaPagamentoRepository.buscarPorId(validarId(id))
-            ?: throw NotFoundException("Forma de pagamento não encontrada")
+            ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
 
     fun atualizar(
         id: Long,
@@ -30,7 +33,7 @@ class FormaPagamentoUseCase(
         val atual =
             formaPagamentoRepository
                 .buscarPorId(idValidado)
-                ?: throw NotFoundException("Forma de pagamento não encontrada")
+                ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
 
         val camposPermitidos = setOf("id", "nome", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
@@ -48,8 +51,8 @@ class FormaPagamentoUseCase(
             )
         validar(atualizada)
 
-        return formaPagamentoRepository.atualizar(idValidado, atualizada)
-            ?: throw NotFoundException("Forma de pagamento não encontrada")
+        return formaPagamentoRepository.atualizar(idValidado, formaPagamentoMapper.toModel(atualizada))
+            ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
     }
 
     fun excluir(id: Long) {
