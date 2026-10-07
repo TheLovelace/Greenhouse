@@ -1,8 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
 import org.greenhouse.repository.EstoqueRepository
-import org.greenhouse.usecase.EstoqueUseCase
+import org.greenhouse.service.EstoqueService
 import java.math.BigDecimal
 import java.sql.DriverManager
 import java.util.UUID
@@ -13,8 +12,8 @@ class EstoqueFixture {
             "A variável DATABASE_URL é necessária para os testes de integração"
         }
     private val produtoIds = mutableListOf<Long>()
-    private val repository = EstoqueRepository(DatabaseConfig(databaseUrl))
-    val useCase = EstoqueUseCase(repository)
+    private val repository = SpringTestContext.bean<EstoqueRepository>()
+    val service = SpringTestContext.bean<EstoqueService>()
 
     fun novoProdutoComEstoque(
         quantidadeFisica: Int,

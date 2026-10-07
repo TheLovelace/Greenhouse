@@ -1,18 +1,16 @@
-package org.greenhouse.security
+package org.greenhouse.integration.security
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.config.WebConfig
-import org.greenhouse.controller.FuncionarioController
-import org.greenhouse.controller.OpenApiController
-import org.greenhouse.entity.Funcionario
-import org.greenhouse.usecase.FuncionarioUseCase
+import org.greenhouse.GreenhouseApplication
+import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import org.greenhouse.security.JwtService
+import org.greenhouse.service.FuncionarioService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -23,9 +21,18 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@WebMvcTest(controllers = [FuncionarioController::class, OpenApiController::class])
-@Import(SecurityConfig::class, JwtAuthenticationFilter::class, JwtService::class, WebConfig::class)
-class FuncionarioSecurityTest {
+@SpringBootTest(
+    classes = [GreenhouseApplication::class],
+    properties = [
+        "spring.autoconfigure.exclude=" +
+            "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+    ],
+)
+@AutoConfigureMockMvc
+class FuncionarioSecurityTest : SpringBootWebTest() {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -34,10 +41,7 @@ class FuncionarioSecurityTest {
     private lateinit var jwtService: JwtService
 
     @MockitoBean
-    private lateinit var funcionarioUseCase: FuncionarioUseCase
-
-    @MockitoBean
-    private lateinit var databaseConfig: DatabaseConfig
+    private lateinit var funcionarioService: FuncionarioService
 
     private val funcionario =
         Funcionario(
@@ -67,16 +71,16 @@ class FuncionarioSecurityTest {
     @Test
     fun `token ADMIN autoriza as cinco operacoes do CRUD`() {
         Mockito.doReturn(funcionario)
-            .`when`(funcionarioUseCase)
+            .`when`(funcionarioService)
             .criar(Mockito.any(Funcionario::class.java) ?: funcionario)
         Mockito.doReturn(listOf(funcionario))
-            .`when`(funcionarioUseCase)
+            .`when`(funcionarioService)
             .listar()
         Mockito.doReturn(funcionario)
-            .`when`(funcionarioUseCase)
+            .`when`(funcionarioService)
             .buscarPorId(1)
         Mockito.doReturn(funcionario)
-            .`when`(funcionarioUseCase)
+            .`when`(funcionarioService)
             .atualizar(Mockito.anyLong(), Mockito.anyMap<String, Any?>() ?: emptyMap())
         val token = jwtService.gerarToken("admin", "ADMIN")
         val expectedStatuses = listOf(201, 200, 200, 200, 204)

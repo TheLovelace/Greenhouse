@@ -18,7 +18,7 @@ class TestCategoriaPatch {
             val criada = fixture.novaCategoria()
             id = criada.id
 
-            val atualizada = fixture.useCase.atualizar(criada.id!!, mapOf("nome" to "Folhagens"))
+            val atualizada = fixture.service.atualizar(criada.id!!, mapOf("nome" to "Folhagens"))
 
             assertEquals(criada.id, atualizada.id)
             assertEquals("Folhagens", atualizada.nome)
@@ -39,7 +39,7 @@ class TestCategoriaPatch {
             id = criada.id
             val idCategoria = criada.id!!
 
-            val atualizada = fixture.useCase.atualizar(
+            val atualizada = fixture.service.atualizar(
                 idCategoria,
                 mapOf(
                     "id" to idCategoria,
@@ -68,7 +68,7 @@ class TestCategoriaPatch {
             id = criada.id
 
             assertFailsWith<BadRequestException> {
-                fixture.useCase.atualizar(criada.id!!, mapOf("ativo" to "false"))
+                fixture.service.atualizar(criada.id!!, mapOf("ativo" to "false"))
             }
         } finally {
             fixture.limpar(id)
@@ -80,7 +80,7 @@ class TestCategoriaPatch {
         val fixture = CategoriaFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("nome" to "Folhagens"))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("nome" to "Folhagens"))
         }
     }
 }

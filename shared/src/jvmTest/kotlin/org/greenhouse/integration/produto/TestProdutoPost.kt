@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Produto
+import org.greenhouse.dto.ProdutoDTO as Produto
 import org.greenhouse.integration.fixture.ProdutoFixture
 import java.math.BigDecimal
 import java.util.UUID
@@ -35,7 +35,7 @@ class TestProdutoPost {
 
         try {
             val criado =
-                fixture.useCase.criar(
+                fixture.service.criar(
                     Produto(
                         id = -1,
                         codigo = "SKU-${UUID.randomUUID()}",
@@ -56,7 +56,7 @@ class TestProdutoPost {
         val fixture = ProdutoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 Produto(nome = "Produto inválido", preco = BigDecimal("-0.01")),
             )
         }

@@ -18,7 +18,7 @@ class TestClienteGet {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            assertEquals(criado, fixture.useCase.buscarPorId(criado.id!!))
+            assertEquals(criado, fixture.service.buscarPorId(criado.id!!))
         } finally {
             fixture.limpar(id)
         }
@@ -32,9 +32,9 @@ class TestClienteGet {
         try {
             val criado = fixture.novoCliente()
             id = criado.id
-            fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to false))
+            fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
 
-            assertEquals(true, fixture.useCase.listar().any { it.id == criado.id })
+            assertEquals(true, fixture.service.listar().any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
         }
@@ -48,10 +48,10 @@ class TestClienteGet {
         try {
             val criado = fixture.novoCliente()
             id = criado.id
-            fixture.useCase.atualizar(criado.id!!, mapOf("ativo" to false))
+            fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
 
-            assertEquals(false, fixture.useCase.listar(ativo = true).any { it.id == criado.id })
-            assertEquals(true, fixture.useCase.listar(ativo = false).any { it.id == criado.id })
+            assertEquals(false, fixture.service.listar(ativo = true).any { it.id == criado.id })
+            assertEquals(true, fixture.service.listar(ativo = false).any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
         }
@@ -67,7 +67,7 @@ class TestClienteGet {
             val criado = fixture.novoCliente(nome = "Maria $token Silva")
             id = criado.id
 
-            assertEquals(true, fixture.useCase.listar(nome = token.lowercase()).any { it.id == criado.id })
+            assertEquals(true, fixture.service.listar(nome = token.lowercase()).any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
         }
@@ -83,7 +83,7 @@ class TestClienteGet {
             val criado = fixture.novoCliente(telefone = telefone)
             id = criado.id
 
-            assertEquals(true, fixture.useCase.listar(telefone = telefone.take(8)).any { it.id == criado.id })
+            assertEquals(true, fixture.service.listar(telefone = telefone.take(8)).any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
         }
@@ -93,7 +93,7 @@ class TestClienteGet {
     fun `deve retornar lista vazia quando nenhum cliente for encontrado`() {
         val fixture = ClienteFixture()
 
-        val encontrados = fixture.useCase.listar(nome = "Inexistente ${fixture.tokenUnico()}")
+        val encontrados = fixture.service.listar(nome = "Inexistente ${fixture.tokenUnico()}")
 
         assertEquals(0, encontrados.size)
     }
@@ -103,7 +103,7 @@ class TestClienteGet {
         val fixture = ClienteFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
     }
 
@@ -112,7 +112,7 @@ class TestClienteGet {
         val fixture = ClienteFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

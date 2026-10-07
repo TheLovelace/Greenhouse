@@ -21,19 +21,19 @@ class TestDescontoStatus {
                     valor = BigDecimal("15.00"),
                     ativo = true,
                 )
-            val original = fixture.useCase.buscarPorId(id)
+            val original = fixture.service.buscarPorId(id)
 
-            val inativado = fixture.useCase.atualizar(id, mapOf("ativo" to false))
+            val inativado = fixture.service.atualizar(id, mapOf("ativo" to false))
             assertEquals(false, inativado.ativo)
             assertEquals(id, inativado.id)
             assertEquals(original.copy(ativo = false), inativado)
 
-            val reativado = fixture.useCase.atualizar(id, mapOf("ativo" to true))
+            val reativado = fixture.service.atualizar(id, mapOf("ativo" to true))
             assertEquals(true, reativado.ativo)
             assertEquals(id, reativado.id)
             assertEquals(original, reativado)
 
-            assertEquals(original, fixture.useCase.buscarPorId(id))
+            assertEquals(original, fixture.service.buscarPorId(id))
         } finally {
             fixture.limpar()
         }
@@ -44,7 +44,7 @@ class TestDescontoStatus {
         val fixture = DescontoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("ativo" to false))
+            fixture.service.atualizar(Long.MAX_VALUE, mapOf("ativo" to false))
         }
     }
 
@@ -53,7 +53,7 @@ class TestDescontoStatus {
         val fixture = DescontoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.atualizar(0, mapOf("ativo" to false))
+            fixture.service.atualizar(0, mapOf("ativo" to false))
         }
     }
 }

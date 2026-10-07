@@ -13,11 +13,11 @@ class TestDescontoDelete {
 
         try {
             val id = fixture.novoDesconto()
-            val original = fixture.useCase.buscarPorId(id)
+            val original = fixture.service.buscarPorId(id)
 
-            fixture.useCase.excluir(id)
+            fixture.service.excluir(id)
 
-            assertEquals(original.copy(ativo = false), fixture.useCase.buscarPorId(id))
+            assertEquals(original.copy(ativo = false), fixture.service.buscarPorId(id))
         } finally {
             fixture.limpar()
         }
@@ -28,7 +28,7 @@ class TestDescontoDelete {
         val fixture = DescontoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.excluir(Long.MAX_VALUE)
+            fixture.service.excluir(Long.MAX_VALUE)
         }
     }
 }
