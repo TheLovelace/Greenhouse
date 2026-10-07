@@ -23,8 +23,8 @@ ON CONFLICT DO NOTHING;
 -- 3. Usuário
 -- senha_hash contém valores de seed apenas para popular a tabela.
 -- Substitua por hashes válidos do mecanismo de autenticação quando o login for implementado/testado.
-INSERT INTO usuario (funcionario_id, login, senha_hash, perfil, ativo)
-SELECT f.id, v.login, v.senha_hash, v.perfil, TRUE
+INSERT INTO usuario (funcionario_id, login, senha_hash, perfil, ativo, primeiro_acesso_feito)
+SELECT f.id, v.login, v.senha_hash, v.perfil, TRUE, TRUE
 FROM (
     VALUES
         ('11111111111', 'ana.admin', 'SEED_DEV_HASH_ANA', 'ADMIN'),

@@ -56,20 +56,20 @@ paths:
                 items:
                   $ref: '#/components/schemas/Cliente'
   /cliente/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico do cliente
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
     get:
       tags:
         - Cliente
       summary: Buscar cliente por ID
       operationId: buscarClientePorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '200':
           description: Cliente encontrado
@@ -87,6 +87,15 @@ paths:
       summary: Atualizar cliente
       description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Envie null em cpf ou email para limpar o campo. Também usado para inativar (ativo=false) e reativar (ativo=true). Também aceita o objeto completo do cliente.
       operationId: atualizarCliente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       requestBody:
         required: true
         content:
