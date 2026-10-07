@@ -36,7 +36,7 @@ class TestDescontoGet {
                     ),
                 )
 
-            val descontos = fixture.useCase.listar().filter { it.id in idsCriados }
+            val descontos = fixture.service.listar().filter { it.id in idsCriados }
 
             assertEquals(2, descontos.size)
             assertEquals(setOf(true, false), descontos.map { it.ativo }.toSet())
@@ -58,7 +58,7 @@ class TestDescontoGet {
         try {
             val id = fixture.novoDesconto(tipo = TipoDesconto.VALOR_FIXO, valor = BigDecimal("15.00"))
 
-            val desconto = fixture.useCase.buscarPorId(id)
+            val desconto = fixture.service.buscarPorId(id)
 
             assertEquals(id, desconto.id)
             assertEquals(TipoDesconto.VALOR_FIXO, desconto.tipo)
@@ -73,7 +73,7 @@ class TestDescontoGet {
         val fixture = DescontoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
     }
 
@@ -82,7 +82,7 @@ class TestDescontoGet {
         val fixture = DescontoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

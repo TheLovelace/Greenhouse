@@ -1,14 +1,13 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Cliente
+import org.greenhouse.dto.ClienteDTO as Cliente
 import org.greenhouse.repository.ClienteRepository
-import org.greenhouse.usecase.ClienteUseCase
+import org.greenhouse.service.ClienteService
 import java.util.UUID
 
 class ClienteFixture {
-    private val repository = ClienteRepository(DatabaseConfig(System.getenv("DATABASE_URL")))
-    val useCase = ClienteUseCase(repository)
+    private val repository = SpringTestContext.bean<ClienteRepository>()
+    val service = SpringTestContext.bean<ClienteService>()
 
     fun novoCliente(
         nome: String = "Cliente ${UUID.randomUUID()}",
@@ -17,7 +16,7 @@ class ClienteFixture {
         cpf: String? = null,
         email: String? = null,
     ): Cliente =
-        useCase.criar(
+        service.criar(
             Cliente(
                 nome = nome,
                 telefone = telefone,

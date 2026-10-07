@@ -2,7 +2,7 @@ package org.greenhouse.integration.estoque
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.entity.Estoque
+import org.greenhouse.dto.EstoqueDTO as Estoque
 import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,7 +29,7 @@ class TestEstoqueGet {
                     quantidadeDisponivel = 10,
                     quantidadeMinima = 3,
                 ),
-                fixture.useCase.buscarPosicaoPorProdutoId(produtoId),
+                fixture.service.buscarPosicaoPorProdutoId(produtoId),
             )
         } finally {
             fixture.limpar()
@@ -51,7 +51,7 @@ class TestEstoqueGet {
                     quantidadeDisponivel = 0,
                     quantidadeMinima = 0,
                 ),
-                fixture.useCase.buscarPosicaoPorProdutoId(produtoId),
+                fixture.service.buscarPosicaoPorProdutoId(produtoId),
             )
         } finally {
             fixture.limpar()
@@ -63,7 +63,7 @@ class TestEstoqueGet {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPosicaoPorProdutoId(Long.MAX_VALUE)
+            fixture.service.buscarPosicaoPorProdutoId(Long.MAX_VALUE)
         }
     }
 
@@ -72,7 +72,7 @@ class TestEstoqueGet {
         val fixture = EstoqueFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPosicaoPorProdutoId(0)
+            fixture.service.buscarPosicaoPorProdutoId(0)
         }
     }
 }

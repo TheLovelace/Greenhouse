@@ -1,10 +1,10 @@
 package org.greenhouse.controller
 
 // Trocamos os imports da pasta DTO para a pasta usecase, onde as data classes estão agora
-import org.greenhouse.usecase.LoginRequest
-import org.greenhouse.usecase.PrimeiroAcessoRequest
-import org.greenhouse.usecase.TokenResponse
-import org.greenhouse.usecase.AuthUseCase
+import org.greenhouse.service.LoginRequest
+import org.greenhouse.service.PrimeiroAcessoRequest
+import org.greenhouse.service.TokenResponse
+import org.greenhouse.service.AuthService
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/auth")
 class AuthController(
-    private val authUseCase: AuthUseCase,
+    private val authUseCase: AuthService,
 ) {
 
     @PostMapping("/login")

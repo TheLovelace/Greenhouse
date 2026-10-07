@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Categoria
-import org.greenhouse.usecase.CategoriaUseCase
+import org.greenhouse.dto.CategoriaDTO as Categoria
+import org.greenhouse.service.CategoriaService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/categoria")
 class CategoriaController(
-    private val categoriaUseCase: CategoriaUseCase,
+    private val categoriaUseCase: CategoriaService,
 ) {
 
     @PostMapping

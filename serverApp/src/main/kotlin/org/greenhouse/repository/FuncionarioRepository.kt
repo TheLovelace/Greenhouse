@@ -1,130 +1,63 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Funcionario
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.greenhouse.model.Funcionario
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
+import jakarta.persistence.LockModeType
 
-private object FuncionarioTable : Table("funcionario") {
-    val id = long("id").autoIncrement()
-    val nome = varchar("nome", 150)
-    val cpf = varchar("cpf", 11).uniqueIndex()
-    val telefone = varchar("telefone", 20).nullable()
-    val email = varchar("email", 150).uniqueIndex().nullable()
-    val cargo = varchar("cargo", 100).nullable()
-    val ativo = bool("ativo").default(true)
+interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
+    @Query("SELECT f FROM Funcionario f")
+    fun listar(): List<Funcionario>
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query("SELECT f FROM Funcionario f WHERE f.id = :id")
+    fun buscarPorId(@Param("id") id: Long): Funcionario?
 
-private object UsuarioTable : Table("usuario") {
-    val id = long("id").autoIncrement()
-    val funcionarioId = long("funcionario_id").references(FuncionarioTable.id)
-    val login = varchar("login", 100).uniqueIndex()
-    val senhaHash = varchar("senha_hash", 255)
-    val perfil = varchar("perfil", 20)
-    val ativo = bool("ativo").default(true)
-    val primeiroAcessoFeito = bool("primeiro_acesso_feito").default(false)
+    fun criar(funcionario: Funcionario): Funcionario = save(funcionario)
 
-    override val primaryKey = PrimaryKey(id)
-}
-
-@Repository
-class FuncionarioRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
-
-    fun criar(
-        funcionario: Funcionario,
-        login: String,
-        senhaPlaceholder: String,
-    ): Funcionario =
-        databaseConfig.session {
-            if (UsuarioTable.selectAll().where { UsuarioTable.login eq login }.count() > 0) {
-                throw UnprocessableEntityException("Já existe um usuário com o login derivado deste e-mail")
-            }
-
-            val id =
-                FuncionarioTable.insert {
-                    it[nome] = funcionario.nome
-                    it[cpf] = funcionario.cpf
-                    it[telefone] = funcionario.telefone
-                    it[email] = funcionario.email
-                    it[cargo] = funcionario.cargo
-                    it[ativo] = funcionario.ativo
-                }[FuncionarioTable.id]
-
-            UsuarioTable.insert {
-                it[UsuarioTable.funcionarioId] = id
-                it[UsuarioTable.login] = login
-                it[UsuarioTable.senhaHash] = senhaPlaceholder
-                it[UsuarioTable.perfil] = "FUNCIONARIO"
-                it[UsuarioTable.ativo] = funcionario.ativo
-                it[UsuarioTable.primeiroAcessoFeito] = false
-            }
-
-            funcionario.copy(id = id)
+    @Transactional
+    fun atualizar(id: Long, funcionario: Funcionario): Funcionario? {
+        if (atualizarCampos(
+                id,
+                funcionario.nome,
+                funcionario.cpf,
+                funcionario.telefone,
+                funcionario.email,
+                funcionario.cargo,
+                funcionario.ativo,
+            ) == 0
+        ) {
+            return null
         }
+        return buscarPorId(id)
+    }
 
-    fun listar(): List<Funcionario> =
-        databaseConfig.session {
-            FuncionarioTable.selectAll().map { it.toFuncionario() }
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE Funcionario f
+        SET f.nome = :nome, f.cpf = :cpf, f.telefone = :telefone,
+            f.email = :email, f.cargo = :cargo, f.ativo = :ativo
+        WHERE f.id = :id
+        """,
+    )
+    fun atualizarCampos(
+        @Param("id") id: Long,
+        @Param("nome") nome: String,
+        @Param("cpf") cpf: String,
+        @Param("telefone") telefone: String?,
+        @Param("email") email: String?,
+        @Param("cargo") cargo: String?,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 
-    fun buscarPorId(id: Long): Funcionario? =
-        databaseConfig.session {
-            FuncionarioTable.selectAll()
-                .where { FuncionarioTable.id eq id }
-                .singleOrNull()
-                ?.toFuncionario()
-        }
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Funcionario f WHERE f.id = :id")
+    fun excluirPorId(@Param("id") id: Long): Int
 
-    fun atualizar(id: Long, funcionario: Funcionario): Funcionario? =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                FuncionarioTable.update({ FuncionarioTable.id eq id }) {
-                    it[nome] = funcionario.nome
-                    it[cpf] = funcionario.cpf
-                    it[telefone] = funcionario.telefone
-                    it[email] = funcionario.email
-                    it[cargo] = funcionario.cargo
-                    it[ativo] = funcionario.ativo
-                }
-
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                UsuarioTable.update({ UsuarioTable.funcionarioId eq id }) {
-                    it[UsuarioTable.ativo] = funcionario.ativo
-                }
-
-                FuncionarioTable.selectAll()
-                    .where { FuncionarioTable.id eq id }
-                    .single()
-                    .toFuncionario()
-            }
-        }
-
-    fun excluir(id: Long): Boolean =
-        databaseConfig.session {
-            FuncionarioTable.deleteWhere { FuncionarioTable.id eq id } > 0
-        }
-
-    private fun ResultRow.toFuncionario() =
-        Funcionario(
-            id = this[FuncionarioTable.id],
-            nome = this[FuncionarioTable.nome],
-            cpf = this[FuncionarioTable.cpf],
-            telefone = this[FuncionarioTable.telefone],
-            email = this[FuncionarioTable.email],
-            cargo = this[FuncionarioTable.cargo],
-            ativo = this[FuncionarioTable.ativo],
-        )
+    fun excluir(id: Long): Boolean = excluirPorId(id) > 0
 }

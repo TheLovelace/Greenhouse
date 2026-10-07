@@ -19,7 +19,7 @@ class TestProdutoGet {
             val criado = fixture.novoProduto()
             id = criado.id
 
-            assertEquals(criado, fixture.useCase.buscarPorId(criado.id!!))
+            assertEquals(criado, fixture.service.buscarPorId(criado.id!!))
         } finally {
             fixture.limpar(id)
         }
@@ -34,7 +34,7 @@ class TestProdutoGet {
             val criado = fixture.novoProduto()
             id = criado.id
 
-            assertTrue(fixture.useCase.listar().any { it.id == criado.id })
+            assertTrue(fixture.service.listar().any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
         }
@@ -45,7 +45,7 @@ class TestProdutoGet {
         val fixture = ProdutoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.buscarPorId(0)
+            fixture.service.buscarPorId(0)
         }
     }
 
@@ -54,7 +54,7 @@ class TestProdutoGet {
         val fixture = ProdutoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.buscarPorId(Long.MAX_VALUE)
+            fixture.service.buscarPorId(Long.MAX_VALUE)
         }
     }
 }

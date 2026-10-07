@@ -24,7 +24,7 @@ class TestEstoqueMovimentacao {
                 )
 
             val movimentacao =
-                fixture.useCase.registrarMovimentacao(
+                fixture.service.registrarMovimentacao(
                     produtoId = produtoId,
                     tipo = TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
                     quantidade = 2,
@@ -38,11 +38,11 @@ class TestEstoqueMovimentacao {
             assertEquals(2, movimentacao.quantidade)
             assertEquals(
                 10,
-                fixture.useCase.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica,
+                fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica,
             )
             assertEquals(
                 2,
-                fixture.useCase.buscarPosicaoPorProdutoId(produtoId).quantidadeReservada,
+                fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeReservada,
             )
         } finally {
             fixture.limpar()
@@ -56,14 +56,14 @@ class TestEstoqueMovimentacao {
         try {
             val produtoId = fixture.novoProdutoSemEstoque()
 
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = produtoId,
                 tipo = TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
                 quantidade = 5,
                 observacao = null,
             )
 
-            val posicao = fixture.useCase.buscarPosicaoPorProdutoId(produtoId)
+            val posicao = fixture.service.buscarPosicaoPorProdutoId(produtoId)
             assertEquals(5, posicao.quantidadeFisica)
             assertEquals(0, posicao.quantidadeReservada)
             assertEquals(5, posicao.quantidadeDisponivel)
@@ -85,14 +85,14 @@ class TestEstoqueMovimentacao {
                     quantidadeMinima = 3,
                 )
 
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = produtoId,
                 tipo = TipoMovimentacaoEstoque.AJUSTE_SAIDA,
                 quantidade = 3,
                 observacao = "Contagem encontrou três unidades a menos",
             )
 
-            val posicao = fixture.useCase.buscarPosicaoPorProdutoId(produtoId)
+            val posicao = fixture.service.buscarPosicaoPorProdutoId(produtoId)
             assertEquals(5, posicao.quantidadeFisica)
             assertEquals(2, posicao.quantidadeReservada)
             assertEquals(3, posicao.quantidadeDisponivel)
@@ -115,7 +115,7 @@ class TestEstoqueMovimentacao {
 
             listOf(TipoMovimentacaoEstoque.AJUSTE_SAIDA, TipoMovimentacaoEstoque.PERDA).forEach { tipo ->
                 assertFailsWith<UnprocessableEntityException> {
-                    fixture.useCase.registrarMovimentacao(
+                    fixture.service.registrarMovimentacao(
                         produtoId = produtoId,
                         tipo = tipo,
                         quantidade = 4,
@@ -124,7 +124,7 @@ class TestEstoqueMovimentacao {
                 }
             }
 
-            val posicao = fixture.useCase.buscarPosicaoPorProdutoId(produtoId)
+            val posicao = fixture.service.buscarPosicaoPorProdutoId(produtoId)
             assertEquals(5, posicao.quantidadeFisica)
             assertEquals(2, posicao.quantidadeReservada)
             assertEquals(3, posicao.quantidadeDisponivel)
@@ -138,7 +138,7 @@ class TestEstoqueMovimentacao {
         val fixture = EstoqueFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = 1,
                 tipo = TipoMovimentacaoEstoque.ENTRADA,
                 quantidade = 1,
@@ -146,7 +146,7 @@ class TestEstoqueMovimentacao {
             )
         }
         assertFailsWith<BadRequestException> {
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = 1,
                 tipo = TipoMovimentacaoEstoque.SAIDA,
                 quantidade = 1,
@@ -160,7 +160,7 @@ class TestEstoqueMovimentacao {
         val fixture = EstoqueFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = 1,
                 tipo = TipoMovimentacaoEstoque.PERDA,
                 quantidade = 0,
@@ -174,7 +174,7 @@ class TestEstoqueMovimentacao {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.registrarMovimentacao(
+            fixture.service.registrarMovimentacao(
                 produtoId = Long.MAX_VALUE,
                 tipo = TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
                 quantidade = 1,

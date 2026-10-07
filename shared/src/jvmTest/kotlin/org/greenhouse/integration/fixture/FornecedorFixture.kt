@@ -1,18 +1,14 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Fornecedor
+import org.greenhouse.dto.FornecedorDTO as Fornecedor
 import org.greenhouse.repository.FornecedorRepository
-import org.greenhouse.usecase.FornecedorUseCase
+import org.greenhouse.service.FornecedorService
 import java.util.UUID
 
 class FornecedorFixture {
-    private val repository =
-        FornecedorRepository(
-            DatabaseConfig(System.getenv("DATABASE_URL")),
-        )
+    private val repository = SpringTestContext.bean<FornecedorRepository>()
 
-    val useCase = FornecedorUseCase(repository)
+    val service = SpringTestContext.bean<FornecedorService>()
 
     fun novoFornecedor(
         nome: String = "Fornecedor ${UUID.randomUUID()}",
@@ -22,7 +18,7 @@ class FornecedorFixture {
         contato: String? = "Contato teste",
         ativo: Boolean = true,
     ): Fornecedor =
-        useCase.criar(
+        service.criar(
             Fornecedor(
                 nome = nome,
                 cnpj = cnpj,

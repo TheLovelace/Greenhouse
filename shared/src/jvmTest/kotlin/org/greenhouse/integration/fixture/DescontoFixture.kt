@@ -1,10 +1,9 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Desconto
+import org.greenhouse.dto.DescontoDTO as Desconto
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
-import org.greenhouse.usecase.DescontoUseCase
+import org.greenhouse.service.DescontoService
 import java.math.BigDecimal
 import java.sql.DriverManager
 import java.sql.Types
@@ -16,12 +15,12 @@ class DescontoFixture {
         requireNotNull(System.getenv("DATABASE_URL")) {
             "A variável DATABASE_URL é necessária para os testes de integração"
         }
-    private val repository = DescontoRepository(DatabaseConfig(databaseUrl))
+    private val repository = SpringTestContext.bean<DescontoRepository>()
     private val idsCriados = mutableListOf<Long>()
-    val useCase = DescontoUseCase(repository)
+    val service = SpringTestContext.bean<DescontoService>()
 
     fun criarDesconto(desconto: Desconto): Desconto =
-        useCase.criar(desconto).also { criado ->
+        service.criar(desconto).also { criado ->
             val id = requireNotNull(criado.id) { "O banco não retornou o ID do desconto criado" }
             idsCriados.add(id)
         }

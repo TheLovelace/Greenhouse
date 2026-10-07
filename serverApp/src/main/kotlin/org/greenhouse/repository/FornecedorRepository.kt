@@ -1,96 +1,62 @@
 package org.greenhouse.repository
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Fornecedor
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
-import org.springframework.stereotype.Repository
+import org.greenhouse.model.Fornecedor
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.transaction.annotation.Transactional
 
-private object Fornecedores : Table("fornecedor") {
-    val id = long("id").autoIncrement()
-    val nome = varchar("nome", 150)
-    val cnpj = varchar("cnpj", 14).nullable()
-    val telefone = varchar("telefone", 20).nullable()
-    val email = varchar("email", 150).nullable()
-    val contato = varchar("contato", 150).nullable()
-    val ativo = bool("ativo").default(true)
+interface FornecedorRepository : JpaRepository<Fornecedor, Long> {
+    @Query("SELECT f FROM Fornecedor f")
+    fun listar(): List<Fornecedor>
 
-    override val primaryKey = PrimaryKey(id)
-}
+    @Query("SELECT f FROM Fornecedor f WHERE f.id = :id")
+    fun buscarPorId(@Param("id") id: Long): Fornecedor?
 
-@Repository
-class FornecedorRepository(
-    private val databaseConfig: DatabaseConfig,
-) {
+    fun criar(fornecedor: Fornecedor): Fornecedor = save(fornecedor)
 
-    fun criar(fornecedor: Fornecedor): Fornecedor =
-        databaseConfig.session {
-            val id =
-                Fornecedores.insert {
-                    it[nome] = fornecedor.nome
-                    it[cnpj] = fornecedor.cnpj
-                    it[telefone] = fornecedor.telefone
-                    it[email] = fornecedor.email
-                    it[contato] = fornecedor.contato
-                    it[ativo] = fornecedor.ativo
-                }[Fornecedores.id]
-
-            fornecedor.copy(id = id)
+    @Transactional
+    fun atualizar(id: Long, fornecedor: Fornecedor): Fornecedor? {
+        if (atualizarCampos(
+                id,
+                fornecedor.nome,
+                fornecedor.cnpj,
+                fornecedor.telefone,
+                fornecedor.email,
+                fornecedor.contato,
+                fornecedor.ativo,
+            ) == 0
+        ) {
+            return null
         }
+        return buscarPorId(id)
+    }
 
-    fun listar(): List<Fornecedor> =
-        databaseConfig.session {
-            Fornecedores.selectAll().map { it.toFornecedor() }
-        }
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE Fornecedor f
+        SET f.nome = :nome, f.cnpj = :cnpj, f.telefone = :telefone,
+            f.email = :email, f.contato = :contato, f.ativo = :ativo
+        WHERE f.id = :id
+        """,
+    )
+    fun atualizarCampos(
+        @Param("id") id: Long,
+        @Param("nome") nome: String,
+        @Param("cnpj") cnpj: String?,
+        @Param("telefone") telefone: String?,
+        @Param("email") email: String?,
+        @Param("contato") contato: String?,
+        @Param("ativo") ativo: Boolean,
+    ): Int
 
-    fun buscarPorId(id: Long): Fornecedor? =
-        databaseConfig.session {
-            Fornecedores.selectAll()
-                .where { Fornecedores.id eq id }
-                .singleOrNull()
-                ?.toFornecedor()
-        }
+    fun excluir(id: Long): Boolean = excluirPorId(id) > 0
 
-    fun atualizar(id: Long, fornecedor: Fornecedor): Fornecedor? =
-        databaseConfig.session {
-            val linhasAtualizadas =
-                Fornecedores.update({ Fornecedores.id eq id }) {
-                    it[nome] = fornecedor.nome
-                    it[cnpj] = fornecedor.cnpj
-                    it[telefone] = fornecedor.telefone
-                    it[email] = fornecedor.email
-                    it[contato] = fornecedor.contato
-                    it[ativo] = fornecedor.ativo
-                }
-
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                Fornecedores.selectAll()
-                    .where { Fornecedores.id eq id }
-                    .single()
-                    .toFornecedor()
-            }
-        }
-
-    fun excluir(id: Long): Boolean =
-        databaseConfig.session {
-            Fornecedores.deleteWhere { Fornecedores.id eq id } > 0
-        }
-
-    private fun ResultRow.toFornecedor() =
-        Fornecedor(
-            id = this[Fornecedores.id],
-            nome = this[Fornecedores.nome],
-            cnpj = this[Fornecedores.cnpj],
-            telefone = this[Fornecedores.telefone],
-            email = this[Fornecedores.email],
-            contato = this[Fornecedores.contato],
-            ativo = this[Fornecedores.ativo],
-        )
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Fornecedor f WHERE f.id = :id")
+    fun excluirPorId(@Param("id") id: Long): Int
 }

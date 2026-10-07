@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Fornecedor
-import org.greenhouse.usecase.FornecedorUseCase
+import org.greenhouse.dto.FornecedorDTO as Fornecedor
+import org.greenhouse.service.FornecedorService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/fornecedor")
 class FornecedorController(
-    private val fornecedorUseCase: FornecedorUseCase,
+    private val fornecedorUseCase: FornecedorService,
 ) {
 
     @PostMapping

@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.entity.Fornecedor
+import org.greenhouse.dto.FornecedorDTO as Fornecedor
 import org.greenhouse.integration.fixture.FornecedorFixture
 
 class TestFornecedorPost {
@@ -33,7 +33,7 @@ class TestFornecedorPost {
 
         try {
             val criado =
-                fixture.useCase.criar(
+                fixture.service.criar(
                     Fornecedor(
                         id = -1,
                         nome = "Fornecedor com id",
@@ -55,7 +55,7 @@ class TestFornecedorPost {
 
         try {
             val criado =
-                fixture.useCase.criar(
+                fixture.service.criar(
                     Fornecedor(
                         nome = "Fornecedor sem opcionais",
                     ),
@@ -77,7 +77,7 @@ class TestFornecedorPost {
         val fixture = FornecedorFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 Fornecedor(
                     nome = "a".repeat(151),
                 ),
@@ -90,7 +90,7 @@ class TestFornecedorPost {
         val fixture = FornecedorFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 Fornecedor(
                     nome = "Fornecedor",
                     cnpj = "123",
@@ -104,7 +104,7 @@ class TestFornecedorPost {
         val fixture = FornecedorFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.useCase.criar(
+            fixture.service.criar(
                 Fornecedor(
                     nome = "Fornecedor",
                     cnpj = "1234567890123A",

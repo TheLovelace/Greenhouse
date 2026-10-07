@@ -1,24 +1,17 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.adapter.DatabaseConfig
-import org.greenhouse.entity.Produto
+import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.model.Estoque
+import org.greenhouse.repository.EstoqueRepository
 import org.greenhouse.repository.ProdutoRepository
-import org.greenhouse.usecase.ProdutoUseCase
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
+import org.greenhouse.service.ProdutoService
 import java.math.BigDecimal
 import java.util.UUID
 
-private object EstoquesProduto : Table("estoque") {
-    val produtoId = long("produto_id")
-}
-
 class ProdutoFixture {
-    private val databaseConfig = DatabaseConfig(System.getenv("DATABASE_URL"))
-    private val repository = ProdutoRepository(databaseConfig)
-    val useCase = ProdutoUseCase(repository)
+    private val repository = SpringTestContext.bean<ProdutoRepository>()
+    private val estoqueRepository = SpringTestContext.bean<EstoqueRepository>()
+    val service = SpringTestContext.bean<ProdutoService>()
 
     fun novoProduto(
         codigo: String = "SKU-${UUID.randomUUID()}",
@@ -26,7 +19,7 @@ class ProdutoFixture {
         descricao: String? = "Descrição de teste",
         preco: BigDecimal = BigDecimal("12.50"),
     ): Produto =
-        useCase.criar(
+        service.criar(
             Produto(
                 codigo = codigo,
                 nome = nome,
@@ -36,18 +29,12 @@ class ProdutoFixture {
         )
 
     fun adicionarEstoque(produtoId: Long) {
-        databaseConfig.session {
-            EstoquesProduto.insert {
-                it[EstoquesProduto.produtoId] = produtoId
-            }
-        }
+        estoqueRepository.save(Estoque(produtoId = produtoId))
     }
 
     fun limpar(id: Long?) {
         id?.let { produtoId ->
-            databaseConfig.session {
-                EstoquesProduto.deleteWhere { EstoquesProduto.produtoId eq produtoId }
-            }
+            estoqueRepository.deleteById(produtoId)
             repository.excluir(produtoId)
         }
     }
