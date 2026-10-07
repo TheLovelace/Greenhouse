@@ -4,7 +4,7 @@ import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.entity.Desconto
-import org.greenhouse.entity.TipoDesconto
+import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -37,7 +37,7 @@ class DescontoUseCase(
             descontoRepository.buscarPorId(idValidado)
                 ?: throw NotFoundException("Desconto não encontrado")
 
-        val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim")
+        val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim", "ativo")
         val camposDesconhecidos = campos.keys - camposPermitidos
         if (camposDesconhecidos.isNotEmpty()) {
             throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
@@ -54,6 +54,7 @@ class DescontoUseCase(
                 valor = campos.valor("valor", descontoAtual.valor),
                 dataInicio = campos.data("dataInicio", descontoAtual.dataInicio),
                 dataFim = campos.data("dataFim", descontoAtual.dataFim),
+                ativo = campos.booleano("ativo", descontoAtual.ativo),
             )
         validar(descontoAtualizado)
 
@@ -61,12 +62,11 @@ class DescontoUseCase(
             ?: throw NotFoundException("Desconto não encontrado")
     }
 
-    fun atualizarStatus(
-        id: Long,
-        ativo: Boolean,
-    ): Desconto =
-        descontoRepository.atualizarStatus(validarId(id), ativo)
-            ?: throw NotFoundException("Desconto não encontrado")
+    fun excluir(id: Long) {
+        if (!descontoRepository.inativar(validarId(id))) {
+            throw NotFoundException("Desconto não encontrado")
+        }
+    }
 
     private fun validarId(id: Long): Long {
         if (id <= 0) {
@@ -118,6 +118,15 @@ class DescontoUseCase(
         val valorInformado = this[campo] ?: return null
         return valorInformado as? String
             ?: throw BadRequestException("O campo '$campo' deve ser texto ou null")
+    }
+
+    private fun Map<String, Any?>.booleano(
+        campo: String,
+        valorAtual: Boolean,
+    ): Boolean {
+        if (!containsKey(campo)) return valorAtual
+        return this[campo] as? Boolean
+            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
     }
 
     private fun Map<String, Any?>.tipo(

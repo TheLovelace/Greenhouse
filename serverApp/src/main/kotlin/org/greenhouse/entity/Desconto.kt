@@ -1,12 +1,8 @@
 package org.greenhouse.entity
 
+import org.greenhouse.enums.TipoDesconto
 import java.math.BigDecimal
 import java.time.OffsetDateTime
-
-enum class TipoDesconto {
-    PERCENTUAL,
-    VALOR_FIXO,
-}
 
 data class Desconto(
     val id: Long? = null,

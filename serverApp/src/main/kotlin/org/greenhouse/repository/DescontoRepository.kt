@@ -2,7 +2,7 @@ package org.greenhouse.repository
 
 import org.greenhouse.adapter.DatabaseConfig
 import org.greenhouse.entity.Desconto
-import org.greenhouse.entity.TipoDesconto
+import org.greenhouse.enums.TipoDesconto
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.Table
@@ -91,27 +91,16 @@ class DescontoRepository(
             }
         }
 
-    fun atualizarStatus(
-        id: Long,
-        ativo: Boolean,
-    ): Desconto? =
+    fun inativar(id: Long): Boolean =
         databaseConfig.session {
             val linhasAtualizadas =
                 Descontos.update(
                     { Descontos.id eq id },
                 ) {
-                    it[Descontos.ativo] = ativo
+                    it[Descontos.ativo] = false
                 }
 
-            if (linhasAtualizadas == 0) {
-                null
-            } else {
-                Descontos
-                    .selectAll()
-                    .where { Descontos.id eq id }
-                    .single()
-                    .toDesconto()
-            }
+            linhasAtualizadas > 0
         }
 
     private fun ResultRow.toDesconto() =
