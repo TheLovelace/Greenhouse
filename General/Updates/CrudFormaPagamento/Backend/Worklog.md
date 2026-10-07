@@ -27,9 +27,16 @@ Decisão autônoma: agrupar tudo em uma track `Backend`; não foi encontrada sep
 - Adicionada fixture de integração com limpeza física dos registros criados pelos testes e testes para criação, leitura, atualização parcial, inativação, validações e IDs inválidos/inexistentes.
 - Adicionado teste MVC cobrindo todas as cinco operações com token ausente/inválido e tokens válidos de `ADMIN` e `FUNCIONARIO`; o fragmento OpenAPI é verificado como acessível sem token.
 - Nenhuma migration foi criada ou executada.
+
 - Revisão estática: caminhos e referências do recurso estão registrados no OpenAPI principal e whitelist; o fragmento declara JWT nas cinco operações e parâmetros de ID nos três métodos com `{id}`. `git diff --check` e busca de whitespace nos arquivos novos não apontaram problemas.
 - O parser YAML automatizado não estava disponível (PyYAML ausente); a sintaxe foi revisada no fragmento, mas não validada por parser.
 - Com autorização do solicitante, `.\gradlew.bat :serverApp:test` passou: 22 testes (4 `FormaPagamentoSecurityTest`, 5 `FuncionarioSecurityTest`, 11 `AuthUseCaseTest`, 2 `FuncionarioProvisioningTest`).
 - Com autorização do solicitante, `.\gradlew.bat :shared:compileTestKotlinJvm` passou e compilou os testes de integração novos. A execução `testDesktop` foi omitida porque `DATABASE_URL` não está configurada no ambiente; não foi acessado banco.
 - `.\gradlew.bat ktlintCheck` falhou por violações de estilo em arquivos fora deste CRUD (`androidApp/build.gradle.kts`, `desktopApp/build.gradle.kts`, `shared/src/commonMain/kotlin/org/greenhouse/App.kt` e `shared/src/androidHostTest/kotlin/org/greenhouse/SharedLogicAndroidHostTest.kt`). Verificações específicas também encontraram violações preexistentes em outros arquivos do `serverApp`; nenhuma violação apontada nos arquivos novos deste CRUD.
 - Nenhuma migration foi criada ou executada.
+
+## Sessão de correção do teste PATCH
+
+- Diagnóstico: o teste `deve atualizar apenas os campos enviados` alterava o nome para o valor fixo `PIX`. Como `forma_pagamento.nome` tem constraint `UNIQUE` e `PIX` já existe nos dados iniciais da base de integração, a atualização pode falhar com `PSQLException`, reportada pelo teste como `DatabaseConnectionException`.
+- Alterado o teste para usar um nome com UUID, mantendo a finalidade de verificar PATCH parcial sem colidir com registros pré-existentes.
+- Com autorização do solicitante, `.\gradlew.bat testDesktop` passou (`BUILD SUCCESSFUL`). O Gradle compilou e executou `shared:jvmTest`; houve apenas o aviso esperado de que testes do simulador iOS requerem macOS.
