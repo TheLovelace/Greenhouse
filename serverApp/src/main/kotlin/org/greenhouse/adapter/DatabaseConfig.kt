@@ -24,9 +24,9 @@ class DatabaseConfig(url: String) {
 
     private fun mapException(e: Exception): AppException =
         when {
-            e !is SQLException -> DatabaseConnectionException(e)
-            e.sqlState == "28P01" -> AuthenticationException(e)
-            e.sqlState?.startsWith("08") == true -> DatabaseConnectionException(e)
-            else -> DatabaseConnectionException(e)
+            e !is SQLException -> DatabaseConnectionException(cause = e)
+            e.sqlState == "28P01" -> AuthenticationException(cause = e)
+            e.sqlState?.startsWith("08") == true -> DatabaseConnectionException(cause = e)
+            else -> DatabaseConnectionException(cause = e)
         }
 }
