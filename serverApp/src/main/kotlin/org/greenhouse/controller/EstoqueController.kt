@@ -1,8 +1,8 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Estoque
-import org.greenhouse.entity.MovimentacaoEstoque
-import org.greenhouse.usecase.EstoqueUseCase
+import org.greenhouse.dto.EstoqueDTO as Estoque
+import org.greenhouse.dto.MovimentacaoEstoqueDTO as MovimentacaoEstoque
+import org.greenhouse.service.EstoqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/estoque")
 class EstoqueController(
-    private val estoqueUseCase: EstoqueUseCase,
+    private val estoqueUseCase: EstoqueService,
 ) {
     @GetMapping("/{produtoId}")
     fun buscarPosicaoPorProdutoId(

@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Produto
-import org.greenhouse.usecase.ProdutoUseCase
+import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.service.ProdutoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/produto")
 class ProdutoController(
-    private val produtoUseCase: ProdutoUseCase,
+    private val produtoUseCase: ProdutoService,
 ) {
 
     @PostMapping

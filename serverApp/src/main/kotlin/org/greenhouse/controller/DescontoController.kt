@@ -1,7 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.entity.Desconto
-import org.greenhouse.usecase.DescontoUseCase
+import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.service.DescontoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/desconto")
 class DescontoController(
-    private val descontoUseCase: DescontoUseCase,
+    private val descontoUseCase: DescontoService,
 ) {
     @PostMapping
     fun criar(
