@@ -14,13 +14,13 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.springframework.stereotype.Repository
 
-private object Produtos : Table("produto") {
+private object ProdutosEstoqueTable : Table("produto") {
     val id = long("id")
 
     override val primaryKey = PrimaryKey(id)
 }
 
-private object Estoques : Table("estoque") {
+private object EstoquesTable : Table("estoque") {
     val produtoId = long("produto_id")
     val quantidadeFisica = integer("quantidade_fisica")
     val quantidadeReservada = integer("quantidade_reservada")
@@ -29,7 +29,7 @@ private object Estoques : Table("estoque") {
     override val primaryKey = PrimaryKey(produtoId)
 }
 
-private object MovimentacoesEstoque : Table("movimentacao_estoque") {
+private object MovimentacoesEstoqueTable : Table("movimentacao_estoque") {
     val id = long("id").autoIncrement()
     val produtoId = long("produto_id")
     val pedidoId = long("pedido_id").nullable()
@@ -49,34 +49,39 @@ class EstoqueRepository(
 ) {
     fun listarMovimentacoes(): List<MovimentacaoEstoque> =
         databaseConfig.session {
-            MovimentacoesEstoque
+            MovimentacoesEstoqueTable
                 .selectAll()
                 .orderBy(
-                    MovimentacoesEstoque.dataHora to SortOrder.DESC,
-                    MovimentacoesEstoque.id to SortOrder.DESC,
+                    MovimentacoesEstoqueTable.dataHora to SortOrder.DESC,
+                    MovimentacoesEstoqueTable.id to SortOrder.DESC,
                 ).map { it.toMovimentacaoEstoque() }
         }
 
     fun buscarPosicaoPorProdutoId(produtoId: Long): Estoque? =
         databaseConfig.session {
             val produtoExiste =
-                Produtos
+                ProdutosEstoqueTable
                     .selectAll()
-                    .where { Produtos.id eq produtoId }
+                    .where { ProdutosEstoqueTable.id eq produtoId }
                     .singleOrNull() != null
 
             if (!produtoExiste) {
                 null
             } else {
                 val estoque =
-                    Estoques
+                    EstoquesTable
                         .selectAll()
-                        .where { Estoques.produtoId eq produtoId }
+                        .where { EstoquesTable.produtoId eq produtoId }
                         .singleOrNull()
 
-                val quantidadeFisica = estoque?.get(Estoques.quantidadeFisica) ?: 0
-                val quantidadeReservada = estoque?.get(Estoques.quantidadeReservada) ?: 0
-                val quantidadeMinima = estoque?.get(Estoques.quantidadeMinima) ?: 0
+                val quantidadeFisica =
+                    estoque?.get(EstoquesTable.quantidadeFisica) ?: 0
+
+                val quantidadeReservada =
+                    estoque?.get(EstoquesTable.quantidadeReservada) ?: 0
+
+                val quantidadeMinima =
+                    estoque?.get(EstoquesTable.quantidadeMinima) ?: 0
 
                 Estoque(
                     produtoId = produtoId,
@@ -88,12 +93,14 @@ class EstoqueRepository(
             }
         }
 
-    fun registrarMovimentacao(movimentacao: MovimentacaoEstoque): MovimentacaoEstoque? =
+    fun registrarMovimentacao(
+        movimentacao: MovimentacaoEstoque,
+    ): MovimentacaoEstoque? =
         databaseConfig.session {
             val produtoExiste =
-                Produtos
+                ProdutosEstoqueTable
                     .selectAll()
-                    .where { Produtos.id eq movimentacao.produtoId }
+                    .where { ProdutosEstoqueTable.id eq movimentacao.produtoId }
                     .forUpdate()
                     .singleOrNull() != null
 
@@ -102,19 +109,26 @@ class EstoqueRepository(
             }
 
             val estoque =
-                Estoques
+                EstoquesTable
                     .selectAll()
-                    .where { Estoques.produtoId eq movimentacao.produtoId }
+                    .where {
+                        EstoquesTable.produtoId eq movimentacao.produtoId
+                    }
                     .forUpdate()
                     .singleOrNull()
-            val quantidadeFisica = estoque?.get(Estoques.quantidadeFisica) ?: 0
-            val quantidadeReservada = estoque?.get(Estoques.quantidadeReservada) ?: 0
-            val quantidadeMinima = estoque?.get(Estoques.quantidadeMinima) ?: 0
+
+            val quantidadeFisica =
+                estoque?.get(EstoquesTable.quantidadeFisica) ?: 0
+
+            val quantidadeReservada =
+                estoque?.get(EstoquesTable.quantidadeReservada) ?: 0
+
             val novaQuantidadeFisica =
                 when (movimentacao.tipo) {
                     TipoMovimentacaoEstoque.ENTRADA,
                     TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
                     -> quantidadeFisica.toLong() + movimentacao.quantidade
+
                     TipoMovimentacaoEstoque.SAIDA,
                     TipoMovimentacaoEstoque.AJUSTE_SAIDA,
                     TipoMovimentacaoEstoque.PERDA,
@@ -126,25 +140,33 @@ class EstoqueRepository(
                     "A movimentação não pode reduzir o estoque físico abaixo da quantidade reservada",
                 )
             }
+
             if (novaQuantidadeFisica > Int.MAX_VALUE) {
-                throw UnprocessableEntityException("A quantidade física excede o limite suportado pelo estoque")
+                throw UnprocessableEntityException(
+                    "A quantidade física excede o limite suportado pelo estoque",
+                )
             }
 
             if (estoque == null) {
-                Estoques.insert {
+                EstoquesTable.insert {
                     it[produtoId] = movimentacao.produtoId
-                    it[Estoques.quantidadeFisica] = novaQuantidadeFisica.toInt()
-                    it[Estoques.quantidadeReservada] = 0
-                    it[Estoques.quantidadeMinima] = 0
+                    it[quantidadeFisica] = novaQuantidadeFisica.toInt()
+                    it[quantidadeReservada] = 0
+                    it[quantidadeMinima] = 0
                 }
             } else {
-                Estoques.update({ Estoques.produtoId eq movimentacao.produtoId }) {
-                    it[Estoques.quantidadeFisica] = novaQuantidadeFisica.toInt()
+                EstoquesTable.update(
+                    {
+                        EstoquesTable.produtoId eq movimentacao.produtoId
+                    },
+                ) {
+                    it[quantidadeFisica] =
+                        novaQuantidadeFisica.toInt()
                 }
             }
 
             val movimentacaoId =
-                MovimentacoesEstoque.insert {
+                MovimentacoesEstoqueTable.insert {
                     it[produtoId] = movimentacao.produtoId
                     it[pedidoId] = movimentacao.pedidoId
                     it[compraId] = movimentacao.compraId
@@ -152,25 +174,30 @@ class EstoqueRepository(
                     it[tipo] = movimentacao.tipo.name
                     it[quantidade] = movimentacao.quantidade
                     it[observacao] = movimentacao.observacao
-                }[MovimentacoesEstoque.id]
+                }[MovimentacoesEstoqueTable.id]
 
-            MovimentacoesEstoque
+            MovimentacoesEstoqueTable
                 .selectAll()
-                .where { MovimentacoesEstoque.id eq movimentacaoId }
+                .where {
+                    MovimentacoesEstoqueTable.id eq movimentacaoId
+                }
                 .single()
                 .toMovimentacaoEstoque()
         }
 
     private fun ResultRow.toMovimentacaoEstoque() =
         MovimentacaoEstoque(
-            id = this[MovimentacoesEstoque.id],
-            produtoId = this[MovimentacoesEstoque.produtoId],
-            pedidoId = this[MovimentacoesEstoque.pedidoId],
-            compraId = this[MovimentacoesEstoque.compraId],
-            funcionarioId = this[MovimentacoesEstoque.funcionarioId],
-            tipo = TipoMovimentacaoEstoque.valueOf(this[MovimentacoesEstoque.tipo]),
-            quantidade = this[MovimentacoesEstoque.quantidade],
-            observacao = this[MovimentacoesEstoque.observacao],
-            dataHora = this[MovimentacoesEstoque.dataHora],
+            id = this[MovimentacoesEstoqueTable.id],
+            produtoId = this[MovimentacoesEstoqueTable.produtoId],
+            pedidoId = this[MovimentacoesEstoqueTable.pedidoId],
+            compraId = this[MovimentacoesEstoqueTable.compraId],
+            funcionarioId = this[MovimentacoesEstoqueTable.funcionarioId],
+            tipo =
+                TipoMovimentacaoEstoque.valueOf(
+                    this[MovimentacoesEstoqueTable.tipo],
+                ),
+            quantidade = this[MovimentacoesEstoqueTable.quantidade],
+            observacao = this[MovimentacoesEstoqueTable.observacao],
+            dataHora = this[MovimentacoesEstoqueTable.dataHora],
         )
 }
