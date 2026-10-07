@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.springdoc.openapi)
     implementation(libs.exposed.core)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.java.time)
     implementation(libs.postgresql)
 
     implementation("org.flywaydb:flyway-core")
