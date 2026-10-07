@@ -89,6 +89,13 @@ class EstoqueFixture {
         if (produtoIds.isEmpty()) return
 
         DriverManager.getConnection(databaseUrl).use { connection ->
+            connection.prepareStatement("DELETE FROM movimentacao_estoque WHERE produto_id = ?").use { statement ->
+                produtoIds.forEach { produtoId ->
+                    statement.setLong(1, produtoId)
+                    statement.addBatch()
+                }
+                statement.executeBatch()
+            }
             connection.prepareStatement("DELETE FROM estoque WHERE produto_id = ?").use { estoqueStatement ->
                 produtoIds.forEach { produtoId ->
                     estoqueStatement.setLong(1, produtoId)

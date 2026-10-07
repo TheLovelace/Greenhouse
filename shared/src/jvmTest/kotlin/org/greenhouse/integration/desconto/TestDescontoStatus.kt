@@ -2,7 +2,7 @@ package org.greenhouse.integration.desconto
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.entity.TipoDesconto
+import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -23,12 +23,12 @@ class TestDescontoStatus {
                 )
             val original = fixture.useCase.buscarPorId(id)
 
-            val inativado = fixture.useCase.atualizarStatus(id, false)
+            val inativado = fixture.useCase.atualizar(id, mapOf("ativo" to false))
             assertEquals(false, inativado.ativo)
             assertEquals(id, inativado.id)
             assertEquals(original.copy(ativo = false), inativado)
 
-            val reativado = fixture.useCase.atualizarStatus(id, true)
+            val reativado = fixture.useCase.atualizar(id, mapOf("ativo" to true))
             assertEquals(true, reativado.ativo)
             assertEquals(id, reativado.id)
             assertEquals(original, reativado)
@@ -44,7 +44,7 @@ class TestDescontoStatus {
         val fixture = DescontoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.useCase.atualizarStatus(Long.MAX_VALUE, false)
+            fixture.useCase.atualizar(Long.MAX_VALUE, mapOf("ativo" to false))
         }
     }
 
@@ -53,7 +53,7 @@ class TestDescontoStatus {
         val fixture = DescontoFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.useCase.atualizarStatus(0, false)
+            fixture.useCase.atualizar(0, mapOf("ativo" to false))
         }
     }
 }

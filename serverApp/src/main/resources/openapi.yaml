@@ -24,10 +24,10 @@ paths:
     $ref: './openapi/desconto.yml#/paths/~1desconto'
   /desconto/{id}:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
-  /desconto/{id}/status:
-    $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D~1status'
   /estoque/{produtoId}:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1%7BprodutoId%7D'
+  /estoque/movimentacoes:
+    $ref: './openapi/estoque.yml#/paths/~1estoque~1movimentacoes'
   /status:
     $ref: './openapi/status.yml#/paths/~1status'
 components:
@@ -38,6 +38,8 @@ components:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     EstoquePosicao:
       $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
+    MovimentacaoEstoque:
+      $ref: './openapi/estoque.yml#/components/schemas/MovimentacaoEstoque'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
