@@ -1,9 +1,9 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
 import org.greenhouse.enums.TipoMovimentacaoEstoque
 import java.time.OffsetDateTime
 
-data class MovimentacaoEstoque(
+data class MovimentacaoEstoqueDTO(
     val id: Long? = null,
     val produtoId: Long,
     val pedidoId: Long? = null,

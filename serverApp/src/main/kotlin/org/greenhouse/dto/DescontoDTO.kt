@@ -1,10 +1,10 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
 import org.greenhouse.enums.TipoDesconto
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
-data class Desconto(
+data class DescontoDTO(
     val id: Long? = null,
     val titulo: String,
     val descricao: String? = null,

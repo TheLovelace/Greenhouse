@@ -1,6 +1,6 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
-data class Usuario(
+data class UsuarioDTO(
     val id: Long? = null,
     val funcionarioId: Long,
     val login: String,

@@ -1,8 +1,8 @@
-package org.greenhouse.entity
+package org.greenhouse.dto
 
 import java.math.BigDecimal
 
-data class Produto(
+data class ProdutoDTO(
     val id: Long? = null,
     val codigo: String? = null,
     val nome: String,
