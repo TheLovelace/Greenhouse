@@ -1,0 +1,178 @@
+paths:
+  /cliente:
+    post:
+      tags:
+        - Cliente
+      summary: Cadastrar cliente
+      description: Cria um cliente ativo por padrão. Campos id e ativo enviados no payload são ignorados.
+      operationId: criarCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cliente'
+      responses:
+        '201':
+          description: Cliente cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+    get:
+      tags:
+        - Cliente
+      summary: Listar clientes
+      description: Lista clientes ativos e inativos. Aceita filtros opcionais por nome (parcial, sem diferenciar maiúsculas), telefone (parcial) e status ativo.
+      operationId: listarClientes
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Trecho do nome do cliente
+          schema:
+            type: string
+        - name: telefone
+          in: query
+          required: false
+          description: Trecho do telefone do cliente
+          schema:
+            type: string
+        - name: ativo
+          in: query
+          required: false
+          description: Filtra por clientes ativos (true) ou inativos (false)
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Clientes encontrados (lista vazia quando nenhum corresponde aos filtros)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cliente'
+  /cliente/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico do cliente
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    get:
+      tags:
+        - Cliente
+      summary: Buscar cliente por ID
+      operationId: buscarClientePorId
+      responses:
+        '200':
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    patch:
+      tags:
+        - Cliente
+      summary: Atualizar cliente
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Envie null em cpf ou email para limpar o campo. Também usado para inativar (ativo=false) e reativar (ativo=true). Também aceita o objeto completo do cliente.
+      operationId: atualizarCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientePatch'
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+components:
+  schemas:
+    Cliente:
+      type: object
+      required:
+        - nome
+        - telefone
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Gerado pelo banco, não é necessário enviar na criação.
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+          default: false
+          description: Indica se o telefone possui WhatsApp.
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+          description: CPF com exatamente 11 dígitos numéricos. Deve ser único entre clientes.
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        ativo:
+          type: boolean
+          default: true
+          description: Clientes inativos não podem ser selecionados em novos pedidos.
+    ClientePatch:
+      type: object
+      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização. cpf e email aceitam null para limpar o campo.
+      additionalProperties: false
+      anyOf:
+        - required: [nome]
+        - required: [telefone]
+        - required: [whatsapp]
+        - required: [cpf]
+        - required: [email]
+        - required: [ativo]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        ativo:
+          type: boolean
