@@ -2,7 +2,7 @@ package org.greenhouse.usecase
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.entity.EstoquePosicao
+import org.greenhouse.entity.Estoque
 import org.greenhouse.entity.MovimentacaoEstoque
 import org.greenhouse.enums.TipoMovimentacaoEstoque
 import org.greenhouse.repository.EstoqueRepository
@@ -14,7 +14,7 @@ class EstoqueUseCase(
 ) {
     fun listarMovimentacoes(): List<MovimentacaoEstoque> = estoqueRepository.listarMovimentacoes()
 
-    fun buscarPosicaoPorProdutoId(produtoId: Long): EstoquePosicao {
+    fun buscarPosicaoPorProdutoId(produtoId: Long): Estoque {
         if (produtoId <= 0) {
             throw BadRequestException("O id do produto deve ser maior que zero")
         }

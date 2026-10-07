@@ -2,7 +2,7 @@ package org.greenhouse.integration.estoque
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.entity.EstoquePosicao
+import org.greenhouse.entity.Estoque
 import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ class TestEstoqueGet {
                 )
 
             assertEquals(
-                EstoquePosicao(
+                Estoque(
                     produtoId = produtoId,
                     quantidadeFisica = 12,
                     quantidadeReservada = 2,
@@ -44,7 +44,7 @@ class TestEstoqueGet {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             assertEquals(
-                EstoquePosicao(
+                Estoque(
                     produtoId = produtoId,
                     quantidadeFisica = 0,
                     quantidadeReservada = 0,
