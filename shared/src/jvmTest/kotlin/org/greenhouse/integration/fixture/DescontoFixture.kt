@@ -2,7 +2,7 @@ package org.greenhouse.integration.fixture
 
 import org.greenhouse.adapter.DatabaseConfig
 import org.greenhouse.entity.Desconto
-import org.greenhouse.entity.TipoDesconto
+import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.greenhouse.usecase.DescontoUseCase
 import java.math.BigDecimal
