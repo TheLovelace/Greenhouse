@@ -1,3 +1,4 @@
+-- AUX C: cadastro tecnico dos dispositivos para receber leituras e configurar alertas.
 CREATE TABLE dispositivo_iot (
     id BIGSERIAL PRIMARY KEY,
     codigo VARCHAR(50) NOT NULL UNIQUE,
