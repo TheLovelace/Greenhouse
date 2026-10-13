@@ -16,6 +16,7 @@ class DescontoMapper {
             model.dataInicio,
             model.dataFim,
             model.ativo,
+            model.quantidadeMinimaItens,
         )
 
     fun toModel(dto: DescontoDTO) =
@@ -28,5 +29,6 @@ class DescontoMapper {
             dto.dataInicio,
             dto.dataFim,
             dto.ativo,
+            dto.quantidadeMinimaItens,
         )
 }

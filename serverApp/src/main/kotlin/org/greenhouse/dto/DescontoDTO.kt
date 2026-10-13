@@ -13,4 +13,5 @@ data class DescontoDTO(
     val dataInicio: OffsetDateTime? = null,
     val dataFim: OffsetDateTime? = null,
     val ativo: Boolean = true,
+    val quantidadeMinimaItens: Int = 1,
 )

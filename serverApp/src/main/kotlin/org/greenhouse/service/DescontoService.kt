@@ -40,7 +40,18 @@ class DescontoService(
             descontoRepository.buscarPorId(idValidado)
                 ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
 
-        val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim", "ativo")
+        val camposPermitidos =
+            setOf(
+                "id",
+                "titulo",
+                "descricao",
+                "tipo",
+                "valor",
+                "dataInicio",
+                "dataFim",
+                "ativo",
+                "quantidadeMinimaItens",
+            )
         val camposDesconhecidos = campos.keys - camposPermitidos
         if (camposDesconhecidos.isNotEmpty()) {
             throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
@@ -58,6 +69,11 @@ class DescontoService(
                 dataInicio = campos.data("dataInicio", descontoAtual.dataInicio),
                 dataFim = campos.data("dataFim", descontoAtual.dataFim),
                 ativo = campos.booleano("ativo", descontoAtual.ativo),
+                quantidadeMinimaItens =
+                    campos.quantidadeMinimaItens(
+                        "quantidadeMinimaItens",
+                        descontoAtual.quantidadeMinimaItens,
+                    ),
             )
         validar(descontoAtualizado)
 
@@ -84,6 +100,12 @@ class DescontoService(
         }
         if (desconto.titulo.length > 150) {
             throw UnprocessableEntityException("O título do desconto deve ter no máximo 150 caracteres")
+        }
+        if (desconto.descricao != null && desconto.descricao.length > 1000) {
+            throw UnprocessableEntityException("A descrição do desconto deve ter no máximo 1000 caracteres")
+        }
+        if (desconto.quantidadeMinimaItens < 1) {
+            throw UnprocessableEntityException("A quantidade mínima de itens deve ser maior que zero")
         }
         if (desconto.valor <= BigDecimal.ZERO) {
             throw UnprocessableEntityException("O valor do desconto deve ser maior que zero")
@@ -129,6 +151,23 @@ class DescontoService(
         if (!containsKey(campo)) return valorAtual
         return this[campo] as? Boolean
             ?: throw BadRequestException("O campo '$campo' deve ser booleano")
+    }
+
+    private fun Map<String, Any?>.quantidadeMinimaItens(
+        campo: String,
+        valorAtual: Int,
+    ): Int {
+        if (!containsKey(campo)) return valorAtual
+        val valorInformado =
+            this[campo] as? Number
+                ?: throw BadRequestException("O campo '$campo' deve ser um número inteiro")
+        return try {
+            BigDecimal(valorInformado.toString()).intValueExact()
+        } catch (e: NumberFormatException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro", e)
+        } catch (e: ArithmeticException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro dentro do limite suportado", e)
+        }
     }
 
     private fun Map<String, Any?>.tipo(

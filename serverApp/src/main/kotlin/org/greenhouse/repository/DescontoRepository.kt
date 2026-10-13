@@ -30,6 +30,7 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
                 desconto.dataInicio,
                 desconto.dataFim,
                 desconto.ativo,
+                desconto.quantidadeMinimaItens,
             ) == 0
         ) {
             return null
@@ -43,7 +44,8 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
         """
         UPDATE Desconto d
         SET d.titulo = :titulo, d.descricao = :descricao, d.tipo = :tipo,
-            d.valor = :valor, d.dataInicio = :dataInicio, d.dataFim = :dataFim, d.ativo = :ativo
+            d.valor = :valor, d.dataInicio = :dataInicio, d.dataFim = :dataFim,
+            d.ativo = :ativo, d.quantidadeMinimaItens = :quantidadeMinimaItens
         WHERE d.id = :id
         """,
     )
@@ -56,6 +58,7 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
         @Param("dataInicio") dataInicio: OffsetDateTime?,
         @Param("dataFim") dataFim: OffsetDateTime?,
         @Param("ativo") ativo: Boolean,
+        @Param("quantidadeMinimaItens") quantidadeMinimaItens: Int,
     ): Int
 
     fun inativar(id: Long): Boolean = inativarPorId(id) > 0
