@@ -18,7 +18,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EstoquePosicao'
+                $ref: '#/components/schemas/Estoque'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
@@ -43,13 +43,13 @@ paths:
                 schema:
                   type: array
                   items:
-                    $ref: '#/components/schemas/EstoquePosicao'
+                    $ref: '#/components/schemas/Estoque'
   /estoque/{produtoId}:
     get:
       tags:
         - Estoque
-      summary: Consultar informaçõesde estoque por produto
-      description: Retorna os saldos e os dados de controle do estoque. Produtos existentes sem posição cadastrada retornam quantidades zeradas, localização nula e estoque desbloqueado.
+      summary: Consultar informações de estoque por produto
+      description: Retorna os saldos e os dados de controle do estoque. Produtos existentes sem estoque registrado retornam quantidades zeradas, localização nula e estoque desbloqueado.
       operationId: consultarEstoquePorProduto
       parameters:
         - name: produtoId
@@ -66,7 +66,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EstoquePosicao'
+                $ref: '#/components/schemas/Estoque'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
@@ -98,7 +98,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EstoquePosicao'
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Estoque
+      summary: Excluir informações de estoque do produto
+      description: Exclui o estoque de um produto. A exclusão é impedida enquanto houver quantidade reservada; saldo físico e demais campos não impedem a exclusão.
+      operationId: excluirPosicaoEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Informações de estoque excluídas
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
@@ -155,7 +177,7 @@ components:
           maxLength: 100
         bloqueado:
           type: boolean
-    EstoquePosicao:
+    Estoque:
       type: object
       required:
         - produtoId

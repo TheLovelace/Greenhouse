@@ -54,6 +54,24 @@ class EstoqueService(
     fun listarPosicoes(): List<EstoqueDTO> =
         estoqueRepository.listar().map(estoqueMapper::toDto)
 
+    @Transactional(rollbackFor = [Exception::class])
+    fun excluirPosicao(produtoId: Long) {
+        validarId(produtoId)
+        produtoRepository.buscarParaAtualizar(produtoId)
+            ?: throw NotFoundException("Produto não encontrado")
+        val estoque =
+            estoqueRepository.buscarParaAtualizar(produtoId)
+                ?: throw NotFoundException("Posição de estoque não encontrada")
+
+        if (estoque.quantidadeReservada > 0) {
+            throw UnprocessableEntityException(
+                "A posição de estoque não pode ser excluída enquanto houver quantidade reservada",
+            )
+        }
+
+        estoqueRepository.delete(estoque)
+    }
+
     fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueDTO {
         validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {
