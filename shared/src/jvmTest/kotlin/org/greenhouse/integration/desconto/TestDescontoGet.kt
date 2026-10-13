@@ -28,6 +28,7 @@ class TestDescontoGet {
                         ativo = true,
                         dataInicio = dataInicio,
                         dataFim = dataFim,
+                        quantidadeMinimaItens = 2,
                     ),
                     fixture.novoDesconto(
                         tipo = TipoDesconto.VALOR_FIXO,
@@ -45,6 +46,7 @@ class TestDescontoGet {
             assertEquals(BigDecimal("10.00"), percentual.valor)
             assertEquals(dataInicio.toInstant(), assertNotNull(percentual.dataInicio).toInstant())
             assertEquals(dataFim.toInstant(), assertNotNull(percentual.dataFim).toInstant())
+            assertEquals(2, percentual.quantidadeMinimaItens)
             assertEquals(TipoDesconto.VALOR_FIXO, descontos.single { it.id == idsCriados[1] }.tipo)
         } finally {
             fixture.limpar()
@@ -56,13 +58,19 @@ class TestDescontoGet {
         val fixture = DescontoFixture()
 
         try {
-            val id = fixture.novoDesconto(tipo = TipoDesconto.VALOR_FIXO, valor = BigDecimal("15.00"))
+            val id =
+                fixture.novoDesconto(
+                    tipo = TipoDesconto.VALOR_FIXO,
+                    valor = BigDecimal("15.00"),
+                    quantidadeMinimaItens = 4,
+                )
 
             val desconto = fixture.service.buscarPorId(id)
 
             assertEquals(id, desconto.id)
             assertEquals(TipoDesconto.VALOR_FIXO, desconto.tipo)
             assertEquals(BigDecimal("15.00"), desconto.valor)
+            assertEquals(4, desconto.quantidadeMinimaItens)
         } finally {
             fixture.limpar()
         }

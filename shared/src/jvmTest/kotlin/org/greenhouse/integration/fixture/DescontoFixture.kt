@@ -31,6 +31,7 @@ class DescontoFixture {
         ativo: Boolean = true,
         dataInicio: OffsetDateTime? = null,
         dataFim: OffsetDateTime? = null,
+        quantidadeMinimaItens: Int = 1,
     ): Long {
         val titulo = "Desconto ${UUID.randomUUID()}"
         val id =
@@ -38,8 +39,10 @@ class DescontoFixture {
                 val statement =
                     connection.prepareStatement(
                         """
-                        INSERT INTO desconto (titulo, descricao, tipo, valor, data_inicio, data_fim, ativo)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO desconto (
+                            titulo, descricao, tipo, valor, data_inicio, data_fim, ativo, quantidade_minima_itens
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """.trimIndent(),
                     )
@@ -59,6 +62,7 @@ class DescontoFixture {
                         it.setObject(6, dataFim)
                     }
                     it.setBoolean(7, ativo)
+                    it.setInt(8, quantidadeMinimaItens)
                     it.executeQuery().use { resultSet ->
                         check(resultSet.next()) { "O banco não retornou o ID do desconto criado" }
                         resultSet.getLong("id")

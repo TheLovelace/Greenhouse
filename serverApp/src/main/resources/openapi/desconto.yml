@@ -129,6 +129,7 @@ components:
         - required: [dataInicio]
         - required: [dataFim]
         - required: [ativo]
+        - required: [quantidadeMinimaItens]
       properties:
         id:
           type: integer
@@ -142,6 +143,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -163,6 +165,11 @@ components:
         ativo:
           type: boolean
           description: Envie true para ativar ou false para inativar.
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.
     DescontoCadastro:
       type: object
       required:
@@ -177,6 +184,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -199,6 +207,12 @@ components:
         ativo:
           type: boolean
           default: true
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.
     Desconto:
       type: object
       required:
@@ -207,6 +221,7 @@ components:
         - tipo
         - valor
         - ativo
+        - quantidadeMinimaItens
       properties:
         id:
           type: integer
@@ -217,6 +232,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -237,3 +253,8 @@ components:
           nullable: true
         ativo:
           type: boolean
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.

@@ -20,7 +20,7 @@ data class Desconto(
     var id: Long? = null,
     @field:Column(nullable = false, length = 150)
     var titulo: String = "",
-    @field:Column(columnDefinition = "TEXT")
+    @field:Column(length = 1000)
     var descricao: String? = null,
     @field:Enumerated(EnumType.STRING)
     @field:Column(nullable = false, length = 20)
@@ -33,4 +33,6 @@ data class Desconto(
     var dataFim: OffsetDateTime? = null,
     @field:Column(nullable = false)
     var ativo: Boolean = true,
+    @field:Column(name = "quantidade_minima_itens", nullable = false)
+    var quantidadeMinimaItens: Int = 1,
 )

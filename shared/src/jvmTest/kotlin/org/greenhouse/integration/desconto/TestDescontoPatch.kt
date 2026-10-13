@@ -32,11 +32,32 @@ class TestDescontoPatch {
             assertEquals(true, atualizado.ativo)
             assertEquals(TipoDesconto.PERCENTUAL, atualizado.tipo)
             assertEquals(BigDecimal("10.00"), atualizado.valor)
+            assertEquals(1, atualizado.quantidadeMinimaItens)
 
             val consultado = fixture.service.buscarPorId(id)
             assertEquals("Título atualizado", consultado.titulo)
             assertEquals(true, consultado.ativo)
+            assertEquals(1, consultado.quantidadeMinimaItens)
             assertEquals(id, consultado.id)
+        } finally {
+            fixture.limpar()
+        }
+    }
+
+    @Test
+    fun `deve atualizar quantidade minima de itens`() {
+        val fixture = DescontoFixture()
+        val id = fixture.novoDesconto()
+
+        try {
+            val atualizado =
+                fixture.service.atualizar(
+                    id,
+                    mapOf("quantidadeMinimaItens" to 5),
+                )
+
+            assertEquals(5, atualizado.quantidadeMinimaItens)
+            assertEquals(5, fixture.service.buscarPorId(id).quantidadeMinimaItens)
         } finally {
             fixture.limpar()
         }
@@ -113,6 +134,12 @@ class TestDescontoPatch {
                 fixture.service.atualizar(id, mapOf("ativo" to "false"))
             }
             assertFailsWith<BadRequestException> {
+                fixture.service.atualizar(id, mapOf("quantidadeMinimaItens" to "3"))
+            }
+            assertFailsWith<BadRequestException> {
+                fixture.service.atualizar(id, mapOf("quantidadeMinimaItens" to 2.5))
+            }
+            assertFailsWith<BadRequestException> {
                 fixture.service.atualizar(id, mapOf("dataInicio" to "data inválida"))
             }
         } finally {
@@ -128,6 +155,12 @@ class TestDescontoPatch {
         try {
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.atualizar(id, mapOf("titulo" to " "))
+            }
+            assertFailsWith<UnprocessableEntityException> {
+                fixture.service.atualizar(id, mapOf("descricao" to "a".repeat(1001)))
+            }
+            assertFailsWith<UnprocessableEntityException> {
+                fixture.service.atualizar(id, mapOf("quantidadeMinimaItens" to 0))
             }
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.atualizar(id, mapOf("tipo" to "INVALIDO"))
