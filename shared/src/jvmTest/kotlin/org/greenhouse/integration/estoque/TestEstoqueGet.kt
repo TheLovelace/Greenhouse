@@ -19,6 +19,8 @@ class TestEstoqueGet {
                     quantidadeFisica = 12,
                     quantidadeReservada = 2,
                     quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
                 )
 
             assertEquals(
@@ -28,6 +30,8 @@ class TestEstoqueGet {
                     quantidadeReservada = 2,
                     quantidadeDisponivel = 10,
                     quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
                 ),
                 fixture.service.buscarPosicaoPorProdutoId(produtoId),
             )
@@ -50,6 +54,8 @@ class TestEstoqueGet {
                     quantidadeReservada = 0,
                     quantidadeDisponivel = 0,
                     quantidadeMinima = 0,
+                    localizacao = null,
+                    bloqueado = false,
                 ),
                 fixture.service.buscarPosicaoPorProdutoId(produtoId),
             )

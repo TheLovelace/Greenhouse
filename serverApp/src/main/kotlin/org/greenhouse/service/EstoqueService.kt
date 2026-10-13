@@ -4,33 +4,22 @@ import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.dto.EstoqueDTO
-import org.greenhouse.dto.MovimentacaoEstoqueDTO as MovimentacaoEstoque
-import org.greenhouse.model.Estoque as EstoqueModel
-import org.greenhouse.enums.TipoMovimentacaoEstoque
 import org.greenhouse.mapper.EstoqueMapper
-import org.greenhouse.mapper.MovimentacaoEstoqueMapper
+import org.greenhouse.model.Estoque
 import org.greenhouse.repository.EstoqueRepository
-import org.greenhouse.repository.MovimentacaoEstoqueRepository
 import org.greenhouse.repository.ProdutoRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
 class EstoqueService(
     private val estoqueRepository: EstoqueRepository,
     private val produtoRepository: ProdutoRepository,
-    private val movimentacaoEstoqueRepository: MovimentacaoEstoqueRepository,
     private val estoqueMapper: EstoqueMapper,
-    private val movimentacaoEstoqueMapper: MovimentacaoEstoqueMapper,
 ) {
-    fun listarMovimentacoes(): List<MovimentacaoEstoque> =
-        movimentacaoEstoqueRepository.listarMovimentacoes().map(movimentacaoEstoqueMapper::toDto)
-
     fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueDTO {
-        if (produtoId <= 0) {
-            throw BadRequestException("O id do produto deve ser maior que zero")
-        }
-
+        validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {
             throw NotFoundException("Produto não encontrado")
         }
@@ -42,137 +31,187 @@ class EstoqueService(
                 quantidadeReservada = 0,
                 quantidadeDisponivel = 0,
                 quantidadeMinima = 0,
+                localizacao = null,
+                bloqueado = false,
             )
     }
 
-    @Transactional
-    fun registrarMovimentacao(
+    @Transactional(rollbackFor = [Exception::class])
+    fun atualizarPosicao(
         produtoId: Long,
-        tipo: TipoMovimentacaoEstoque,
-        quantidade: Int,
-        observacao: String?,
-    ): MovimentacaoEstoque {
-        if (tipo !in TIPOS_MOVIMENTACAO_MANUAL) {
-            throw BadRequestException("A rota manual aceita somente AJUSTE_ENTRADA, AJUSTE_SAIDA ou PERDA")
+        campos: Map<String, Any?>,
+    ): EstoqueDTO {
+        validarId(produtoId)
+        val produto =
+            produtoRepository.buscarParaAtualizar(produtoId)
+                ?: throw NotFoundException("Produto não encontrado")
+
+        val camposPermitidos = setOf("quantidadeFisica", "quantidadeMinima", "localizacao", "bloqueado")
+        val camposDesconhecidos = campos.keys - camposPermitidos
+        if (camposDesconhecidos.isNotEmpty()) {
+            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        }
+        if (campos.isEmpty()) {
+            throw BadRequestException("Informe ao menos um campo para atualizar")
         }
 
-        return registrarMovimentacaoInterna(
-            produtoId = produtoId,
-            tipo = tipo,
-            quantidade = quantidade,
-            observacao = observacao,
-        )
+        val estoque =
+            estoqueRepository.buscarParaAtualizar(produtoId)
+                ?: Estoque(produtoId = requireNotNull(produto.id))
+
+        if (campos.containsKey("quantidadeFisica")) {
+            estoque.quantidadeFisica = campos.inteiro("quantidadeFisica")
+        }
+        if (campos.containsKey("quantidadeMinima")) {
+            estoque.quantidadeMinima = campos.inteiro("quantidadeMinima")
+        }
+        if (campos.containsKey("localizacao")) {
+            estoque.localizacao = campos.textoOpcional("localizacao")
+        }
+        if (campos.containsKey("bloqueado")) {
+            estoque.bloqueado = campos.booleano("bloqueado")
+        }
+
+        if (estoque.quantidadeFisica < 0) {
+            throw UnprocessableEntityException("A quantidade física não pode ser negativa")
+        }
+        if (estoque.quantidadeMinima < 0) {
+            throw UnprocessableEntityException("A quantidade mínima não pode ser negativa")
+        }
+        if ((estoque.localizacao?.length ?: 0) > 100) {
+            throw UnprocessableEntityException("A localização deve ter no máximo 100 caracteres")
+        }
+        if (estoque.quantidadeFisica < estoque.quantidadeReservada) {
+            throw UnprocessableEntityException(
+                "A quantidade física não pode ser menor que a quantidade reservada",
+            )
+        }
+
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
     }
 
-    @Transactional
-    internal fun registrarMovimentacaoInterna(
+    @Transactional(rollbackFor = [Exception::class])
+    fun validarDisponibilidade(
         produtoId: Long,
-        tipo: TipoMovimentacaoEstoque,
         quantidade: Int,
-        observacao: String?,
-        pedidoId: Long? = null,
-        compraId: Long? = null,
-        funcionarioId: Long? = null,
-    ): MovimentacaoEstoque {
+    ) {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+        validarNaoBloqueado(estoque)
+        validarDisponivel(estoque, quantidade)
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun reservar(
+        produtoId: Long,
+        quantidade: Int,
+    ): EstoqueDTO {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+        validarNaoBloqueado(estoque)
+        validarDisponivel(estoque, quantidade)
+
+        val novaQuantidadeReservada = estoque.quantidadeReservada.toLong() + quantidade
+        if (novaQuantidadeReservada > Int.MAX_VALUE) {
+            throw UnprocessableEntityException("A quantidade reservada excede o limite suportado pelo estoque")
+        }
+        estoque.quantidadeReservada = novaQuantidadeReservada.toInt()
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun liberarReserva(
+        produtoId: Long,
+        quantidade: Int,
+    ): EstoqueDTO {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+        if (estoque.quantidadeReservada < quantidade) {
+            throw UnprocessableEntityException("A quantidade reservada é insuficiente para liberar")
+        }
+
+        estoque.quantidadeReservada -= quantidade
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun concluirPedidoAgendado(
+        produtoId: Long,
+        quantidade: Int,
+    ): EstoqueDTO {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+        if (estoque.quantidadeReservada < quantidade) {
+            throw UnprocessableEntityException("A quantidade reservada é insuficiente para concluir o pedido")
+        }
+
+        estoque.quantidadeFisica -= quantidade
+        estoque.quantidadeReservada -= quantidade
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun concluirPedidoImediato(
+        produtoId: Long,
+        quantidade: Int,
+    ): EstoqueDTO {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+        validarNaoBloqueado(estoque)
+        validarDisponivel(estoque, quantidade)
+
+        estoque.quantidadeFisica -= quantidade
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+    }
+
+    private fun estoqueParaPedido(
+        produtoId: Long,
+        quantidade: Int,
+    ): Estoque {
+        validarId(produtoId)
+        if (quantidade <= 0) {
+            throw BadRequestException("A quantidade deve ser maior que zero")
+        }
+        val produto =
+            produtoRepository.buscarParaAtualizar(produtoId)
+                ?: throw NotFoundException("Produto não encontrado")
+        return estoqueRepository.buscarParaAtualizar(produtoId)
+            ?: Estoque(produtoId = requireNotNull(produto.id))
+    }
+
+    private fun validarDisponivel(
+        estoque: Estoque,
+        quantidade: Int,
+    ) {
+        if (estoque.quantidadeFisica - estoque.quantidadeReservada < quantidade) {
+            throw UnprocessableEntityException("Estoque disponível insuficiente")
+        }
+    }
+
+    private fun validarNaoBloqueado(estoque: Estoque) {
+        if (estoque.bloqueado) {
+            throw UnprocessableEntityException("O estoque deste produto está bloqueado")
+        }
+    }
+
+    private fun validarId(produtoId: Long) {
         if (produtoId <= 0) {
             throw BadRequestException("O id do produto deve ser maior que zero")
         }
-        if (quantidade <= 0) {
-            throw BadRequestException("A quantidade da movimentação deve ser maior que zero")
-        }
-        if (observacao != null && observacao.length > 10_000) {
-            throw BadRequestException("A observação deve ter no máximo 10000 caracteres")
-        }
-
-        validarOrigem(tipo, pedidoId, compraId)
-
-        val produto = produtoRepository.buscarParaAtualizar(produtoId)
-            ?: throw NotFoundException("Produto não encontrado")
-        val estoque = estoqueRepository.buscarParaAtualizar(produtoId)
-        val quantidadeFisica = estoque?.quantidadeFisica ?: 0
-        val quantidadeReservada = estoque?.quantidadeReservada ?: 0
-        val novaQuantidadeFisica =
-            when (tipo) {
-                TipoMovimentacaoEstoque.ENTRADA,
-                TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
-                -> quantidadeFisica.toLong() + quantidade
-
-                TipoMovimentacaoEstoque.SAIDA,
-                TipoMovimentacaoEstoque.AJUSTE_SAIDA,
-                TipoMovimentacaoEstoque.PERDA,
-                -> quantidadeFisica.toLong() - quantidade
-            }
-
-        if (novaQuantidadeFisica < quantidadeReservada) {
-            throw UnprocessableEntityException(
-                "A movimentação não pode reduzir o estoque físico abaixo da quantidade reservada",
-            )
-        }
-        if (novaQuantidadeFisica > Int.MAX_VALUE) {
-            throw UnprocessableEntityException(
-                "A quantidade física excede o limite suportado pelo estoque",
-            )
-        }
-
-        estoqueRepository.save(
-            estoque?.apply { this.quantidadeFisica = novaQuantidadeFisica.toInt() }
-                ?: EstoqueModel(
-                    produtoId = requireNotNull(produto.id),
-                    quantidadeFisica = novaQuantidadeFisica.toInt(),
-                ),
-        )
-
-        val novaMovimentacao =
-            movimentacaoEstoqueRepository.save(
-                MovimentacaoEstoque(
-                    produtoId = produtoId,
-                    pedidoId = pedidoId,
-                    compraId = compraId,
-                    funcionarioId = funcionarioId,
-                    tipo = tipo,
-                    quantidade = quantidade,
-                    observacao = observacao,
-                ).let(movimentacaoEstoqueMapper::toModel),
-            )
-        return movimentacaoEstoqueMapper.toDto(novaMovimentacao)
     }
 
-    private fun validarOrigem(
-        tipo: TipoMovimentacaoEstoque,
-        pedidoId: Long?,
-        compraId: Long?,
-    ) {
-        when (tipo) {
-            TipoMovimentacaoEstoque.ENTRADA -> {
-                if (compraId == null || pedidoId != null) {
-                    throw BadRequestException("ENTRADA deve estar vinculada somente a uma compra recebida")
-                }
-            }
-            TipoMovimentacaoEstoque.SAIDA -> {
-                if (pedidoId == null || compraId != null) {
-                    throw BadRequestException("SAIDA deve estar vinculada somente a um pedido concluído")
-                }
-            }
-            TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
-            TipoMovimentacaoEstoque.AJUSTE_SAIDA,
-            TipoMovimentacaoEstoque.PERDA,
-            -> {
-                if (pedidoId != null || compraId != null) {
-                    throw BadRequestException("Ajustes e perdas manuais não podem ser vinculados a compra ou pedido")
-                }
-            }
-        }
-        if (pedidoId != null && pedidoId <= 0 || compraId != null && compraId <= 0) {
-            throw BadRequestException("O id de compra ou pedido deve ser maior que zero")
+    private fun Map<String, Any?>.inteiro(campo: String): Int {
+        val valor = this[campo] as? Number
+            ?: throw BadRequestException("O campo '$campo' deve ser um número inteiro")
+        return try {
+            BigDecimal(valor.toString()).intValueExact()
+        } catch (e: NumberFormatException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro", e)
+        } catch (e: ArithmeticException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro dentro do limite suportado", e)
         }
     }
 
-    private companion object {
-        val TIPOS_MOVIMENTACAO_MANUAL =
-            setOf(
-                TipoMovimentacaoEstoque.AJUSTE_ENTRADA,
-                TipoMovimentacaoEstoque.AJUSTE_SAIDA,
-                TipoMovimentacaoEstoque.PERDA,
-            )
+    private fun Map<String, Any?>.textoOpcional(campo: String): String? {
+        val valor = this[campo] ?: return null
+        return valor as? String ?: throw BadRequestException("O campo '$campo' deve ser texto ou null")
     }
+
+    private fun Map<String, Any?>.booleano(campo: String): Boolean =
+        this[campo] as? Boolean ?: throw BadRequestException("O campo '$campo' deve ser booleano")
 }

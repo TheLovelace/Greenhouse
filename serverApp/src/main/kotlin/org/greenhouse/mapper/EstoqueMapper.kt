@@ -13,5 +13,7 @@ class EstoqueMapper {
             quantidadeReservada = model.quantidadeReservada,
             quantidadeDisponivel = model.quantidadeFisica - model.quantidadeReservada,
             quantidadeMinima = model.quantidadeMinima,
+            localizacao = model.localizacao,
+            bloqueado = model.bloqueado,
         )
 }

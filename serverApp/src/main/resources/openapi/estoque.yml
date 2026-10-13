@@ -1,49 +1,10 @@
 paths:
-  /estoque/movimentacoes:
-    get:
-      tags:
-        - Estoque
-      summary: Consultar histórico de movimentações
-      description: Lista as movimentações registradas com produto, tipo, quantidade, data e origem quando disponível. Resultados ordenados da mais recente para a mais antiga; em caso de empate, pelo identificador decrescente.
-      operationId: listarMovimentacoesEstoque
-      responses:
-        '200':
-          description: Histórico de movimentações; retorna uma lista vazia quando não há registros.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MovimentacaoEstoque'
-    post:
-      tags:
-        - Estoque
-      summary: Registrar ajuste ou perda de estoque
-      description: Registra somente movimentações manuais AJUSTE_ENTRADA, AJUSTE_SAIDA ou PERDA. Entradas de compra e saídas de pedido devem ser registradas pelos respectivos fluxos após a confirmação dos status de negócio. Observação é opcional. Saídas não podem reduzir o estoque físico abaixo do reservado.
-      operationId: registrarMovimentacaoEstoque
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegistrarMovimentacaoEstoque'
-      responses:
-        '201':
-          description: Movimentação registrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MovimentacaoEstoque'
-        '400':
-          $ref: './status.yml#/components/responses/ErroRequisicao'
-        '404':
-          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
   /estoque/{produtoId}:
     get:
       tags:
         - Estoque
-      summary: Consultar informações de estoque por produto
-      description: Retorna o saldo atual do estoque. A quantidade disponível é calculada como quantidade física menos quantidade reservada. A quantidade mínima é um limite separado. Produtos sem registro de estoque retornam quantidades zeradas; o histórico de movimentações não é somado novamente.
+      summary: Consultar posição de estoque por produto
+      description: Retorna os saldos e os dados de controle do estoque. Produtos existentes sem posição cadastrada retornam quantidades zeradas, localização nula e estoque desbloqueado.
       operationId: consultarEstoquePorProduto
       parameters:
         - name: produtoId
@@ -56,7 +17,39 @@ paths:
             minimum: 1
       responses:
         '200':
-          description: Informações de estoque do produto
+          description: Posição de estoque do produto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstoquePosicao'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    patch:
+      tags:
+        - Estoque
+      summary: Atualizar posição de estoque
+      description: Atualiza parcialmente os campos quantidadeFisica, quantidadeMinima, localizacao e bloqueado. A quantidade reservada é controlada exclusivamente pelo fluxo de pedidos. A quantidade física não pode ficar abaixo da quantidade reservada.
+      operationId: atualizarPosicaoEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoquePatch'
+      responses:
+        '200':
+          description: Posição de estoque atualizada
           content:
             application/json:
               schema:
@@ -67,74 +60,29 @@ paths:
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
-    RegistrarMovimentacaoEstoque:
+    EstoquePatch:
       type: object
       additionalProperties: false
-      required:
-        - produtoId
-        - tipo
-        - quantidade
+      anyOf:
+        - required: [quantidadeFisica]
+        - required: [quantidadeMinima]
+        - required: [localizacao]
+        - required: [bloqueado]
       properties:
-        produtoId:
-          type: integer
-          format: int64
-          minimum: 1
-        tipo:
-          type: string
-          enum:
-            - AJUSTE_ENTRADA
-            - AJUSTE_SAIDA
-            - PERDA
-        quantidade:
+        quantidadeFisica:
           type: integer
           format: int32
-          minimum: 1
-        observacao:
-          type: string
-          nullable: true
-          maxLength: 10000
-    MovimentacaoEstoque:
-      type: object
-      required:
-        - produtoId
-        - tipo
-        - quantidade
-      properties:
-        id:
-          type: integer
-          format: int64
-        produtoId:
-          type: integer
-          format: int64
-        pedidoId:
-          type: integer
-          format: int64
-          nullable: true
-        compraId:
-          type: integer
-          format: int64
-          nullable: true
-        funcionarioId:
-          type: integer
-          format: int64
-          nullable: true
-        tipo:
-          type: string
-          enum:
-            - ENTRADA
-            - SAIDA
-            - AJUSTE_ENTRADA
-            - AJUSTE_SAIDA
-            - PERDA
-        quantidade:
+          minimum: 0
+        quantidadeMinima:
           type: integer
           format: int32
-        observacao:
+          minimum: 0
+        localizacao:
           type: string
           nullable: true
-        dataHora:
-          type: string
-          format: date-time
+          maxLength: 100
+        bloqueado:
+          type: boolean
     EstoquePosicao:
       type: object
       required:
@@ -143,6 +91,8 @@ components:
         - quantidadeReservada
         - quantidadeDisponivel
         - quantidadeMinima
+        - localizacao
+        - bloqueado
       properties:
         produtoId:
           type: integer
@@ -155,6 +105,7 @@ components:
           type: integer
           format: int32
           minimum: 0
+          description: Controlada exclusivamente pelo fluxo de pedidos.
         quantidadeDisponivel:
           type: integer
           format: int32
@@ -164,4 +115,10 @@ components:
           type: integer
           format: int32
           minimum: 0
-          description: Limite mínimo cadastrado para o produto, separado da quantidade disponível.
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+          description: Produtos bloqueados não podem ser reservados ou vendidos em pedidos imediatos.
