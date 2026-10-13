@@ -80,8 +80,8 @@ components:
       $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoPatch'
     EstoqueCreate:
       $ref: './openapi/estoque.yml#/components/schemas/EstoqueCreate'
-    EstoquePosicao:
-      $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
+    Estoque:
+      $ref: './openapi/estoque.yml#/components/schemas/Estoque'
     Funcionario:
       $ref: './openapi/funcionario.yml#/components/schemas/Funcionario'
     FuncionarioCreate:

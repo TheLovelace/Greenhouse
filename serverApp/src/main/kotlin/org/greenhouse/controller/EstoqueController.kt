@@ -6,6 +6,7 @@ import org.greenhouse.service.EstoqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -39,4 +40,12 @@ class EstoqueController(
         @PathVariable produtoId: Long,
         @RequestBody campos: Map<String, Any?>,
     ): Estoque = estoqueService.atualizarPosicao(produtoId, campos)
+
+    @DeleteMapping("/{produtoId}")
+    fun excluirPosicao(
+        @PathVariable produtoId: Long,
+    ): ResponseEntity<Unit> {
+        estoqueService.excluirPosicao(produtoId)
+        return ResponseEntity.noContent().build()
+    }
 }
