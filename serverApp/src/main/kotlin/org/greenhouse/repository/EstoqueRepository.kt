@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface EstoqueRepository : JpaRepository<Estoque, Long> {
+    @Query("SELECT e FROM Estoque e")
+    fun listar(): List<Estoque>
+
     @Query("SELECT e FROM Estoque e WHERE e.produtoId = :produtoId")
     fun buscarPorProdutoId(@Param("produtoId") produtoId: Long): Estoque?
 

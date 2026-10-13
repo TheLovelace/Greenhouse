@@ -51,6 +51,9 @@ class EstoqueService(
         return estoqueMapper.toDto(estoqueRepository.save(novaPosicao))
     }
 
+    fun listarPosicoes(): List<EstoqueDTO> =
+        estoqueRepository.listar().map(estoqueMapper::toDto)
+
     fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueDTO {
         validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {

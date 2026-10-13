@@ -3,7 +3,7 @@ paths:
     post:
       tags:
         - Estoque
-      summary: Cadastrar posição de estoque para um produto
+      summary: Cadastrar informações de estoque para um produto
       description: Cria a posição somente se o produto ainda não possuir uma. A quantidade reservada inicia em zero e é controlada pelo fluxo de pedidos.
       operationId: criarPosicaoEstoque
       requestBody:
@@ -14,7 +14,7 @@ paths:
               $ref: '#/components/schemas/EstoqueCreate'
       responses:
         '201':
-          description: Posição de estoque criada
+          description: Informações de estoque criadas
           content:
             application/json:
               schema:
@@ -29,11 +29,26 @@ paths:
             application/json:
               schema:
                 $ref: './status.yml#/components/schemas/Erro'
+    get:
+      tags:
+        - Estoque
+      summary: Listar informações de estoque
+      description: Retorna todos os registros na tabela de estoque. Não inclui produtos que ainda não possuem estoque.
+      operationId: listarPosicoesEstoque
+      responses:
+        '200':
+          description: Lista de posições de estoque
+          content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EstoquePosicao'
   /estoque/{produtoId}:
     get:
       tags:
         - Estoque
-      summary: Consultar posição de estoque por produto
+      summary: Consultar informaçõesde estoque por produto
       description: Retorna os saldos e os dados de controle do estoque. Produtos existentes sem posição cadastrada retornam quantidades zeradas, localização nula e estoque desbloqueado.
       operationId: consultarEstoquePorProduto
       parameters:
@@ -47,7 +62,7 @@ paths:
             minimum: 1
       responses:
         '200':
-          description: Posição de estoque do produto
+          description: Informações de estoque do produto
           content:
             application/json:
               schema:
@@ -59,7 +74,7 @@ paths:
     patch:
       tags:
         - Estoque
-      summary: Atualizar posição de estoque
+      summary: Atualizar informações de estoque
       description: Atualiza parcialmente os campos quantidadeFisica, quantidadeMinima, localizacao e bloqueado. A quantidade reservada é controlada exclusivamente pelo fluxo de pedidos. A quantidade física não pode ficar abaixo da quantidade reservada.
       operationId: atualizarPosicaoEstoque
       parameters:
@@ -79,7 +94,7 @@ paths:
               $ref: '#/components/schemas/EstoquePatch'
       responses:
         '200':
-          description: Posição de estoque atualizada
+          description: Informações de estoque atualizadas
           content:
             application/json:
               schema:
