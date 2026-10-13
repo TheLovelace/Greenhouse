@@ -8,26 +8,26 @@
 
 ## Integrantes e responsabilidades
 
-As migrations do banco registram os seguintes responsáveis pelos CRUDs. O repositório contém somente os primeiros nomes:
+Abaixo, estão enumeradas as integrantes da equipe e suas respectivas responsabilidades:
 
-| Integrante | Entidades/CRUDs sob responsabilidade |
-|---|---|
-| Luna | Funcionário e forma de pagamento |
-| Isabella | Categoria e produto |
-| Amanda | Espécie e configuração de alertas |
-| Anahi | Fornecedor e compra de fornecedor |
-| Julia | Cliente e pedido |
-| Debora | Desconto e estoque |
+| Integrante | Bloco | Entidades/CRUDs sob responsabilidade |
+|---|---|---|
+| Luna | Acesso | Funcionário, Forma de pagamento, Autenticação |
+| Isabella | Catalogo | Categoria e Produto |
+| Amanda | Plantas/IoT | Espécie/cuidados e configuração de Alertas|
+| Julia | Compras | Fornecedor e Compra |
+| Anahi | Vendas | Cliente e Pedido |
+| Débora | Estoque/Comercial | Estoque e Desconto |
 
 As tabelas auxiliares são utilizadas pelos respectivos fluxos, como itens de pedido, itens de compra e relações entre produtos, categorias e espécies.
 
 ## Sobre a aplicação
 
-Greenhouse é uma plataforma para apoiar a gestão de uma floricultura. O backend oferece uma API para operações de cadastro e gerenciamento de dados como funcionários, clientes, fornecedores, categorias, produtos, formas de pagamento, descontos e estoque. O modelo do banco também contempla pedidos e compras, espécies de plantas, dispositivos IoT, leituras ambientais e configuração de alertas.
+**Greenhouse** é uma plataforma para apoiar a gestão de floriculturas. O backend oferece uma API para operações de cadastro e gerenciamento de dados como funcionários, clientes, fornecedores, categorias, produtos, formas de pagamento, descontos e estoque. O modelo do banco também contempla pedidos e compras, espécies de plantas, dispositivos IoT, leituras ambientais e configuração de alertas.
 
 A centralização desses dados e regras ajuda a reduzir controles manuais e inconsistências entre catálogo, estoque e operações da loja. As validações de domínio e persistência ficam no backend, enquanto o banco aplica restrições de integridade. O estoque, por exemplo, controla quantidades físicas e reservadas; os descontos aceitam percentuais ou valores fixos sujeitos às regras cadastradas.
 
-O backend é a camada de API e persistência. As aplicações Android, iOS, Desktop e Web compartilham a interface Compose Multiplatform. **No estado atual do repositório, as entradas das aplicações cliente exibem a tela de demonstração padrão do Compose; elas ainda não apresentam uma interface completa integrada aos CRUDs da floricultura.** O Swagger/OpenAPI pode ser utilizado para explorar a API.
+O backend é a camada de API e persistência. As aplicações Android, iOS, Desktop e Web compartilham a interface Compose Multiplatform. O Swagger/OpenAPI pode ser utilizado para explorar a API.
 
 ## Tecnologias
 
@@ -101,9 +101,9 @@ As telas e componentes da interface ainda não estão organizados em camadas pr�
 
 Clone o repositório e entre na pasta:
 
-```powershell
-git clone https://github.com/Best-of-the-class/Greenhouse.git
-Set-Location Greenhouse
+```bash
+$ git clone https://github.com/Best-of-the-class/Greenhouse.git
+$ cd Greenhouse
 ```
 
 No macOS/Linux, os comandos do Gradle Wrapper usam `./gradlew`; no Windows, use `.\gradlew.bat`.
@@ -112,7 +112,7 @@ No macOS/Linux, os comandos do Gradle Wrapper usam `./gradlew`; no Windows, use 
 
 O backend exige a variável de ambiente `DATABASE_URL`, no formato de URL JDBC PostgreSQL. Configure-a com os dados de um banco de **desenvolvimento/teste** fornecidos pela equipe. Por exemplo, no PowerShell:
 
-```powershell
+```bash
 $env:DATABASE_URL = "jdbc:postgresql://<host>:<porta>/<banco>?user=<usuario>&password=<senha>"
 ```
 
@@ -126,8 +126,8 @@ Para executar os testes JVM de integração, crie na raiz o arquivo local `.env.
 
 Com `DATABASE_URL` configurada:
 
-```powershell
-.\gradlew.bat :serverApp:bootRun
+```bash
+$ .\gradlew.bat :serverApp:bootRun
 ```
 
 O backend inicia na porta `8080`.
@@ -136,27 +136,27 @@ O backend inicia na porta `8080`.
 
 Inicie o Docker Desktop e configure `.env.test.local` na raiz. Depois:
 
-```powershell
-.\gradlew.bat --no-configuration-cache :serverApp:runTest
+```bash
+$ .\gradlew.bat --no-configuration-cache :serverApp:runTest
 ```
 
 A task constrói a imagem local e inicia o container mapeando a porta `8081` da máquina para a porta `8080` do container. Para pará-lo:
 
-```powershell
-.\gradlew.bat :serverApp:stopTest
+```bash
+$ .\gradlew.bat :serverApp:stopTest
 ```
 
 ### Aplicações cliente
 
-```powershell
+```bash
 # Web em modo de desenvolvimento
-.\gradlew.bat devWeb
+$ .\gradlew.bat devWeb
 
 # Desktop
-.\gradlew.bat devDesktop
+$ .\gradlew.bat devDesktop
 
 # Instalação/execução Android em dispositivo ou emulador conectado
-.\gradlew.bat devMobile
+$ .\gradlew.bat devMobile
 ```
 
 Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
@@ -175,21 +175,24 @@ As rotas de negócio exigem autenticação JWT. As rotas de login, status e docu
 
 ## Testes e qualidade
 
-```powershell
+```bash
 # Testes JVM, incluindo os testes de integração do backend
-.\gradlew.bat testDesktop
+$ .\gradlew.bat testDesktop
 
 # Testes Android host
-.\gradlew.bat :shared:testAndroidHostTest
+$ .\gradlew.bat :shared:testAndroidHostTest
 
 # Testes Web (JavaScript e Wasm)
-.\gradlew.bat testWeb
+$ .\gradlew.bat testWeb
 
 # Verificação de formatação e lint
-.\gradlew.bat lintCheck
+$ .\gradlew.bat lintCheck
 
 # Validar a mensagem do último commit
-.\gradlew.bat checkCommitMessage
+$ .\gradlew.bat checkCommitMessage
 ```
 
 Os testes de integração JVM dependem de `DATABASE_URL` para acessar o PostgreSQL de teste.
+
+
+📅 Última atualização: **out. 2026**.
