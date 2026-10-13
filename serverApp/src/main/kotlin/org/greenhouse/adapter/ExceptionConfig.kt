@@ -48,6 +48,14 @@ class NotFoundException(message: String = "Recurso não encontrado", cause: Thro
         cause = cause,
     )
 
+/** 409 - O recurso já existe e não pode ser criado novamente. */
+class ConflictException(message: String = "Conflito com o estado atual do recurso", cause: Throwable? = null) :
+    AppException(
+        message = message,
+        statusCode = HttpStatus.CONFLICT,
+        cause = cause,
+    )
+
 /** 500 - Erro interno inesperado. */
 class ServerException(message: String = "Erro interno do servidor", cause: Throwable? = null) :
     AppException(
