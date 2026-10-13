@@ -26,6 +26,9 @@ class EstoqueController(
             .status(HttpStatus.CREATED)
             .body(estoqueService.criarPosicao(estoque))
 
+    @GetMapping
+    fun listarPosicoes(): List<Estoque> = estoqueService.listarPosicoes()
+
     @GetMapping("/{produtoId}")
     fun buscarPosicaoPorProdutoId(
         @PathVariable produtoId: Long,

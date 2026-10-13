@@ -7,8 +7,59 @@ import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class TestEstoqueGet {
+    @Test
+    fun `deve listar posicoes cadastradas`() {
+        val fixture = EstoqueFixture()
+
+        try {
+            val primeiroProdutoId =
+                fixture.novoProdutoComEstoque(
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                )
+            val segundoProdutoId =
+                fixture.novoProdutoComEstoque(
+                    quantidadeFisica = 8,
+                    quantidadeReservada = 0,
+                    quantidadeMinima = 1,
+                    localizacao = "Estante B-02",
+                )
+
+            val posicoes = fixture.service.listarPosicoes()
+
+            assertTrue(
+                Estoque(
+                    produtoId = primeiroProdutoId,
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeDisponivel = 10,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                ) in posicoes,
+            )
+            assertTrue(
+                Estoque(
+                    produtoId = segundoProdutoId,
+                    quantidadeFisica = 8,
+                    quantidadeReservada = 0,
+                    quantidadeDisponivel = 8,
+                    quantidadeMinima = 1,
+                    localizacao = "Estante B-02",
+                    bloqueado = false,
+                ) in posicoes,
+            )
+        } finally {
+            fixture.limpar()
+        }
+    }
+
     @Test
     fun `deve consultar posicao com quantidade disponivel calculada`() {
         val fixture = EstoqueFixture()
