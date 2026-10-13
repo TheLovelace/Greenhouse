@@ -6,4 +6,6 @@ data class EstoqueDTO(
     val quantidadeReservada: Int,
     val quantidadeDisponivel: Int,
     val quantidadeMinima: Int,
+    val localizacao: String?,
+    val bloqueado: Boolean,
 )

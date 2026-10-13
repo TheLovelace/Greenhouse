@@ -40,8 +40,6 @@ paths:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
   /estoque/{produtoId}:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1%7BprodutoId%7D'
-  /estoque/movimentacoes:
-    $ref: './openapi/estoque.yml#/paths/~1estoque~1movimentacoes'
   /fornecedor:
     $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
   /fornecedor/{id}:
@@ -86,8 +84,6 @@ components:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioCreate'
     FuncionarioPatch:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioPatch'
-    MovimentacaoEstoque:
-      $ref: './openapi/estoque.yml#/components/schemas/MovimentacaoEstoque'
     Produto:
       $ref: './openapi/produto.yml#/components/schemas/Produto'
     Status:

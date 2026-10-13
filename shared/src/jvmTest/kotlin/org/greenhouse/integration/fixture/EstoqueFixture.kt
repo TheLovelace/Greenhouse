@@ -19,6 +19,8 @@ class EstoqueFixture {
         quantidadeFisica: Int,
         quantidadeReservada: Int,
         quantidadeMinima: Int,
+        localizacao: String? = null,
+        bloqueado: Boolean = false,
     ): Long {
         val produtoId =
             DriverManager.getConnection(databaseUrl).use { connection ->
@@ -45,14 +47,18 @@ class EstoqueFixture {
             connection
                 .prepareStatement(
                     """
-                    INSERT INTO estoque (produto_id, quantidade_fisica, quantidade_reservada, quantidade_minima)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO estoque (
+                        produto_id, quantidade_fisica, quantidade_reservada, quantidade_minima, localizacao, bloqueado
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
                     """.trimIndent(),
                 ).use { statement ->
                     statement.setLong(1, produtoId)
                     statement.setInt(2, quantidadeFisica)
                     statement.setInt(3, quantidadeReservada)
                     statement.setInt(4, quantidadeMinima)
+                    statement.setString(5, localizacao)
+                    statement.setBoolean(6, bloqueado)
                     statement.executeUpdate()
                 }
         }
@@ -88,13 +94,6 @@ class EstoqueFixture {
         if (produtoIds.isEmpty()) return
 
         DriverManager.getConnection(databaseUrl).use { connection ->
-            connection.prepareStatement("DELETE FROM movimentacao_estoque WHERE produto_id = ?").use { statement ->
-                produtoIds.forEach { produtoId ->
-                    statement.setLong(1, produtoId)
-                    statement.addBatch()
-                }
-                statement.executeBatch()
-            }
             connection.prepareStatement("DELETE FROM estoque WHERE produto_id = ?").use { estoqueStatement ->
                 produtoIds.forEach { produtoId ->
                     estoqueStatement.setLong(1, produtoId)
