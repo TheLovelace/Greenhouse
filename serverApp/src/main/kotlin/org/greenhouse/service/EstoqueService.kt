@@ -1,8 +1,10 @@
 package org.greenhouse.service
 
 import org.greenhouse.adapter.BadRequestException
+import org.greenhouse.adapter.ConflictException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
+import org.greenhouse.dto.EstoqueCreateDTO
 import org.greenhouse.dto.EstoqueDTO
 import org.greenhouse.mapper.EstoqueMapper
 import org.greenhouse.model.Estoque
@@ -18,6 +20,37 @@ class EstoqueService(
     private val produtoRepository: ProdutoRepository,
     private val estoqueMapper: EstoqueMapper,
 ) {
+    @Transactional(rollbackFor = [Exception::class])
+    fun criarPosicao(estoque: EstoqueCreateDTO): EstoqueDTO {
+        validarId(estoque.produtoId)
+        val produto =
+            produtoRepository.buscarParaAtualizar(estoque.produtoId)
+                ?: throw NotFoundException("Produto não encontrado")
+
+        if (estoqueRepository.buscarParaAtualizar(estoque.produtoId) != null) {
+            throw ConflictException("Já existe uma posição de estoque para este produto")
+        }
+        if (estoque.quantidadeFisica < 0) {
+            throw UnprocessableEntityException("A quantidade física não pode ser negativa")
+        }
+        if (estoque.quantidadeMinima < 0) {
+            throw UnprocessableEntityException("A quantidade mínima não pode ser negativa")
+        }
+        if ((estoque.localizacao?.length ?: 0) > 100) {
+            throw UnprocessableEntityException("A localização deve ter no máximo 100 caracteres")
+        }
+
+        val novaPosicao =
+            Estoque(
+                produtoId = requireNotNull(produto.id),
+                quantidadeFisica = estoque.quantidadeFisica,
+                quantidadeMinima = estoque.quantidadeMinima,
+                localizacao = estoque.localizacao,
+                bloqueado = estoque.bloqueado,
+            )
+        return estoqueMapper.toDto(estoqueRepository.save(novaPosicao))
+    }
+
     fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueDTO {
         validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {

@@ -1,4 +1,34 @@
 paths:
+  /estoque:
+    post:
+      tags:
+        - Estoque
+      summary: Cadastrar posição de estoque para um produto
+      description: Cria a posição somente se o produto ainda não possuir uma. A quantidade reservada inicia em zero e é controlada pelo fluxo de pedidos.
+      operationId: criarPosicaoEstoque
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoqueCreate'
+      responses:
+        '201':
+          description: Posição de estoque criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstoquePosicao'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '409':
+          description: O produto já possui uma posição de estoque
+          content:
+            application/json:
+              schema:
+                $ref: './status.yml#/components/schemas/Erro'
   /estoque/{produtoId}:
     get:
       tags:
@@ -60,6 +90,33 @@ paths:
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
+    EstoqueCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - produtoId
+      properties:
+        produtoId:
+          type: integer
+          format: int64
+          minimum: 1
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+          default: false
     EstoquePatch:
       type: object
       additionalProperties: false
