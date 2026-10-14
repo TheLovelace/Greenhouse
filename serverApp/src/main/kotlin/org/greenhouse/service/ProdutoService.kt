@@ -3,7 +3,9 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.dto.request.ProdutoCreateRequestDTO
+import org.greenhouse.dto.request.ProdutoUpdateRequestDTO
+import org.greenhouse.dto.response.ProdutoResponseDTO
 import org.greenhouse.mapper.ProdutoMapper
 import org.greenhouse.repository.ProdutoRepository
 import org.springframework.stereotype.Service
@@ -15,47 +17,43 @@ class ProdutoService(
     private val produtoMapper: ProdutoMapper,
 ) {
 
-    fun criar(produto: Produto): Produto {
-        validar(produto)
+    fun criar(produto: ProdutoCreateRequestDTO): ProdutoResponseDTO {
+        validar(produto.codigo, produto.nome, produto.descricao, produto.preco, produto.prazoPreparoMinutos)
         validarCodigoDisponivel(produto.codigo)
-        val model = produtoMapper.toModel(produto.copy(id = null))
-        return produtoMapper.toDto(produtoRepository.criar(model))
+        val model = produtoMapper.toModel(produto)
+        return produtoMapper.toResponse(produtoRepository.criar(model))
     }
 
-    fun listar(): List<Produto> = produtoRepository.listar().map(produtoMapper::toDto)
+    fun listar(nome: String? = null): List<ProdutoResponseDTO> =
+        (if (nome == null) produtoRepository.listar() else produtoRepository.buscarPorNome(nome))
+            .map(produtoMapper::toResponse)
 
-    fun buscarPorId(id: Long): Produto =
+    fun buscarPorId(id: Long): ProdutoResponseDTO =
         produtoRepository.buscarPorId(validarId(id))
-            ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
+            ?.let(produtoMapper::toResponse) ?: throw NotFoundException("Produto não encontrado")
 
-    fun atualizar(id: Long, campos: Map<String, Any?>): Produto {
+    fun atualizar(id: Long, produto: ProdutoUpdateRequestDTO): ProdutoResponseDTO {
         val idValidado = validarId(id)
-        val produtoAtual =
-            produtoRepository.buscarPorId(idValidado)
-                ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
-
-        val camposPermitidos = setOf("id", "codigo", "nome", "descricao", "preco", "ativo")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
-        }
-        if (campos.keys.none { it != "id" }) {
+        val atual = produtoRepository.buscarPorId(idValidado)
+            ?: throw NotFoundException("Produto não encontrado")
+        if (!produto.possuiCamposParaAtualizar) {
             throw BadRequestException("Informe ao menos um campo para atualizar")
         }
+        if (!produto.valoresInformadosSaoValidos) {
+            throw BadRequestException("Nome, preço e ativo não podem ser nulos quando informados")
+        }
+        val atualizado = produtoMapper.toModel(produto, atual)
+        validar(
+            atualizado.codigo,
+            atualizado.nome,
+            atualizado.descricao,
+            atualizado.preco,
+            atualizado.prazoPreparoMinutos,
+        )
+        validarCodigoDisponivel(atualizado.codigo, ignorarId = idValidado)
 
-        val produtoAtualizado =
-            produtoAtual.copy(
-                codigo = campos.textoOpcional("codigo", produtoAtual.codigo),
-                nome = campos.texto("nome", produtoAtual.nome),
-                descricao = campos.textoOpcional("descricao", produtoAtual.descricao),
-                preco = campos.decimal("preco", produtoAtual.preco),
-                ativo = campos.booleano("ativo", produtoAtual.ativo),
-            )
-        validar(produtoAtualizado)
-        validarCodigoDisponivel(produtoAtualizado.codigo, ignorarId = idValidado)
-
-        return produtoRepository.atualizar(idValidado, produtoMapper.toModel(produtoAtualizado))
-            ?.let(produtoMapper::toDto) ?: throw NotFoundException("Produto não encontrado")
+        return produtoRepository.atualizar(idValidado, atualizado)
+            ?.let(produtoMapper::toResponse) ?: throw NotFoundException("Produto não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -65,7 +63,7 @@ class ProdutoService(
         }
         if (produtoRepository.possuiDependencias(idValidado)) {
             throw UnprocessableEntityException(
-                "Produto não pode ser excluído porque possui registros vinculados (pedidos, compras, estoque ou movimentações)",
+                "Produto não pode ser excluído porque possui registros vinculados (pedidos, compras ou estoque)",
             )
         }
         if (!produtoRepository.excluir(idValidado)) {
@@ -73,21 +71,32 @@ class ProdutoService(
         }
     }
 
-    private fun validar(produto: Produto) {
-        val codigo = produto.codigo
+    private fun validar(
+        codigo: String?,
+        nome: String,
+        descricao: String?,
+        preco: BigDecimal,
+        prazoPreparoMinutos: Int?,
+    ) {
         if (codigo != null && codigo.length > 50) {
             throw UnprocessableEntityException("O código do produto deve ter no máximo 50 caracteres")
         }
-        if (produto.nome.length > 150) {
+        if (nome.length > 150) {
             throw UnprocessableEntityException("O nome do produto deve ter no máximo 150 caracteres")
         }
-        if (produto.preco < BigDecimal.ZERO) {
+        if (descricao != null && descricao.length > 1000) {
+            throw UnprocessableEntityException("A descrição do produto deve ter no máximo 1000 caracteres")
+        }
+        if (preco < BigDecimal.ZERO) {
             throw UnprocessableEntityException("O preço do produto não pode ser negativo")
         }
-        if (produto.preco > BigDecimal("9999999999.99") ||
-            produto.preco.stripTrailingZeros().scale() > 2
+        if (preco > BigDecimal("9999999999.99") ||
+            preco.stripTrailingZeros().scale() > 2
         ) {
             throw UnprocessableEntityException("O preço deve respeitar o limite de 10 dígitos inteiros e 2 decimais")
+        }
+        if (prazoPreparoMinutos != null && prazoPreparoMinutos < 0) {
+            throw UnprocessableEntityException("O prazo de preparo não pode ser negativo")
         }
     }
 
@@ -104,30 +113,4 @@ class ProdutoService(
         return id
     }
 
-    private fun Map<String, Any?>.texto(campo: String, valorAtual: String): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.textoOpcional(campo: String, valorAtual: String?): String? {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] ?: return null
-        return valor as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto ou nulo")
-    }
-
-    private fun Map<String, Any?>.decimal(campo: String, valorAtual: BigDecimal): BigDecimal {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] as? Number
-            ?: throw BadRequestException("O campo '$campo' deve ser numérico")
-        return valor.toString().toBigDecimalOrNull()
-            ?: throw BadRequestException("O campo '$campo' deve ser numérico")
-    }
-
-    private fun Map<String, Any?>.booleano(campo: String, valorAtual: Boolean): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
-    }
 }
