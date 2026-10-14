@@ -2,7 +2,7 @@ package org.greenhouse.integration.estoque
 
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.EstoqueUpdateDTO
+import org.greenhouse.dto.request.EstoqueUpdateRequestDTO
 import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,7 +26,7 @@ class TestEstoquePut {
             val atualizada =
                 fixture.service.substituirPosicao(
                     produtoId,
-                    EstoqueUpdateDTO(
+                    EstoqueUpdateRequestDTO(
                         quantidadeFisica = 15,
                         quantidadeMinima = 4,
                         localizacao = "Estante nova",
@@ -61,7 +61,7 @@ class TestEstoquePut {
             val atualizada =
                 fixture.service.substituirPosicao(
                     produtoId,
-                    EstoqueUpdateDTO(
+                    EstoqueUpdateRequestDTO(
                         quantidadeFisica = 5,
                         quantidadeMinima = 1,
                         localizacao = null,
@@ -90,7 +90,7 @@ class TestEstoquePut {
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.substituirPosicao(
                     produtoId,
-                    EstoqueUpdateDTO(
+                    EstoqueUpdateRequestDTO(
                         quantidadeFisica = 2,
                         quantidadeMinima = 1,
                         localizacao = null,
@@ -114,7 +114,7 @@ class TestEstoquePut {
             assertFailsWith<NotFoundException> {
                 fixture.service.substituirPosicao(
                     produtoId,
-                    EstoqueUpdateDTO(
+                    EstoqueUpdateRequestDTO(
                         quantidadeFisica = 5,
                         quantidadeMinima = 1,
                         localizacao = null,

@@ -3,7 +3,7 @@ package org.greenhouse.integration.estoque
 import org.greenhouse.adapter.ConflictException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.EstoqueCreateDTO
+import org.greenhouse.dto.request.EstoqueCreateRequestDTO
 import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,7 +19,7 @@ class TestEstoquePost {
 
             val criado =
                 fixture.service.criarPosicao(
-                    EstoqueCreateDTO(
+                    EstoqueCreateRequestDTO(
                         produtoId = produtoId,
                         quantidadeFisica = 12,
                         quantidadeMinima = 3,
@@ -47,7 +47,7 @@ class TestEstoquePost {
         try {
             val produtoId = fixture.novoProdutoSemEstoque()
 
-            val criado = fixture.service.criarPosicao(EstoqueCreateDTO(produtoId))
+            val criado = fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId))
 
             assertEquals(0, criado.quantidadeFisica)
             assertEquals(0, criado.quantidadeReservada)
@@ -72,7 +72,7 @@ class TestEstoquePost {
                 )
 
             assertFailsWith<ConflictException> {
-                fixture.service.criarPosicao(EstoqueCreateDTO(produtoId))
+                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId))
             }
         } finally {
             fixture.limpar()
@@ -87,13 +87,13 @@ class TestEstoquePost {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateDTO(produtoId, quantidadeFisica = -1))
+                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, quantidadeFisica = -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateDTO(produtoId, quantidadeMinima = -1))
+                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, quantidadeMinima = -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateDTO(produtoId, localizacao = "x".repeat(101)))
+                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, localizacao = "x".repeat(101)))
             }
         } finally {
             fixture.limpar()
@@ -105,7 +105,7 @@ class TestEstoquePost {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.criarPosicao(EstoqueCreateDTO(Long.MAX_VALUE))
+            fixture.service.criarPosicao(EstoqueCreateRequestDTO(Long.MAX_VALUE))
         }
     }
 }

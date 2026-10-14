@@ -1,6 +1,6 @@
-package org.greenhouse.dto
+package org.greenhouse.dto.request
 
-data class EstoqueCreateDTO(
+data class EstoqueCreateRequestDTO(
     val produtoId: Long,
     val quantidadeFisica: Int = 0,
     val quantidadeMinima: Int = 0,

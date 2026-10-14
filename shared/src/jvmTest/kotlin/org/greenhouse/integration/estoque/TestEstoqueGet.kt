@@ -2,7 +2,7 @@ package org.greenhouse.integration.estoque
 
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
-import org.greenhouse.dto.EstoqueDTO as Estoque
+import org.greenhouse.dto.response.EstoqueResponseDTO as Estoque
 import org.greenhouse.integration.fixture.EstoqueFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals

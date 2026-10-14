@@ -1,6 +1,6 @@
-package org.greenhouse.dto
+package org.greenhouse.dto.request
 
-data class EstoqueUpdateDTO(
+data class EstoqueUpdateRequestDTO(
     val quantidadeFisica: Int,
     val quantidadeMinima: Int,
     val localizacao: String? = null,

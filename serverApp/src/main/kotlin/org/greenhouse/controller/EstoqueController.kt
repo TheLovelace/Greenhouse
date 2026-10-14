@@ -1,8 +1,8 @@
 package org.greenhouse.controller
 
-import org.greenhouse.dto.EstoqueCreateDTO
-import org.greenhouse.dto.EstoqueDTO as Estoque
-import org.greenhouse.dto.EstoqueUpdateDTO
+import org.greenhouse.dto.request.EstoqueCreateRequestDTO
+import org.greenhouse.dto.request.EstoqueUpdateRequestDTO
+import org.greenhouse.dto.response.EstoqueResponseDTO
 import org.greenhouse.service.EstoqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -23,31 +23,31 @@ class EstoqueController(
 ) {
     @PostMapping
     fun criarPosicao(
-        @RequestBody estoque: EstoqueCreateDTO,
-    ): ResponseEntity<Estoque> =
+        @RequestBody estoque: EstoqueCreateRequestDTO,
+    ): ResponseEntity<EstoqueResponseDTO> =
         ResponseEntity
             .status(HttpStatus.CREATED)
             .body(estoqueService.criarPosicao(estoque))
 
     @GetMapping
-    fun listarPosicoes(): List<Estoque> = estoqueService.listarPosicoes()
+    fun listarPosicoes(): List<EstoqueResponseDTO> = estoqueService.listarPosicoes()
 
     @GetMapping("/{produtoId}")
     fun buscarPosicaoPorProdutoId(
         @PathVariable produtoId: Long,
-    ): Estoque = estoqueService.buscarPosicaoPorProdutoId(produtoId)
+    ): EstoqueResponseDTO = estoqueService.buscarPosicaoPorProdutoId(produtoId)
 
     @PutMapping("/{produtoId}")
     fun substituirPosicao(
         @PathVariable produtoId: Long,
-        @RequestBody estoque: EstoqueUpdateDTO,
-    ): Estoque = estoqueService.substituirPosicao(produtoId, estoque)
+        @RequestBody estoque: EstoqueUpdateRequestDTO,
+    ): EstoqueResponseDTO = estoqueService.substituirPosicao(produtoId, estoque)
 
     @PatchMapping("/{produtoId}")
     fun atualizarPosicao(
         @PathVariable produtoId: Long,
         @RequestBody campos: Map<String, Any?>,
-    ): Estoque = estoqueService.atualizarPosicao(produtoId, campos)
+    ): EstoqueResponseDTO = estoqueService.atualizarPosicao(produtoId, campos)
 
     @DeleteMapping("/{produtoId}")
     fun excluirPosicao(
