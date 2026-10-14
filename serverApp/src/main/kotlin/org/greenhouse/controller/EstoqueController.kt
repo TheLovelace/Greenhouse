@@ -2,6 +2,7 @@ package org.greenhouse.controller
 
 import org.greenhouse.dto.EstoqueCreateDTO
 import org.greenhouse.dto.EstoqueDTO as Estoque
+import org.greenhouse.dto.EstoqueUpdateDTO
 import org.greenhouse.service.EstoqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -34,6 +36,12 @@ class EstoqueController(
     fun buscarPosicaoPorProdutoId(
         @PathVariable produtoId: Long,
     ): Estoque = estoqueService.buscarPosicaoPorProdutoId(produtoId)
+
+    @PutMapping("/{produtoId}")
+    fun substituirPosicao(
+        @PathVariable produtoId: Long,
+        @RequestBody estoque: EstoqueUpdateDTO,
+    ): Estoque = estoqueService.substituirPosicao(produtoId, estoque)
 
     @PatchMapping("/{produtoId}")
     fun atualizarPosicao(

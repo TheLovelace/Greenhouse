@@ -71,10 +71,42 @@ paths:
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Estoque
+      summary: Atualizar informações de estoque (registro completo)
+      description: Substitui quantidade física, quantidade mínima, localização e bloqueio da posição existente. Envie os campos obrigatórios; localização omitida ou null limpa a localização. A quantidade reservada não é editável e deve continuar compatível com a quantidade física.
+      operationId: substituirPosicaoEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoqueUpdate'
+      responses:
+        '200':
+          description: Posição de estoque substituída
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
     patch:
       tags:
         - Estoque
-      summary: Atualizar informações de estoque
+      summary: Atualizar informações de estoque (campos parciais)
       description: Atualiza parcialmente os campos quantidadeFisica, quantidadeMinima, localizacao e bloqueado. A quantidade reservada é controlada exclusivamente pelo fluxo de pedidos. A quantidade física não pode ficar abaixo da quantidade reservada.
       operationId: atualizarPosicaoEstoque
       parameters:
@@ -162,6 +194,28 @@ components:
         - required: [quantidadeMinima]
         - required: [localizacao]
         - required: [bloqueado]
+      properties:
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+    EstoqueUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - quantidadeFisica
+        - quantidadeMinima
+        - bloqueado
       properties:
         quantidadeFisica:
           type: integer
