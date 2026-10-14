@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 
 class TestEstoqueGet {
     @Test
-    fun `deve listar posicoes cadastradas`() {
+    fun `deve listar estoques cadastrados`() {
         val fixture = EstoqueFixture()
 
         try {
@@ -31,7 +31,7 @@ class TestEstoqueGet {
                     localizacao = "Estante B-02",
                 )
 
-            val posicoes = fixture.service.listarPosicoes()
+            val estoques = fixture.service.listarRegistrosEstoque()
 
             assertTrue(
                 Estoque(
@@ -42,7 +42,7 @@ class TestEstoqueGet {
                     quantidadeMinima = 3,
                     localizacao = "Estante A-01",
                     bloqueado = true,
-                ) in posicoes,
+                ) in estoques,
             )
             assertTrue(
                 Estoque(
@@ -53,7 +53,7 @@ class TestEstoqueGet {
                     quantidadeMinima = 1,
                     localizacao = "Estante B-02",
                     bloqueado = false,
-                ) in posicoes,
+                ) in estoques,
             )
         } finally {
             fixture.limpar()
@@ -61,7 +61,7 @@ class TestEstoqueGet {
     }
 
     @Test
-    fun `deve consultar posicao com quantidade disponivel calculada`() {
+    fun `deve consultar estoque com quantidade disponivel calculada`() {
         val fixture = EstoqueFixture()
 
         try {
@@ -84,7 +84,7 @@ class TestEstoqueGet {
                     localizacao = "Estante A-01",
                     bloqueado = true,
                 ),
-                fixture.service.buscarPosicaoPorProdutoId(produtoId),
+                fixture.service.buscarRegistroEstoquePorProdutoId(produtoId),
             )
         } finally {
             fixture.limpar()
@@ -92,24 +92,15 @@ class TestEstoqueGet {
     }
 
     @Test
-    fun `deve retornar posicao zerada para produto sem registro de estoque`() {
+    fun `deve retornar not found para produto sem estoque cadastrado`() {
         val fixture = EstoqueFixture()
 
         try {
             val produtoId = fixture.novoProdutoSemEstoque()
 
-            assertEquals(
-                Estoque(
-                    produtoId = produtoId,
-                    quantidadeFisica = 0,
-                    quantidadeReservada = 0,
-                    quantidadeDisponivel = 0,
-                    quantidadeMinima = 0,
-                    localizacao = null,
-                    bloqueado = false,
-                ),
-                fixture.service.buscarPosicaoPorProdutoId(produtoId),
-            )
+            assertFailsWith<NotFoundException> {
+                fixture.service.buscarRegistroEstoquePorProdutoId(produtoId)
+            }
         } finally {
             fixture.limpar()
         }
@@ -120,7 +111,7 @@ class TestEstoqueGet {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.buscarPosicaoPorProdutoId(Long.MAX_VALUE)
+            fixture.service.buscarRegistroEstoquePorProdutoId(Long.MAX_VALUE)
         }
     }
 
@@ -129,7 +120,7 @@ class TestEstoqueGet {
         val fixture = EstoqueFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.service.buscarPosicaoPorProdutoId(0)
+            fixture.service.buscarRegistroEstoquePorProdutoId(0)
         }
     }
 }

@@ -10,7 +10,7 @@ import kotlin.test.assertFailsWith
 
 class TestEstoqueDelete {
     @Test
-    fun `deve excluir posicao sem quantidade reservada mesmo com saldo fisico`() {
+    fun `deve excluir estoque sem quantidade reservada mesmo com saldo fisico`() {
         val fixture = EstoqueFixture()
 
         try {
@@ -23,16 +23,18 @@ class TestEstoqueDelete {
                     bloqueado = true,
                 )
 
-            fixture.service.excluirPosicao(produtoId)
+            fixture.service.excluirRegistroEstoque(produtoId)
 
-            assertEquals(0, fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica)
+            assertFailsWith<NotFoundException> {
+                fixture.service.buscarRegistroEstoquePorProdutoId(produtoId)
+            }
         } finally {
             fixture.limpar()
         }
     }
 
     @Test
-    fun `deve impedir excluir posicao com quantidade reservada`() {
+    fun `deve impedir excluir estoque com quantidade reservada`() {
         val fixture = EstoqueFixture()
 
         try {
@@ -44,24 +46,24 @@ class TestEstoqueDelete {
                 )
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.excluirPosicao(produtoId)
+                fixture.service.excluirRegistroEstoque(produtoId)
             }
-            assertEquals(8, fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica)
-            assertEquals(2, fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeReservada)
+            assertEquals(8, fixture.service.buscarRegistroEstoquePorProdutoId(produtoId).quantidadeFisica)
+            assertEquals(2, fixture.service.buscarRegistroEstoquePorProdutoId(produtoId).quantidadeReservada)
         } finally {
             fixture.limpar()
         }
     }
 
     @Test
-    fun `deve retornar not found quando produto nao possui posicao`() {
+    fun `deve retornar not found quando produto nao possui estoque`() {
         val fixture = EstoqueFixture()
 
         try {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             assertFailsWith<NotFoundException> {
-                fixture.service.excluirPosicao(produtoId)
+                fixture.service.excluirRegistroEstoque(produtoId)
             }
         } finally {
             fixture.limpar()
@@ -73,7 +75,7 @@ class TestEstoqueDelete {
         val fixture = EstoqueFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.service.excluirPosicao(0)
+            fixture.service.excluirRegistroEstoque(0)
         }
     }
 }
