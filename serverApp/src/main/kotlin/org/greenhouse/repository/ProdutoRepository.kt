@@ -14,6 +14,9 @@ interface ProdutoRepository : JpaRepository<Produto, Long> {
     @Query("SELECT p FROM Produto p")
     fun listar(): List<Produto>
 
+    @Query("SELECT p FROM Produto p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))")
+    fun buscarPorNome(@Param("nome") nome: String): List<Produto>
+
     @Query("SELECT p FROM Produto p WHERE p.id = :id")
     fun buscarPorId(@Param("id") id: Long): Produto?
 
@@ -44,6 +47,7 @@ interface ProdutoRepository : JpaRepository<Produto, Long> {
                 produto.descricao,
                 produto.preco,
                 produto.ativo,
+                produto.prazoPreparoMinutos,
             ) == 0
         ) {
             return null
@@ -57,7 +61,7 @@ interface ProdutoRepository : JpaRepository<Produto, Long> {
         """
         UPDATE Produto p
         SET p.codigo = :codigo, p.nome = :nome, p.descricao = :descricao,
-            p.preco = :preco, p.ativo = :ativo
+            p.preco = :preco, p.ativo = :ativo, p.prazoPreparoMinutos = :prazoPreparoMinutos
         WHERE p.id = :id
         """,
     )
@@ -68,6 +72,7 @@ interface ProdutoRepository : JpaRepository<Produto, Long> {
         @Param("descricao") descricao: String?,
         @Param("preco") preco: BigDecimal,
         @Param("ativo") ativo: Boolean,
+        @Param("prazoPreparoMinutos") prazoPreparoMinutos: Int?,
     ): Int
 
     @Query(
@@ -76,7 +81,6 @@ interface ProdutoRepository : JpaRepository<Produto, Long> {
                 EXISTS (SELECT 1 FROM pedido_item WHERE produto_id = :id)
                 OR EXISTS (SELECT 1 FROM compra_item WHERE produto_id = :id)
                 OR EXISTS (SELECT 1 FROM estoque WHERE produto_id = :id)
-                OR EXISTS (SELECT 1 FROM movimentacao_estoque WHERE produto_id = :id)
         """,
         nativeQuery = true,
     )
