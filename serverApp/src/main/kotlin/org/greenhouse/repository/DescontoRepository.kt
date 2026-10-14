@@ -17,6 +17,9 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
     @Query("SELECT d FROM Desconto d WHERE d.id = :id")
     fun buscarPorId(@Param("id") id: Long): Desconto?
 
+    @Query("SELECT d FROM Desconto d WHERE LOWER(d.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
+    fun buscarPorTitulo(@Param("titulo") titulo: String): List<Desconto>
+
     fun criar(desconto: Desconto): Desconto = save(desconto)
 
     @Transactional
