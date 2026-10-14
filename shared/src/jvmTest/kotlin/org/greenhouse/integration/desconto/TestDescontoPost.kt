@@ -1,7 +1,7 @@
 package org.greenhouse.integration.desconto
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO as Desconto
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
@@ -23,7 +23,6 @@ class TestDescontoPost {
             val criado =
                 fixture.criarDesconto(
                     Desconto(
-                        id = -1,
                         titulo = "Promoção de verão",
                         descricao = "Desconto percentual de teste",
                         tipo = TipoDesconto.PERCENTUAL,

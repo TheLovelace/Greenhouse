@@ -1,6 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO
+import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.greenhouse.service.DescontoService
@@ -19,7 +20,7 @@ class DescontoFixture {
     private val idsCriados = mutableListOf<Long>()
     val service = SpringTestContext.bean<DescontoService>()
 
-    fun criarDesconto(desconto: Desconto): Desconto =
+    fun criarDesconto(desconto: DescontoRequestDTO): DescontoResponseDTO =
         service.criar(desconto).also { criado ->
             val id = requireNotNull(criado.id) { "O banco não retornou o ID do desconto criado" }
             idsCriados.add(id)

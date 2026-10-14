@@ -3,7 +3,8 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO
+import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.mapper.DescontoMapper
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
@@ -19,42 +20,41 @@ class DescontoService(
     private val descontoRepository: DescontoRepository,
     private val descontoMapper: DescontoMapper,
 ) {
-    fun criar(desconto: Desconto): Desconto {
+    fun criar(desconto: DescontoRequestDTO): DescontoResponseDTO {
         validar(desconto)
-        val model = descontoMapper.toModel(desconto.copy(id = null))
-        return descontoMapper.toDto(descontoRepository.criar(model))
+        return descontoMapper.toResponseDto(descontoRepository.criar(descontoMapper.toModel(desconto)))
     }
 
-    fun listar(): List<Desconto> = descontoRepository.listar().map(descontoMapper::toDto)
+    fun listar(): List<DescontoResponseDTO> =
+        descontoRepository.listar().map(descontoMapper::toResponseDto)
 
-    fun buscarPorId(id: Long): Desconto =
+    fun buscarPorId(id: Long): DescontoResponseDTO =
         descontoRepository.buscarPorId(validarId(id))
-            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
 
     fun substituir(
         id: Long,
-        desconto: Desconto,
-    ): Desconto {
+        desconto: DescontoRequestDTO,
+    ): DescontoResponseDTO {
         val idValidado = validarId(id)
         if (descontoRepository.buscarPorId(idValidado) == null) {
             throw NotFoundException("Desconto não encontrado")
         }
 
-        val descontoSubstituido = desconto.copy(id = idValidado)
-        validar(descontoSubstituido)
+        validar(desconto)
 
-        return descontoRepository.atualizar(idValidado, descontoMapper.toModel(descontoSubstituido))
-            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+        return descontoRepository.atualizar(idValidado, descontoMapper.toModel(desconto))
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
     }
 
     fun atualizar(
         id: Long,
         campos: Map<String, Any?>,
-    ): Desconto {
+    ): DescontoResponseDTO {
         val idValidado = validarId(id)
         val descontoAtual =
             descontoRepository.buscarPorId(idValidado)
-                ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+                ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
 
         val camposPermitidos =
             setOf(
@@ -77,7 +77,7 @@ class DescontoService(
         }
 
         val descontoAtualizado =
-            descontoAtual.copy(
+            DescontoRequestDTO(
                 titulo = campos.texto("titulo", descontoAtual.titulo),
                 descricao = campos.textoOpcional("descricao", descontoAtual.descricao),
                 tipo = campos.tipo("tipo", descontoAtual.tipo),
@@ -94,7 +94,7 @@ class DescontoService(
         validar(descontoAtualizado)
 
         return descontoRepository.atualizar(idValidado, descontoMapper.toModel(descontoAtualizado))
-            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -110,7 +110,7 @@ class DescontoService(
         return id
     }
 
-    private fun validar(desconto: Desconto) {
+    private fun validar(desconto: DescontoRequestDTO) {
         if (desconto.titulo.isBlank()) {
             throw UnprocessableEntityException("O título do desconto é obrigatório")
         }
