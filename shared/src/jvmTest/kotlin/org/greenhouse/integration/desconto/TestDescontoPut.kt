@@ -2,7 +2,7 @@ package org.greenhouse.integration.desconto
 
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.DescontoDTO
+import org.greenhouse.dto.request.DescontoRequestDTO
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
@@ -22,7 +22,7 @@ class TestDescontoPut {
             val substituido =
                 fixture.service.substituir(
                     id,
-                    DescontoDTO(
+                    DescontoRequestDTO(
                         titulo = "Oferta atualizada",
                         descricao = null,
                         tipo = TipoDesconto.VALOR_FIXO,
@@ -55,7 +55,7 @@ class TestDescontoPut {
         assertFailsWith<NotFoundException> {
             fixture.service.substituir(
                 Long.MAX_VALUE,
-                DescontoDTO(
+                DescontoRequestDTO(
                     titulo = "Oferta",
                     tipo = TipoDesconto.PERCENTUAL,
                     valor = BigDecimal("10.00"),
@@ -74,7 +74,7 @@ class TestDescontoPut {
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.substituir(
                     id,
-                    DescontoDTO(
+                    DescontoRequestDTO(
                         titulo = "Oferta",
                         tipo = TipoDesconto.PERCENTUAL,
                         valor = BigDecimal("100.01"),

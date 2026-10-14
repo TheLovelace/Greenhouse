@@ -1,6 +1,7 @@
 package org.greenhouse.controller
 
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO
+import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.service.DescontoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,31 +22,31 @@ class DescontoController(
 ) {
     @PostMapping
     fun criar(
-        @RequestBody desconto: Desconto,
-    ): ResponseEntity<Desconto> =
+        @RequestBody desconto: DescontoRequestDTO,
+    ): ResponseEntity<DescontoResponseDTO> =
         ResponseEntity
             .status(HttpStatus.CREATED)
             .body(descontoUseCase.criar(desconto))
 
     @GetMapping
-    fun listar(): List<Desconto> = descontoUseCase.listar()
+    fun listar(): List<DescontoResponseDTO> = descontoUseCase.listar()
 
     @GetMapping("/{id}")
     fun buscarPorId(
         @PathVariable id: Long,
-    ): Desconto = descontoUseCase.buscarPorId(id)
+    ): DescontoResponseDTO = descontoUseCase.buscarPorId(id)
 
     @PutMapping("/{id}")
     fun substituir(
         @PathVariable id: Long,
-        @RequestBody desconto: Desconto,
-    ): Desconto = descontoUseCase.substituir(id, desconto)
+        @RequestBody desconto: DescontoRequestDTO,
+    ): DescontoResponseDTO = descontoUseCase.substituir(id, desconto)
 
     @PatchMapping("/{id}")
     fun atualizar(
         @PathVariable id: Long,
         @RequestBody campos: Map<String, Any?>,
-    ): Desconto = descontoUseCase.atualizar(id, campos)
+    ): DescontoResponseDTO = descontoUseCase.atualizar(id, campos)
 
     @DeleteMapping("/{id}")
     fun excluir(
