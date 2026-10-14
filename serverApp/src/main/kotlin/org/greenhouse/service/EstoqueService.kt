@@ -6,6 +6,7 @@ import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.dto.EstoqueCreateDTO
 import org.greenhouse.dto.EstoqueDTO
+import org.greenhouse.dto.EstoqueUpdateDTO
 import org.greenhouse.mapper.EstoqueMapper
 import org.greenhouse.model.Estoque
 import org.greenhouse.repository.EstoqueRepository
@@ -88,6 +89,43 @@ class EstoqueService(
                 localizacao = null,
                 bloqueado = false,
             )
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun substituirPosicao(
+        produtoId: Long,
+        atualizacao: EstoqueUpdateDTO,
+    ): EstoqueDTO {
+        validarId(produtoId)
+        val produto =
+            produtoRepository.buscarParaAtualizar(produtoId)
+                ?: throw NotFoundException("Produto não encontrado")
+        val estoque =
+            estoqueRepository.buscarParaAtualizar(produtoId)
+                ?: throw NotFoundException("Posição de estoque não encontrada")
+
+        if (atualizacao.quantidadeFisica < 0) {
+            throw UnprocessableEntityException("A quantidade física não pode ser negativa")
+        }
+        if (atualizacao.quantidadeMinima < 0) {
+            throw UnprocessableEntityException("A quantidade mínima não pode ser negativa")
+        }
+        if ((atualizacao.localizacao?.length ?: 0) > 100) {
+            throw UnprocessableEntityException("A localização deve ter no máximo 100 caracteres")
+        }
+        if (atualizacao.quantidadeFisica < estoque.quantidadeReservada) {
+            throw UnprocessableEntityException(
+                "A quantidade física não pode ser menor que a quantidade reservada",
+            )
+        }
+
+        estoque.produtoId = requireNotNull(produto.id)
+        estoque.quantidadeFisica = atualizacao.quantidadeFisica
+        estoque.quantidadeMinima = atualizacao.quantidadeMinima
+        estoque.localizacao = atualizacao.localizacao
+        estoque.bloqueado = atualizacao.bloqueado
+
+        return estoqueMapper.toDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
