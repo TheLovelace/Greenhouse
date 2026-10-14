@@ -1,6 +1,6 @@
-package org.greenhouse.dto
+package org.greenhouse.dto.response
 
-data class EstoqueDTO(
+data class EstoqueResponseDTO(
     val produtoId: Long,
     val quantidadeFisica: Int,
     val quantidadeReservada: Int,

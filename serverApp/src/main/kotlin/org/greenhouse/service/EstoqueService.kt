@@ -4,9 +4,9 @@ import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.ConflictException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.EstoqueCreateDTO
-import org.greenhouse.dto.EstoqueDTO
-import org.greenhouse.dto.EstoqueUpdateDTO
+import org.greenhouse.dto.request.EstoqueCreateRequestDTO
+import org.greenhouse.dto.request.EstoqueUpdateRequestDTO
+import org.greenhouse.dto.response.EstoqueResponseDTO
 import org.greenhouse.mapper.EstoqueMapper
 import org.greenhouse.model.Estoque
 import org.greenhouse.repository.EstoqueRepository
@@ -22,7 +22,7 @@ class EstoqueService(
     private val estoqueMapper: EstoqueMapper,
 ) {
     @Transactional(rollbackFor = [Exception::class])
-    fun criarPosicao(estoque: EstoqueCreateDTO): EstoqueDTO {
+    fun criarPosicao(estoque: EstoqueCreateRequestDTO): EstoqueResponseDTO {
         validarId(estoque.produtoId)
         val produto =
             produtoRepository.buscarParaAtualizar(estoque.produtoId)
@@ -49,11 +49,11 @@ class EstoqueService(
                 localizacao = estoque.localizacao,
                 bloqueado = estoque.bloqueado,
             )
-        return estoqueMapper.toDto(estoqueRepository.save(novaPosicao))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(novaPosicao))
     }
 
-    fun listarPosicoes(): List<EstoqueDTO> =
-        estoqueRepository.listar().map(estoqueMapper::toDto)
+    fun listarPosicoes(): List<EstoqueResponseDTO> =
+        estoqueRepository.listar().map(estoqueMapper::toResponseDto)
 
     @Transactional(rollbackFor = [Exception::class])
     fun excluirPosicao(produtoId: Long) {
@@ -73,14 +73,14 @@ class EstoqueService(
         estoqueRepository.delete(estoque)
     }
 
-    fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueDTO {
+    fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueResponseDTO {
         validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {
             throw NotFoundException("Produto não encontrado")
         }
 
-        return estoqueRepository.buscarPorProdutoId(produtoId)?.let(estoqueMapper::toDto)
-            ?: EstoqueDTO(
+        return estoqueRepository.buscarPorProdutoId(produtoId)?.let(estoqueMapper::toResponseDto)
+            ?: EstoqueResponseDTO(
                 produtoId = produtoId,
                 quantidadeFisica = 0,
                 quantidadeReservada = 0,
@@ -94,8 +94,8 @@ class EstoqueService(
     @Transactional(rollbackFor = [Exception::class])
     fun substituirPosicao(
         produtoId: Long,
-        atualizacao: EstoqueUpdateDTO,
-    ): EstoqueDTO {
+        atualizacao: EstoqueUpdateRequestDTO,
+    ): EstoqueResponseDTO {
         validarId(produtoId)
         val produto =
             produtoRepository.buscarParaAtualizar(produtoId)
@@ -125,14 +125,14 @@ class EstoqueService(
         estoque.localizacao = atualizacao.localizacao
         estoque.bloqueado = atualizacao.bloqueado
 
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
     fun atualizarPosicao(
         produtoId: Long,
         campos: Map<String, Any?>,
-    ): EstoqueDTO {
+    ): EstoqueResponseDTO {
         validarId(produtoId)
         val produto =
             produtoRepository.buscarParaAtualizar(produtoId)
@@ -179,7 +179,7 @@ class EstoqueService(
             )
         }
 
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
@@ -196,7 +196,7 @@ class EstoqueService(
     fun reservar(
         produtoId: Long,
         quantidade: Int,
-    ): EstoqueDTO {
+    ): EstoqueResponseDTO {
         val estoque = estoqueParaPedido(produtoId, quantidade)
         validarNaoBloqueado(estoque)
         validarDisponivel(estoque, quantidade)
@@ -206,28 +206,28 @@ class EstoqueService(
             throw UnprocessableEntityException("A quantidade reservada excede o limite suportado pelo estoque")
         }
         estoque.quantidadeReservada = novaQuantidadeReservada.toInt()
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
     fun liberarReserva(
         produtoId: Long,
         quantidade: Int,
-    ): EstoqueDTO {
+    ): EstoqueResponseDTO {
         val estoque = estoqueParaPedido(produtoId, quantidade)
         if (estoque.quantidadeReservada < quantidade) {
             throw UnprocessableEntityException("A quantidade reservada é insuficiente para liberar")
         }
 
         estoque.quantidadeReservada -= quantidade
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
     fun concluirPedidoAgendado(
         produtoId: Long,
         quantidade: Int,
-    ): EstoqueDTO {
+    ): EstoqueResponseDTO {
         val estoque = estoqueParaPedido(produtoId, quantidade)
         if (estoque.quantidadeReservada < quantidade) {
             throw UnprocessableEntityException("A quantidade reservada é insuficiente para concluir o pedido")
@@ -235,20 +235,20 @@ class EstoqueService(
 
         estoque.quantidadeFisica -= quantidade
         estoque.quantidadeReservada -= quantidade
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     @Transactional(rollbackFor = [Exception::class])
     fun concluirPedidoImediato(
         produtoId: Long,
         quantidade: Int,
-    ): EstoqueDTO {
+    ): EstoqueResponseDTO {
         val estoque = estoqueParaPedido(produtoId, quantidade)
         validarNaoBloqueado(estoque)
         validarDisponivel(estoque, quantidade)
 
         estoque.quantidadeFisica -= quantidade
-        return estoqueMapper.toDto(estoqueRepository.save(estoque))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
 
     private fun estoqueParaPedido(

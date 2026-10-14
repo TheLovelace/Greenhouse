@@ -1,13 +1,13 @@
 package org.greenhouse.mapper
 
-import org.greenhouse.dto.EstoqueDTO
+import org.greenhouse.dto.response.EstoqueResponseDTO
 import org.greenhouse.model.Estoque
 import org.springframework.stereotype.Component
 
 @Component
 class EstoqueMapper {
-    fun toDto(model: Estoque) =
-        EstoqueDTO(
+    fun toResponseDto(model: Estoque) =
+        EstoqueResponseDTO(
             produtoId = model.produtoId,
             quantidadeFisica = model.quantidadeFisica,
             quantidadeReservada = model.quantidadeReservada,
