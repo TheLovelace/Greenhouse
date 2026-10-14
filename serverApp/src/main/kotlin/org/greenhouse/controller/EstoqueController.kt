@@ -23,40 +23,40 @@ class EstoqueController(
     private val estoqueService: EstoqueService,
 ) {
     @PostMapping
-    fun criarPosicao(
+    fun criarRegistroEstoque(
         @Valid
         @RequestBody estoque: EstoqueCreateRequestDTO,
     ): ResponseEntity<EstoqueResponseDTO> =
         ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(estoqueService.criarPosicao(estoque))
+            .body(estoqueService.criarRegistroEstoque(estoque))
 
     @GetMapping
-    fun listarPosicoes(): List<EstoqueResponseDTO> = estoqueService.listarPosicoes()
+    fun listarRegistrosEstoque(): List<EstoqueResponseDTO> = estoqueService.listarRegistrosEstoque()
 
     @GetMapping("/{produtoId}")
-    fun buscarPosicaoPorProdutoId(
+    fun buscarRegistroEstoquePorProdutoId(
         @PathVariable produtoId: Long,
-    ): EstoqueResponseDTO = estoqueService.buscarPosicaoPorProdutoId(produtoId)
+    ): EstoqueResponseDTO = estoqueService.buscarRegistroEstoquePorProdutoId(produtoId)
 
     @PutMapping("/{produtoId}")
-    fun substituirPosicao(
+    fun substituirRegistroEstoque(
         @PathVariable produtoId: Long,
         @Valid
         @RequestBody estoque: EstoqueUpdateRequestDTO,
-    ): EstoqueResponseDTO = estoqueService.substituirPosicao(produtoId, estoque)
+    ): EstoqueResponseDTO = estoqueService.substituirRegistroEstoque(produtoId, estoque)
 
     @PatchMapping("/{produtoId}")
-    fun atualizarPosicao(
+    fun atualizarRegistroEstoque(
         @PathVariable produtoId: Long,
         @RequestBody campos: Map<String, Any?>,
-    ): EstoqueResponseDTO = estoqueService.atualizarPosicao(produtoId, campos)
+    ): EstoqueResponseDTO = estoqueService.atualizarRegistroEstoque(produtoId, campos)
 
     @DeleteMapping("/{produtoId}")
-    fun excluirPosicao(
+    fun excluirRegistroEstoque(
         @PathVariable produtoId: Long,
     ): ResponseEntity<Unit> {
-        estoqueService.excluirPosicao(produtoId)
+        estoqueService.excluirRegistroEstoque(produtoId)
         return ResponseEntity.noContent().build()
     }
 }

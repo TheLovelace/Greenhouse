@@ -24,7 +24,7 @@ class TestEstoquePut {
                 )
 
             val atualizada =
-                fixture.service.substituirPosicao(
+                fixture.service.substituirRegistroEstoque(
                     produtoId,
                     EstoqueUpdateRequestDTO(
                         quantidadeFisica = 15,
@@ -59,7 +59,7 @@ class TestEstoquePut {
                 )
 
             val atualizada =
-                fixture.service.substituirPosicao(
+                fixture.service.substituirRegistroEstoque(
                     produtoId,
                     EstoqueUpdateRequestDTO(
                         quantidadeFisica = 5,
@@ -88,7 +88,7 @@ class TestEstoquePut {
                 )
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.substituirPosicao(
+                fixture.service.substituirRegistroEstoque(
                     produtoId,
                     EstoqueUpdateRequestDTO(
                         quantidadeFisica = 2,
@@ -98,7 +98,7 @@ class TestEstoquePut {
                     ),
                 )
             }
-            assertEquals(8, fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica)
+            assertEquals(8, fixture.service.buscarRegistroEstoquePorProdutoId(produtoId).quantidadeFisica)
         } finally {
             fixture.limpar()
         }
@@ -112,7 +112,7 @@ class TestEstoquePut {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             assertFailsWith<NotFoundException> {
-                fixture.service.substituirPosicao(
+                fixture.service.substituirRegistroEstoque(
                     produtoId,
                     EstoqueUpdateRequestDTO(
                         quantidadeFisica = 5,

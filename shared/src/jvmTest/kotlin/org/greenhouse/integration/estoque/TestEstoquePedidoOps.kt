@@ -104,7 +104,7 @@ class TestEstoquePedidoOps {
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.concluirPedidoImediato(produtoId, 1)
             }
-            assertEquals(10, fixture.service.buscarPosicaoPorProdutoId(produtoId).quantidadeFisica)
+            assertEquals(10, fixture.service.buscarRegistroEstoquePorProdutoId(produtoId).quantidadeFisica)
         } finally {
             fixture.limpar()
         }

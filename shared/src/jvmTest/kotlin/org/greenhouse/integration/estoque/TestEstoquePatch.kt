@@ -24,7 +24,7 @@ class TestEstoquePatch {
                 )
 
             val atualizada =
-                fixture.service.atualizarPosicao(
+                fixture.service.atualizarRegistroEstoque(
                     produtoId,
                     mapOf(
                         "quantidadeFisica" to 15,
@@ -59,13 +59,13 @@ class TestEstoquePatch {
                 )
             assertNull(
                 fixture.service
-                    .atualizarPosicao(produtoComPosicao, mapOf("localizacao" to null))
+                    .atualizarRegistroEstoque(produtoComPosicao, mapOf("localizacao" to null))
                     .localizacao,
             )
 
             val produtoSemPosicao = fixture.novoProdutoSemEstoque()
             val novaPosicao =
-                fixture.service.atualizarPosicao(
+                fixture.service.atualizarRegistroEstoque(
                     produtoSemPosicao,
                     mapOf("bloqueado" to true),
                 )
@@ -91,22 +91,22 @@ class TestEstoquePatch {
                 )
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizarPosicao(produtoId, mapOf("quantidadeFisica" to 2))
+                fixture.service.atualizarRegistroEstoque(produtoId, mapOf("quantidadeFisica" to 2))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizarPosicao(produtoId, mapOf("quantidadeMinima" to -1))
+                fixture.service.atualizarRegistroEstoque(produtoId, mapOf("quantidadeMinima" to -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizarPosicao(produtoId, mapOf("localizacao" to "a".repeat(101)))
+                fixture.service.atualizarRegistroEstoque(produtoId, mapOf("localizacao" to "a".repeat(101)))
             }
             assertFailsWith<BadRequestException> {
-                fixture.service.atualizarPosicao(produtoId, mapOf("quantidadeFisica" to 2.5))
+                fixture.service.atualizarRegistroEstoque(produtoId, mapOf("quantidadeFisica" to 2.5))
             }
             assertFailsWith<BadRequestException> {
-                fixture.service.atualizarPosicao(produtoId, mapOf("campo" to 1))
+                fixture.service.atualizarRegistroEstoque(produtoId, mapOf("campo" to 1))
             }
             assertFailsWith<BadRequestException> {
-                fixture.service.atualizarPosicao(produtoId, emptyMap())
+                fixture.service.atualizarRegistroEstoque(produtoId, emptyMap())
             }
         } finally {
             fixture.limpar()
@@ -118,7 +118,7 @@ class TestEstoquePatch {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.atualizarPosicao(Long.MAX_VALUE, mapOf("bloqueado" to true))
+            fixture.service.atualizarRegistroEstoque(Long.MAX_VALUE, mapOf("bloqueado" to true))
         }
     }
 }

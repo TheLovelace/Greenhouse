@@ -4,8 +4,8 @@ paths:
       tags:
         - Estoque
       summary: Cadastrar informações de estoque para um produto
-      description: Cria a posição somente se o produto ainda não possuir uma. A quantidade reservada inicia em zero e é controlada pelo fluxo de pedidos.
-      operationId: criarPosicaoEstoque
+      description: Cria o estoque somente se ainda não houver um registro para o produto. A quantidade reservada inicia em zero e é controlada pelo fluxo de pedidos.
+      operationId: criarRegistroEstoque
       requestBody:
         required: true
         content:
@@ -24,7 +24,7 @@ paths:
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
         '409':
-          description: O produto já possui uma posição de estoque
+          description: O produto já possui informações de estoque cadastradas
           content:
             application/json:
               schema:
@@ -34,10 +34,10 @@ paths:
         - Estoque
       summary: Listar informações de estoque
       description: Retorna todos os registros na tabela de estoque. Não inclui produtos que ainda não possuem estoque.
-      operationId: listarPosicoesEstoque
+      operationId: listarRegistrosEstoque
       responses:
         '200':
-          description: Lista de posições de estoque
+          description: Lista de registros de estoque
           content:
               application/json:
                 schema:
@@ -49,7 +49,7 @@ paths:
       tags:
         - Estoque
       summary: Consultar informações de estoque por produto
-      description: Retorna os saldos e os dados de controle do estoque. Produtos existentes sem estoque registrado retornam quantidades zeradas, localização nula e estoque desbloqueado.
+      description: Retorna os saldos e os dados de controle do estoque. Se o produto não existir ou não houver registro de estoque para ele, retorna 404.
       operationId: consultarEstoquePorProduto
       parameters:
         - name: produtoId
@@ -75,8 +75,8 @@ paths:
       tags:
         - Estoque
       summary: Atualizar informações de estoque (registro completo)
-      description: Substitui quantidade física, quantidade mínima, localização e bloqueio da posição existente. Envie os campos obrigatórios; localização omitida ou null limpa a localização. A quantidade reservada não é editável e deve continuar compatível com a quantidade física.
-      operationId: substituirPosicaoEstoque
+      description: Substitui quantidade física, quantidade mínima, localização e bloqueio do estoque existente. Envie os campos obrigatórios; localização omitida ou null limpa a localização. A quantidade reservada não é editável e deve continuar compatível com a quantidade física.
+      operationId: substituirRegistroEstoque
       parameters:
         - name: produtoId
           in: path
@@ -94,7 +94,7 @@ paths:
               $ref: '#/components/schemas/EstoqueUpdate'
       responses:
         '200':
-          description: Posição de estoque substituída
+          description: Informações de estoque substituídas
           content:
             application/json:
               schema:
@@ -108,7 +108,7 @@ paths:
         - Estoque
       summary: Atualizar informações de estoque (campos parciais)
       description: Atualiza parcialmente os campos quantidadeFisica, quantidadeMinima, localizacao e bloqueado. A quantidade reservada é controlada exclusivamente pelo fluxo de pedidos. A quantidade física não pode ficar abaixo da quantidade reservada.
-      operationId: atualizarPosicaoEstoque
+      operationId: atualizarRegistroEstoque
       parameters:
         - name: produtoId
           in: path
@@ -140,7 +140,7 @@ paths:
         - Estoque
       summary: Excluir informações de estoque do produto
       description: Exclui o estoque de um produto. A exclusão é impedida enquanto houver quantidade reservada; saldo físico e demais campos não impedem a exclusão.
-      operationId: excluirPosicaoEstoque
+      operationId: excluirRegistroEstoque
       parameters:
         - name: produtoId
           in: path

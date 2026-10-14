@@ -22,14 +22,14 @@ class EstoqueService(
     private val estoqueMapper: EstoqueMapper,
 ) {
     @Transactional(rollbackFor = [Exception::class])
-    fun criarPosicao(estoque: EstoqueCreateRequestDTO): EstoqueResponseDTO {
+    fun criarRegistroEstoque(estoque: EstoqueCreateRequestDTO): EstoqueResponseDTO {
         validarId(estoque.produtoId)
         val produto =
             produtoRepository.buscarParaAtualizar(estoque.produtoId)
                 ?: throw NotFoundException("Produto não encontrado")
 
         if (estoqueRepository.buscarParaAtualizar(estoque.produtoId) != null) {
-            throw ConflictException("Já existe uma posição de estoque para este produto")
+            throw ConflictException("Já existem informações de estoque para este produto")
         }
         if (estoque.quantidadeFisica < 0) {
             throw UnprocessableEntityException("A quantidade física não pode ser negativa")
@@ -41,51 +41,43 @@ class EstoqueService(
             throw UnprocessableEntityException("A localização deve ter no máximo 100 caracteres")
         }
 
-        val novaPosicao = estoqueMapper.toModel(estoque, requireNotNull(produto.id))
-        return estoqueMapper.toResponseDto(estoqueRepository.save(novaPosicao))
+        val novoRegistro = estoqueMapper.toModel(estoque, requireNotNull(produto.id))
+        return estoqueMapper.toResponseDto(estoqueRepository.save(novoRegistro))
     }
 
-    fun listarPosicoes(): List<EstoqueResponseDTO> =
+    fun listarRegistrosEstoque(): List<EstoqueResponseDTO> =
         estoqueRepository.listar().map(estoqueMapper::toResponseDto)
 
     @Transactional(rollbackFor = [Exception::class])
-    fun excluirPosicao(produtoId: Long) {
+    fun excluirRegistroEstoque(produtoId: Long) {
         validarId(produtoId)
         produtoRepository.buscarParaAtualizar(produtoId)
             ?: throw NotFoundException("Produto não encontrado")
         val estoque =
             estoqueRepository.buscarParaAtualizar(produtoId)
-                ?: throw NotFoundException("Posição de estoque não encontrada")
+                ?: throw NotFoundException("Estoque não encontrado para este produto")
 
         if (estoque.quantidadeReservada > 0) {
             throw UnprocessableEntityException(
-                "A posição de estoque não pode ser excluída enquanto houver quantidade reservada",
+                "O estoque não pode ser excluído enquanto houver quantidade reservada",
             )
         }
 
         estoqueRepository.delete(estoque)
     }
 
-    fun buscarPosicaoPorProdutoId(produtoId: Long): EstoqueResponseDTO {
+    fun buscarRegistroEstoquePorProdutoId(produtoId: Long): EstoqueResponseDTO {
         validarId(produtoId)
         if (produtoRepository.buscarPorId(produtoId) == null) {
             throw NotFoundException("Produto não encontrado")
         }
 
         return estoqueRepository.buscarPorProdutoId(produtoId)?.let(estoqueMapper::toResponseDto)
-            ?: EstoqueResponseDTO(
-                produtoId = produtoId,
-                quantidadeFisica = 0,
-                quantidadeReservada = 0,
-                quantidadeDisponivel = 0,
-                quantidadeMinima = 0,
-                localizacao = null,
-                bloqueado = false,
-            )
+            ?: throw NotFoundException("Estoque não encontrado para este produto")
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    fun substituirPosicao(
+    fun substituirRegistroEstoque(
         produtoId: Long,
         atualizacao: EstoqueUpdateRequestDTO,
     ): EstoqueResponseDTO {
@@ -94,7 +86,7 @@ class EstoqueService(
             ?: throw NotFoundException("Produto não encontrado")
         val estoque =
             estoqueRepository.buscarParaAtualizar(produtoId)
-                ?: throw NotFoundException("Posição de estoque não encontrada")
+                ?: throw NotFoundException("Estoque não encontrado para este produto")
 
         if (atualizacao.quantidadeFisica < 0) {
             throw UnprocessableEntityException("A quantidade física não pode ser negativa")
@@ -117,7 +109,7 @@ class EstoqueService(
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    fun atualizarPosicao(
+    fun atualizarRegistroEstoque(
         produtoId: Long,
         campos: Map<String, Any?>,
     ): EstoqueResponseDTO {

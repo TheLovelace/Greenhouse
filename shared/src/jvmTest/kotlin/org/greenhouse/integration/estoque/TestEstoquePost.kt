@@ -18,7 +18,7 @@ class TestEstoquePost {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             val criado =
-                fixture.service.criarPosicao(
+                fixture.service.criarRegistroEstoque(
                     EstoqueCreateRequestDTO(
                         produtoId = produtoId,
                         quantidadeFisica = 12,
@@ -47,7 +47,7 @@ class TestEstoquePost {
         try {
             val produtoId = fixture.novoProdutoSemEstoque()
 
-            val criado = fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId))
+            val criado = fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(produtoId))
 
             assertEquals(0, criado.quantidadeFisica)
             assertEquals(0, criado.quantidadeReservada)
@@ -72,7 +72,7 @@ class TestEstoquePost {
                 )
 
             assertFailsWith<ConflictException> {
-                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId))
+                fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(produtoId))
             }
         } finally {
             fixture.limpar()
@@ -87,13 +87,13 @@ class TestEstoquePost {
             val produtoId = fixture.novoProdutoSemEstoque()
 
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, quantidadeFisica = -1))
+                fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(produtoId, quantidadeFisica = -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, quantidadeMinima = -1))
+                fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(produtoId, quantidadeMinima = -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.criarPosicao(EstoqueCreateRequestDTO(produtoId, localizacao = "x".repeat(101)))
+                fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(produtoId, localizacao = "x".repeat(101)))
             }
         } finally {
             fixture.limpar()
@@ -105,7 +105,7 @@ class TestEstoquePost {
         val fixture = EstoqueFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.criarPosicao(EstoqueCreateRequestDTO(Long.MAX_VALUE))
+            fixture.service.criarRegistroEstoque(EstoqueCreateRequestDTO(Long.MAX_VALUE))
         }
     }
 }
