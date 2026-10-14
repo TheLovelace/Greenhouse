@@ -1,8 +1,10 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.CategoriaDTO as Categoria
+import org.greenhouse.dto.request.CategoriaCreateRequestDTO
+import org.greenhouse.dto.response.CategoriaResponseDTO
 import org.greenhouse.repository.CategoriaRepository
 import org.greenhouse.service.CategoriaService
+import java.time.LocalDate
 import java.util.UUID
 
 class CategoriaFixture {
@@ -12,7 +14,17 @@ class CategoriaFixture {
     fun novaCategoria(
         nome: String = "Categoria ${UUID.randomUUID()}",
         descricao: String = "Descrição de teste",
-    ): Categoria = service.criar(Categoria(nome = nome, descricao = descricao))
+        observacao: String? = null,
+        dataCadastro: LocalDate? = null,
+    ): CategoriaResponseDTO =
+        service.criar(
+            CategoriaCreateRequestDTO(
+                nome = nome,
+                descricao = descricao,
+                observacao = observacao,
+                dataCadastro = dataCadastro,
+            ),
+        )
 
     fun limpar(id: Long?) {
         id?.let(repository::excluir)

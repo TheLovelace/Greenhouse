@@ -8,36 +8,36 @@ import org.greenhouse.integration.fixture.ProdutoFixture
 
 class TestProdutoDelete {
 
-    // @Test
-    // fun `deve excluir produto sem dependencias`() {
-    //     val fixture = ProdutoFixture()
-    //     val criado = fixture.novoProduto()
-    //     val id = criado.id!!
+    @Test
+    fun `deve excluir produto sem dependencias`() {
+        val fixture = ProdutoFixture()
+        val criado = fixture.novoProduto()
+        val id = criado.id!!
 
-    //     fixture.service.excluir(id)
+        fixture.service.excluir(id)
 
-    //     assertFailsWith<NotFoundException> {
-    //         fixture.service.buscarPorId(id)
-    //     }
-    // }
+        assertFailsWith<NotFoundException> {
+            fixture.service.buscarPorId(id)
+        }
+    }
 
-    // @Test
-    // fun `deve impedir excluir produto com estoque`() {
-    //     val fixture = ProdutoFixture()
-    //     var id: Long? = null
+    @Test
+    fun `deve impedir excluir produto com estoque`() {
+        val fixture = ProdutoFixture()
+        var id: Long? = null
 
-    //     try {
-    //         val criado = fixture.novoProduto()
-    //         id = criado.id
-    //         fixture.adicionarEstoque(criado.id!!)
+        try {
+            val criado = fixture.novoProduto()
+            id = criado.id
+            fixture.adicionarEstoque(criado.id!!)
 
-    //         assertFailsWith<UnprocessableEntityException> {
-    //             fixture.service.excluir(criado.id!!)
-    //         }
-    //     } finally {
-    //         fixture.limpar(id)
-    //     }
-    // }
+            assertFailsWith<UnprocessableEntityException> {
+                fixture.service.excluir(criado.id!!)
+            }
+        } finally {
+            fixture.limpar(id)
+        }
+    }
 
     @Test
     fun `deve lancar not found ao excluir produto inexistente`() {
