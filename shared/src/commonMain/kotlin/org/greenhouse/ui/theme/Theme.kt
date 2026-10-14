@@ -1,4 +1,4 @@
-package org.greenhouse.frontend.ui.theme
+package org.greenhouse.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
