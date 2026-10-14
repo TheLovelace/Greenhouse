@@ -17,4 +17,8 @@ data class Estoque(
     var quantidadeReservada: Int = 0,
     @field:Column(name = "quantidade_minima", nullable = false)
     var quantidadeMinima: Int = 0,
+    @field:Column(length = 100)
+    var localizacao: String? = null,
+    @field:Column(nullable = false)
+    var bloqueado: Boolean = false,
 )

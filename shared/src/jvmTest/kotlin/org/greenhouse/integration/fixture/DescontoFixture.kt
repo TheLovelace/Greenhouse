@@ -1,6 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO
+import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
 import org.greenhouse.service.DescontoService
@@ -19,7 +20,7 @@ class DescontoFixture {
     private val idsCriados = mutableListOf<Long>()
     val service = SpringTestContext.bean<DescontoService>()
 
-    fun criarDesconto(desconto: Desconto): Desconto =
+    fun criarDesconto(desconto: DescontoRequestDTO): DescontoResponseDTO =
         service.criar(desconto).also { criado ->
             val id = requireNotNull(criado.id) { "O banco não retornou o ID do desconto criado" }
             idsCriados.add(id)
@@ -31,6 +32,7 @@ class DescontoFixture {
         ativo: Boolean = true,
         dataInicio: OffsetDateTime? = null,
         dataFim: OffsetDateTime? = null,
+        quantidadeMinimaItens: Int = 1,
     ): Long {
         val titulo = "Desconto ${UUID.randomUUID()}"
         val id =
@@ -38,8 +40,10 @@ class DescontoFixture {
                 val statement =
                     connection.prepareStatement(
                         """
-                        INSERT INTO desconto (titulo, descricao, tipo, valor, data_inicio, data_fim, ativo)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO desconto (
+                            titulo, descricao, tipo, valor, data_inicio, data_fim, ativo, quantidade_minima_itens
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id
                         """.trimIndent(),
                     )
@@ -59,6 +63,7 @@ class DescontoFixture {
                         it.setObject(6, dataFim)
                     }
                     it.setBoolean(7, ativo)
+                    it.setInt(8, quantidadeMinimaItens)
                     it.executeQuery().use { resultSet ->
                         check(resultSet.next()) { "O banco não retornou o ID do desconto criado" }
                         resultSet.getLong("id")

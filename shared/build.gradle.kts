@@ -78,6 +78,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(project(":serverApp"))
             implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.6")
+            implementation("org.springframework.boot:spring-boot-starter-validation:3.5.6")
             implementation("org.springframework.boot:spring-boot-starter-test:3.5.6")
             implementation("org.springframework.boot:spring-boot-starter-web:3.5.6")
             implementation("org.springframework.boot:spring-boot-starter-security:3.5.6")
