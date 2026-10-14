@@ -17,6 +17,9 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
     @Query("SELECT d FROM Desconto d WHERE d.id = :id")
     fun buscarPorId(@Param("id") id: Long): Desconto?
 
+    @Query("SELECT d FROM Desconto d WHERE LOWER(d.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
+    fun buscarPorTitulo(@Param("titulo") titulo: String): List<Desconto>
+
     fun criar(desconto: Desconto): Desconto = save(desconto)
 
     @Transactional
@@ -30,6 +33,7 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
                 desconto.dataInicio,
                 desconto.dataFim,
                 desconto.ativo,
+                desconto.quantidadeMinimaItens,
             ) == 0
         ) {
             return null
@@ -43,7 +47,8 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
         """
         UPDATE Desconto d
         SET d.titulo = :titulo, d.descricao = :descricao, d.tipo = :tipo,
-            d.valor = :valor, d.dataInicio = :dataInicio, d.dataFim = :dataFim, d.ativo = :ativo
+            d.valor = :valor, d.dataInicio = :dataInicio, d.dataFim = :dataFim,
+            d.ativo = :ativo, d.quantidadeMinimaItens = :quantidadeMinimaItens
         WHERE d.id = :id
         """,
     )
@@ -56,6 +61,7 @@ interface DescontoRepository : JpaRepository<Desconto, Long> {
         @Param("dataInicio") dataInicio: OffsetDateTime?,
         @Param("dataFim") dataFim: OffsetDateTime?,
         @Param("ativo") ativo: Boolean,
+        @Param("quantidadeMinimaItens") quantidadeMinimaItens: Int,
     ): Int
 
     fun inativar(id: Long): Boolean = inativarPorId(id) > 0

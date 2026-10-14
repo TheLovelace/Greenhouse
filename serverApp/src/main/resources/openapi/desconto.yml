@@ -61,10 +61,42 @@ paths:
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Desconto
+      summary: Atualizar desconto (registro completo)
+      description: Substitui os dados editáveis do desconto. Envie todos os campos, inclusive descricao, dataInicio, dataFim, ativo e quantidadeMinimaItens. descricao, dataInicio e dataFim podem ser null. O ID é definido pelo caminho.
+      operationId: substituirDesconto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do desconto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DescontoAtualizacao'
+      responses:
+        '200':
+          description: Desconto substituído
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desconto'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
     patch:
       tags:
         - Desconto
-      summary: Atualizar desconto
+      summary: Atualizar desconto (campos parciais)
       description: Atualiza os dados do desconto, incluindo o status ativo. Campos omitidos mantêm os valores atuais; descricao, dataInicio e dataFim podem ser enviados como null. O campo id, se enviado, é ignorado.
       operationId: atualizarDesconto
       parameters:
@@ -117,6 +149,52 @@ paths:
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
+    DescontoAtualizacao:
+      type: object
+      description: Representação completa dos campos editáveis. Campos opcionais devem ser enviados explicitamente; valores nulos limpam descricao e datas.
+      additionalProperties: false
+      required:
+        - titulo
+        - descricao
+        - tipo
+        - valor
+        - dataInicio
+        - dataFim
+        - ativo
+        - quantidadeMinimaItens
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 150
+        descricao:
+          type: string
+          nullable: true
+          maxLength: 1000
+        tipo:
+          type: string
+          enum:
+            - PERCENTUAL
+            - VALOR_FIXO
+        valor:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          description: NUMERIC(12,2); para PERCENTUAL deve ser menor ou igual a 100.
+        dataInicio:
+          type: string
+          format: date-time
+          nullable: true
+        dataFim:
+          type: string
+          format: date-time
+          nullable: true
+        ativo:
+          type: boolean
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
     DescontoPatch:
       type: object
       description: Aceita qualquer combinação de campos editáveis; campos omitidos mantêm o valor atual.
@@ -129,6 +207,7 @@ components:
         - required: [dataInicio]
         - required: [dataFim]
         - required: [ativo]
+        - required: [quantidadeMinimaItens]
       properties:
         id:
           type: integer
@@ -142,6 +221,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -163,6 +243,11 @@ components:
         ativo:
           type: boolean
           description: Envie true para ativar ou false para inativar.
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.
     DescontoCadastro:
       type: object
       required:
@@ -177,6 +262,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -199,6 +285,12 @@ components:
         ativo:
           type: boolean
           default: true
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.
     Desconto:
       type: object
       required:
@@ -207,6 +299,7 @@ components:
         - tipo
         - valor
         - ativo
+        - quantidadeMinimaItens
       properties:
         id:
           type: integer
@@ -217,6 +310,7 @@ components:
         descricao:
           type: string
           nullable: true
+          maxLength: 1000
         tipo:
           type: string
           enum:
@@ -237,3 +331,8 @@ components:
           nullable: true
         ativo:
           type: boolean
+        quantidadeMinimaItens:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Quantidade mínima de itens no pedido para elegibilidade do desconto.

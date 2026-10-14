@@ -3,7 +3,8 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO
+import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.mapper.DescontoMapper
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.repository.DescontoRepository
@@ -19,28 +20,54 @@ class DescontoService(
     private val descontoRepository: DescontoRepository,
     private val descontoMapper: DescontoMapper,
 ) {
-    fun criar(desconto: Desconto): Desconto {
+    fun criar(desconto: DescontoRequestDTO): DescontoResponseDTO {
         validar(desconto)
-        val model = descontoMapper.toModel(desconto.copy(id = null))
-        return descontoMapper.toDto(descontoRepository.criar(model))
+        return descontoMapper.toResponseDto(descontoRepository.criar(descontoMapper.toModel(desconto)))
     }
 
-    fun listar(): List<Desconto> = descontoRepository.listar().map(descontoMapper::toDto)
+    fun listar(): List<DescontoResponseDTO> =
+        descontoRepository.listar().map(descontoMapper::toResponseDto)
 
-    fun buscarPorId(id: Long): Desconto =
+    fun buscarPorId(id: Long): DescontoResponseDTO =
         descontoRepository.buscarPorId(validarId(id))
-            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
+
+    fun substituir(
+        id: Long,
+        desconto: DescontoRequestDTO,
+    ): DescontoResponseDTO {
+        val idValidado = validarId(id)
+        if (descontoRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Desconto não encontrado")
+        }
+
+        validar(desconto)
+
+        return descontoRepository.atualizar(idValidado, descontoMapper.toModel(desconto))
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
+    }
 
     fun atualizar(
         id: Long,
         campos: Map<String, Any?>,
-    ): Desconto {
+    ): DescontoResponseDTO {
         val idValidado = validarId(id)
         val descontoAtual =
             descontoRepository.buscarPorId(idValidado)
-                ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+                ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
 
-        val camposPermitidos = setOf("id", "titulo", "descricao", "tipo", "valor", "dataInicio", "dataFim", "ativo")
+        val camposPermitidos =
+            setOf(
+                "id",
+                "titulo",
+                "descricao",
+                "tipo",
+                "valor",
+                "dataInicio",
+                "dataFim",
+                "ativo",
+                "quantidadeMinimaItens",
+            )
         val camposDesconhecidos = campos.keys - camposPermitidos
         if (camposDesconhecidos.isNotEmpty()) {
             throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
@@ -50,7 +77,7 @@ class DescontoService(
         }
 
         val descontoAtualizado =
-            descontoAtual.copy(
+            DescontoRequestDTO(
                 titulo = campos.texto("titulo", descontoAtual.titulo),
                 descricao = campos.textoOpcional("descricao", descontoAtual.descricao),
                 tipo = campos.tipo("tipo", descontoAtual.tipo),
@@ -58,11 +85,16 @@ class DescontoService(
                 dataInicio = campos.data("dataInicio", descontoAtual.dataInicio),
                 dataFim = campos.data("dataFim", descontoAtual.dataFim),
                 ativo = campos.booleano("ativo", descontoAtual.ativo),
+                quantidadeMinimaItens =
+                    campos.quantidadeMinimaItens(
+                        "quantidadeMinimaItens",
+                        descontoAtual.quantidadeMinimaItens,
+                    ),
             )
         validar(descontoAtualizado)
 
         return descontoRepository.atualizar(idValidado, descontoMapper.toModel(descontoAtualizado))
-            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+            ?.let(descontoMapper::toResponseDto) ?: throw NotFoundException("Desconto não encontrado")
     }
 
     fun excluir(id: Long) {
@@ -78,12 +110,18 @@ class DescontoService(
         return id
     }
 
-    private fun validar(desconto: Desconto) {
+    private fun validar(desconto: DescontoRequestDTO) {
         if (desconto.titulo.isBlank()) {
             throw UnprocessableEntityException("O título do desconto é obrigatório")
         }
         if (desconto.titulo.length > 150) {
             throw UnprocessableEntityException("O título do desconto deve ter no máximo 150 caracteres")
+        }
+        if (desconto.descricao != null && desconto.descricao.length > 1000) {
+            throw UnprocessableEntityException("A descrição do desconto deve ter no máximo 1000 caracteres")
+        }
+        if (desconto.quantidadeMinimaItens < 1) {
+            throw UnprocessableEntityException("A quantidade mínima de itens deve ser maior que zero")
         }
         if (desconto.valor <= BigDecimal.ZERO) {
             throw UnprocessableEntityException("O valor do desconto deve ser maior que zero")
@@ -129,6 +167,23 @@ class DescontoService(
         if (!containsKey(campo)) return valorAtual
         return this[campo] as? Boolean
             ?: throw BadRequestException("O campo '$campo' deve ser booleano")
+    }
+
+    private fun Map<String, Any?>.quantidadeMinimaItens(
+        campo: String,
+        valorAtual: Int,
+    ): Int {
+        if (!containsKey(campo)) return valorAtual
+        val valorInformado =
+            this[campo] as? Number
+                ?: throw BadRequestException("O campo '$campo' deve ser um número inteiro")
+        return try {
+            BigDecimal(valorInformado.toString()).intValueExact()
+        } catch (e: NumberFormatException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro", e)
+        } catch (e: ArithmeticException) {
+            throw BadRequestException("O campo '$campo' deve ser um número inteiro dentro do limite suportado", e)
+        }
     }
 
     private fun Map<String, Any?>.tipo(

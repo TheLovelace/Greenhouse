@@ -1,7 +1,7 @@
 package org.greenhouse.integration.desconto
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.DescontoDTO as Desconto
+import org.greenhouse.dto.request.DescontoRequestDTO as Desconto
 import org.greenhouse.enums.TipoDesconto
 import org.greenhouse.integration.fixture.DescontoFixture
 import java.math.BigDecimal
@@ -23,13 +23,13 @@ class TestDescontoPost {
             val criado =
                 fixture.criarDesconto(
                     Desconto(
-                        id = -1,
                         titulo = "Promoção de verão",
                         descricao = "Desconto percentual de teste",
                         tipo = TipoDesconto.PERCENTUAL,
                         valor = BigDecimal("10.00"),
                         dataInicio = dataInicio,
                         dataFim = dataFim,
+                        quantidadeMinimaItens = 3,
                     ),
                 )
 
@@ -40,6 +40,7 @@ class TestDescontoPost {
             assertEquals(dataInicio.toInstant(), assertNotNull(criado.dataInicio).toInstant())
             assertEquals(dataFim.toInstant(), assertNotNull(criado.dataFim).toInstant())
             assertEquals(true, criado.ativo)
+            assertEquals(3, criado.quantidadeMinimaItens)
 
             val persistido = fixture.service.buscarPorId(id)
             assertEquals(criado.id, persistido.id)
@@ -50,6 +51,7 @@ class TestDescontoPost {
             assertEquals(dataInicio.toInstant(), assertNotNull(persistido.dataInicio).toInstant())
             assertEquals(dataFim.toInstant(), assertNotNull(persistido.dataFim).toInstant())
             assertEquals(criado.ativo, persistido.ativo)
+            assertEquals(3, persistido.quantidadeMinimaItens)
         } finally {
             fixture.limpar()
         }
@@ -91,6 +93,18 @@ class TestDescontoPost {
         }
         assertFailsWith<UnprocessableEntityException> {
             fixture.service.criar(descontoValido(titulo = "a".repeat(151)))
+        }
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(descontoValido(descricao = "a".repeat(1001)))
+        }
+    }
+
+    @Test
+    fun `deve rejeitar quantidade minima de itens menor que um`() {
+        val fixture = DescontoFixture()
+
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(descontoValido(quantidadeMinimaItens = 0))
         }
     }
 
@@ -134,12 +148,15 @@ class TestDescontoPost {
         valor: BigDecimal = BigDecimal("10.00"),
         dataInicio: OffsetDateTime? = null,
         dataFim: OffsetDateTime? = null,
+        descricao: String? = null,
+        quantidadeMinimaItens: Int = 1,
     ) = Desconto(
         titulo = titulo,
-        descricao = null,
+        descricao = descricao,
         tipo = tipo,
         valor = valor,
         dataInicio = dataInicio,
         dataFim = dataFim,
+        quantidadeMinimaItens = quantidadeMinimaItens,
     )
 }

@@ -38,10 +38,10 @@ paths:
     $ref: './openapi/desconto.yml#/paths/~1desconto'
   /desconto/{id}:
     $ref: './openapi/desconto.yml#/paths/~1desconto~1%7Bid%7D'
+  /estoque:
+    $ref: './openapi/estoque.yml#/paths/~1estoque'
   /estoque/{produtoId}:
     $ref: './openapi/estoque.yml#/paths/~1estoque~1%7BprodutoId%7D'
-  /estoque/movimentacoes:
-    $ref: './openapi/estoque.yml#/paths/~1estoque~1movimentacoes'
   /fornecedor:
     $ref: './openapi/fornecedor.yml#/paths/~1fornecedor'
   /fornecedor/{id}:
@@ -78,16 +78,16 @@ components:
       $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamento'
     FormaPagamentoPatch:
       $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoPatch'
-    EstoquePosicao:
-      $ref: './openapi/estoque.yml#/components/schemas/EstoquePosicao'
+    EstoqueCreate:
+      $ref: './openapi/estoque.yml#/components/schemas/EstoqueCreate'
+    Estoque:
+      $ref: './openapi/estoque.yml#/components/schemas/Estoque'
     Funcionario:
       $ref: './openapi/funcionario.yml#/components/schemas/Funcionario'
     FuncionarioCreate:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioCreate'
     FuncionarioPatch:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioPatch'
-    MovimentacaoEstoque:
-      $ref: './openapi/estoque.yml#/components/schemas/MovimentacaoEstoque'
     Produto:
       $ref: './openapi/produto.yml#/components/schemas/Produto'
     Status:

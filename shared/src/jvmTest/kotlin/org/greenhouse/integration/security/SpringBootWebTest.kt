@@ -7,7 +7,6 @@ import org.greenhouse.repository.EstoqueRepository
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.greenhouse.repository.FornecedorRepository
 import org.greenhouse.repository.FuncionarioRepository
-import org.greenhouse.repository.MovimentacaoEstoqueRepository
 import org.greenhouse.repository.ProdutoRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.springframework.jdbc.core.JdbcTemplate
@@ -34,9 +33,6 @@ abstract class SpringBootWebTest {
 
     @MockitoBean
     private lateinit var funcionarioRepository: FuncionarioRepository
-
-    @MockitoBean
-    private lateinit var movimentacaoEstoqueRepository: MovimentacaoEstoqueRepository
 
     @MockitoBean
     private lateinit var produtoRepository: ProdutoRepository
