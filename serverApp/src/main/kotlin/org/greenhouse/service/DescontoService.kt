@@ -31,6 +31,22 @@ class DescontoService(
         descontoRepository.buscarPorId(validarId(id))
             ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
 
+    fun substituir(
+        id: Long,
+        desconto: Desconto,
+    ): Desconto {
+        val idValidado = validarId(id)
+        if (descontoRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Desconto não encontrado")
+        }
+
+        val descontoSubstituido = desconto.copy(id = idValidado)
+        validar(descontoSubstituido)
+
+        return descontoRepository.atualizar(idValidado, descontoMapper.toModel(descontoSubstituido))
+            ?.let(descontoMapper::toDto) ?: throw NotFoundException("Desconto não encontrado")
+    }
+
     fun atualizar(
         id: Long,
         campos: Map<String, Any?>,
