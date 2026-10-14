@@ -23,6 +23,7 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
 
     implementation(libs.spring.boot.starter.web)
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation(libs.springdoc.openapi)
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

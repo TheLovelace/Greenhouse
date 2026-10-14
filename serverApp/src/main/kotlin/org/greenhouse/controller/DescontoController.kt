@@ -1,5 +1,6 @@
 package org.greenhouse.controller
 
+import jakarta.validation.Valid
 import org.greenhouse.dto.request.DescontoRequestDTO
 import org.greenhouse.dto.response.DescontoResponseDTO
 import org.greenhouse.service.DescontoService
@@ -22,6 +23,7 @@ class DescontoController(
 ) {
     @PostMapping
     fun criar(
+        @Valid
         @RequestBody desconto: DescontoRequestDTO,
     ): ResponseEntity<DescontoResponseDTO> =
         ResponseEntity
@@ -39,6 +41,7 @@ class DescontoController(
     @PutMapping("/{id}")
     fun substituir(
         @PathVariable id: Long,
+        @Valid
         @RequestBody desconto: DescontoRequestDTO,
     ): DescontoResponseDTO = descontoUseCase.substituir(id, desconto)
 
