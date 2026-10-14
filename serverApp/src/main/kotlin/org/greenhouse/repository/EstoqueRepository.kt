@@ -14,6 +14,9 @@ interface EstoqueRepository : JpaRepository<Estoque, Long> {
     @Query("SELECT e FROM Estoque e WHERE e.produtoId = :produtoId")
     fun buscarPorProdutoId(@Param("produtoId") produtoId: Long): Estoque?
 
+    @Query("SELECT e FROM Estoque e WHERE LOWER(e.localizacao) LIKE LOWER(CONCAT('%', :localizacao, '%'))")
+    fun buscarPorLocalizacao(@Param("localizacao") localizacao: String): List<Estoque>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Estoque e WHERE e.produtoId = :produtoId")
     fun buscarParaAtualizar(@Param("produtoId") produtoId: Long): Estoque?
