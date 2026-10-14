@@ -67,7 +67,11 @@ paths:
 components:
   schemas:
     Categoria:
-      $ref: './openapi/categoria.yml#/components/schemas/Categoria'
+      $ref: './openapi/categoria.yml#/components/schemas/CategoriaResponse'
+    CategoriaCreateRequest:
+      $ref: './openapi/categoria.yml#/components/schemas/CategoriaCreateRequest'
+    CategoriaUpdateRequest:
+      $ref: './openapi/categoria.yml#/components/schemas/CategoriaUpdateRequest'
     Cliente:
       $ref: './openapi/cliente.yml#/components/schemas/Cliente'
     Desconto:
@@ -89,7 +93,11 @@ components:
     FuncionarioPatch:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioPatch'
     Produto:
-      $ref: './openapi/produto.yml#/components/schemas/Produto'
+      $ref: './openapi/produto.yml#/components/schemas/ProdutoResponse'
+    ProdutoCreateRequest:
+      $ref: './openapi/produto.yml#/components/schemas/ProdutoCreateRequest'
+    ProdutoUpdateRequest:
+      $ref: './openapi/produto.yml#/components/schemas/ProdutoUpdateRequest'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
