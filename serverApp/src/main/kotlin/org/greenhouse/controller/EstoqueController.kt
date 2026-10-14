@@ -1,5 +1,6 @@
 package org.greenhouse.controller
 
+import jakarta.validation.Valid
 import org.greenhouse.dto.request.EstoqueCreateRequestDTO
 import org.greenhouse.dto.request.EstoqueUpdateRequestDTO
 import org.greenhouse.dto.response.EstoqueResponseDTO
@@ -23,6 +24,7 @@ class EstoqueController(
 ) {
     @PostMapping
     fun criarPosicao(
+        @Valid
         @RequestBody estoque: EstoqueCreateRequestDTO,
     ): ResponseEntity<EstoqueResponseDTO> =
         ResponseEntity
@@ -40,6 +42,7 @@ class EstoqueController(
     @PutMapping("/{produtoId}")
     fun substituirPosicao(
         @PathVariable produtoId: Long,
+        @Valid
         @RequestBody estoque: EstoqueUpdateRequestDTO,
     ): EstoqueResponseDTO = estoqueService.substituirPosicao(produtoId, estoque)
 
