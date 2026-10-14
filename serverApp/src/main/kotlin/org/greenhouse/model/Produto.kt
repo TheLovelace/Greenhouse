@@ -18,10 +18,12 @@ data class Produto(
     var codigo: String? = null,
     @field:Column(nullable = false, length = 150)
     var nome: String = "",
-    @field:Column(columnDefinition = "TEXT")
+    @field:Column(length = 1000)
     var descricao: String? = null,
     @field:Column(nullable = false, precision = 12, scale = 2)
     var preco: BigDecimal = BigDecimal.ZERO,
     @field:Column(nullable = false)
     var ativo: Boolean = true,
+    @field:Column(name = "prazo_preparo_minutos")
+    var prazoPreparoMinutos: Int? = null,
 )
