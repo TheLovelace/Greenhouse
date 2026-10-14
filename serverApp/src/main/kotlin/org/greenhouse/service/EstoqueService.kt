@@ -41,14 +41,7 @@ class EstoqueService(
             throw UnprocessableEntityException("A localização deve ter no máximo 100 caracteres")
         }
 
-        val novaPosicao =
-            Estoque(
-                produtoId = requireNotNull(produto.id),
-                quantidadeFisica = estoque.quantidadeFisica,
-                quantidadeMinima = estoque.quantidadeMinima,
-                localizacao = estoque.localizacao,
-                bloqueado = estoque.bloqueado,
-            )
+        val novaPosicao = estoqueMapper.toModel(estoque, requireNotNull(produto.id))
         return estoqueMapper.toResponseDto(estoqueRepository.save(novaPosicao))
     }
 
@@ -97,9 +90,8 @@ class EstoqueService(
         atualizacao: EstoqueUpdateRequestDTO,
     ): EstoqueResponseDTO {
         validarId(produtoId)
-        val produto =
-            produtoRepository.buscarParaAtualizar(produtoId)
-                ?: throw NotFoundException("Produto não encontrado")
+        produtoRepository.buscarParaAtualizar(produtoId)
+            ?: throw NotFoundException("Produto não encontrado")
         val estoque =
             estoqueRepository.buscarParaAtualizar(produtoId)
                 ?: throw NotFoundException("Posição de estoque não encontrada")
@@ -119,11 +111,7 @@ class EstoqueService(
             )
         }
 
-        estoque.produtoId = requireNotNull(produto.id)
-        estoque.quantidadeFisica = atualizacao.quantidadeFisica
-        estoque.quantidadeMinima = atualizacao.quantidadeMinima
-        estoque.localizacao = atualizacao.localizacao
-        estoque.bloqueado = atualizacao.bloqueado
+        estoqueMapper.updateModel(atualizacao, estoque)
 
         return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
     }
