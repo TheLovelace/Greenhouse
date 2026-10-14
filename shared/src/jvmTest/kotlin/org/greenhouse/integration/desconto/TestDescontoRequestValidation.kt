@@ -1,13 +1,14 @@
-package org.greenhouse.dto.request
+package org.greenhouse.integration.desconto
 
 import jakarta.validation.Validation
+import org.greenhouse.dto.request.DescontoRequestDTO
 import org.greenhouse.enums.TipoDesconto
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
-class DescontoRequestDTOTest {
+class TestDescontoRequestValidation {
     private val validator = Validation.buildDefaultValidatorFactory().validator
 
     @Test

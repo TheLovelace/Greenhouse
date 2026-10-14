@@ -1,11 +1,13 @@
-package org.greenhouse.dto.request
+package org.greenhouse.integration.estoque
 
 import jakarta.validation.Validation
+import org.greenhouse.dto.request.EstoqueCreateRequestDTO
+import org.greenhouse.dto.request.EstoqueUpdateRequestDTO
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class EstoqueRequestDTOTest {
+class TestEstoqueRequestValidation {
     private val validator = Validation.buildDefaultValidatorFactory().validator
 
     @Test
