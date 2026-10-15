@@ -65,11 +65,11 @@ paths:
           description: Token JWT ausente ou inválido
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
-    patch:
+    put:
       tags:
         - Forma de Pagamento
-      summary: Atualizar forma de pagamento
-      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. O campo id, se enviado, é ignorado.
+      summary: Substituir forma de pagamento
+      description: Substitui os dados da forma de pagamento. Campos opcionais omitidos assumem seus valores padrão. O campo id, se enviado, é ignorado.
       operationId: atualizarFormaPagamento
       security:
         - BearerAuth: []
@@ -80,7 +80,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormaPagamentoPatch'
+              $ref: '#/components/schemas/FormaPagamento'
       responses:
         '200':
           description: Forma de pagamento atualizada
@@ -145,22 +145,15 @@ components:
         ativo:
           type: boolean
           default: true
-    FormaPagamentoPatch:
-      type: object
-      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização.
-      additionalProperties: false
-      anyOf:
-        - required: [nome]
-        - required: [ativo]
-      properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-        nome:
+        descricao:
           type: string
-          minLength: 1
-          maxLength: 50
-          pattern: '.*\S.*'
-        ativo:
-          type: boolean
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+          default: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true

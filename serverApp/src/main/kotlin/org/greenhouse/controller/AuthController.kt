@@ -18,14 +18,14 @@ class AuthController(
     private val authUseCase: AuthService,
 ) {
 
-    @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
+    @PostMapping("/signin")
+    fun signin(@RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
         val token = authUseCase.login(request)
         return ResponseEntity.ok(token)
     }
 
-    @PostMapping("/primeiro-acesso")
-    fun primeiroAcesso(@RequestBody request: PrimeiroAcessoRequest): ResponseEntity<Unit> {
+    @PostMapping("/signup")
+    fun signup(@RequestBody request: PrimeiroAcessoRequest): ResponseEntity<Unit> {
         authUseCase.primeiroAcesso(request)
         return ResponseEntity.noContent().build()
     }

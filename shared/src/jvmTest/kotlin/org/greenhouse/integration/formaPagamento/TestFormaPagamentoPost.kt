@@ -14,10 +14,18 @@ class TestFormaPagamentoPost {
         val fixture = FormaPagamentoFixture()
 
         try {
-            val criada = fixture.novaFormaPagamento()
+            val criada =
+                fixture.novaFormaPagamento(
+                    descricao = "Pagamento à vista",
+                    limiteParcelas = 3,
+                    prazoEstornoDias = 14,
+                )
 
             assertEquals(true, criada.ativo)
             assertEquals(true, criada.id != null)
+            assertEquals("Pagamento à vista", criada.descricao)
+            assertEquals(3, criada.limiteParcelas)
+            assertEquals(14, criada.prazoEstornoDias)
         } finally {
             fixture.limpar()
         }
@@ -45,6 +53,15 @@ class TestFormaPagamentoPost {
         }
         assertFailsWith<UnprocessableEntityException> {
             fixture.service.criar(FormaPagamento(nome = "a".repeat(51)))
+        }
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(FormaPagamento(nome = "PIX", limiteParcelas = 0))
+        }
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(FormaPagamento(nome = "PIX", prazoEstornoDias = -1))
+        }
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(FormaPagamento(nome = "PIX", descricao = "a".repeat(251)))
         }
     }
 }
