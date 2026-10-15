@@ -48,6 +48,16 @@ A centralização desses dados e regras ajuda a reduzir controles manuais e inco
 
 O backend é a camada de API e persistência. As aplicações Android, iOS, Desktop e Web compartilham a interface Compose Multiplatform. O Swagger/OpenAPI pode ser utilizado para explorar a API.
 
+### Objetivos de Desenvolvimento Sustentável (ODS)
+
+O Greenhouse busca contribuir para os Objetivos de Desenvolvimento Sustentável da ONU por meio da digitalização e do aprimoramento da gestão de floriculturas.
+
+**ODS 12** - Consumo e produção responsáveis: apoio ao controle de estoque e às condições de conservação das plantas, contribuindo para a redução de perdas e desperdícios.
+
+**ODS 9** - Indústria, inovação e infraestrutura: utilização de tecnologias digitais e IoT para modernizar o gerenciamento e o monitoramento das plantas.
+
+**ODS 8** - Trabalho decente e crescimento econômico: organização dos processos comerciais e operacionais, incluindo vendas, compras, fornecedores e estoque.
+
 <h2 align="start"> 
   <img src=".github/assets/icon_tecnologias.png" width="25"/> 
   <b>Tecnologias</b>
