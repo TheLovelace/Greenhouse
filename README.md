@@ -1,9 +1,9 @@
-<img src ="./assets/banner_github.png" style="border-radius: 30px" />
+<img src =".github/assets/banner_github.png" style="border-radius: 30px" />
 
 <br/>
 
 <h2 align="start"> 
-  <img src="./assets/icon_identificacao.png" width="25"/> 
+  <img src=".github/assets/icon_identificacao.png" width="25"/> 
   <b>Identificação</b>
 </h2>
 
@@ -12,7 +12,7 @@
 - **Repositório do Github:** https://github.com/Best-of-the-class/Greenhouse
 
 <h2 align="start"> 
-  <img src="./assets/icon_integrantes.png" width="25"/> 
+  <img src=".github/assets/icon_integrantes.png" width="25"/> 
   <b>Integrantes e Responsabilidades</b>
 </h2>
 
@@ -38,7 +38,7 @@ Abaixo, estão listadas as integrantes da equipe e suas respectivas responsabili
 As tabelas auxiliares são utilizadas pelos respectivos fluxos, como itens de pedido, itens de compra e relações entre produtos, categorias e espécies.
 
 <h2 align="start"> 
-  <img src="./assets/icon_sobre.png" width="25"/> 
+  <img src=".github/assets/icon_sobre.png" width="25"/> 
   <b>Sobre a aplicação</b>
 </h2>
 
@@ -49,7 +49,7 @@ A centralização desses dados e regras ajuda a reduzir controles manuais e inco
 O backend é a camada de API e persistência. As aplicações Android, iOS, Desktop e Web compartilham a interface Compose Multiplatform. O Swagger/OpenAPI pode ser utilizado para explorar a API.
 
 <h2 align="start"> 
-  <img src="./assets/icon_tecnologias.png" width="25"/> 
+  <img src=".github/assets/icon_tecnologias.png" width="25"/> 
   <b>Tecnologias</b>
 </h2>
 
@@ -64,7 +64,7 @@ O backend é a camada de API e persistência. As aplicações Android, iOS, Desk
 - Android, iOS, Desktop (JVM), JavaScript e Kotlin/Wasm como targets cliente
 
 <h2 align="start"> 
-  <img src="./assets/icon_arquitetura.png" width="25"/> 
+  <img src=".github/assets/icon_arquitetura.png" width="25"/> 
   <b>Arquiteturas e pastas</b>
 </h2>
 
@@ -212,17 +212,15 @@ flowchart LR
     B --> C[App]
     C --> D[Theme]
     D --> E[Telas Compose]
-    E --> F[Componentes reutilizáveis]
 
     G[Paleta de cores] -.-> D
     H[Tipografia] -.-> D
-    I[Componentes compartilhados] -.-> E
 ```
 
 A Home já define navegação para os formulários de cadastro das principais entidades, por meio de botões.
 
 <h2 align="start"> 
-  <img src="./assets/icon_requisitos.png" width="25"/> 
+  <img src=".github/assets/icon_requisitos.png" width="25"/> 
   <b>Requisitos</b>
 </h2>
 
@@ -234,36 +232,36 @@ A Home já define navegação para os formulários de cadastro das principais en
 - macOS e Xcode para compilar/executar o aplicativo iOS.
 
 <h2 align="start"> 
-  <img src="./assets/icon_instalacao.png" width="25"/> 
+  <img src=".github/assets/icon_instalacao.png" width="25"/> 
   <b>Instalação</b>
 </h2>
 
 Clone o repositório e entre na pasta:
 
-```bash
-$ git clone https://github.com/Best-of-the-class/Greenhouse.git
-$ cd Greenhouse
+```sh
+git clone https://github.com/Best-of-the-class/Greenhouse.git
+cd Greenhouse
 ```
 
-No macOS/Linux, os comandos do Gradle Wrapper usam `./gradlew`; no Windows, use `.\gradlew.bat`.
+Use os comandos da seção correspondente ao seu sistema: PowerShell no Windows ou Bash no macOS/Linux.
 
 <h2 align="start"> 
-  <img src="./assets/icon_banco_dados.png" width="25"/> 
+  <img src=".github/assets/icon_banco_dados.png" width="25"/> 
   <b>Configuração do banco de dados</b>
 </h2>
 
-O backend exige a variável de ambiente `DATABASE_URL`, no formato de URL JDBC PostgreSQL. Configure-a com os dados de um banco de **desenvolvimento/teste** fornecidos pela equipe. Por exemplo, no PowerShell:
+O backend exige a variável de ambiente `DATABASE_URL`, no formato de URL JDBC PostgreSQL. Configure-a com os dados de um banco de **desenvolvimento/teste** fornecidos pela equipe. O exemplo abaixo usa PowerShell. No Bash (macOS/Linux), use `export DATABASE_URL="jdbc:postgresql://<host>:5432/<banco>?user=<usuario>&password=<senha>"`.
 
 ```bash
-$env:DATABASE_URL = "jdbc:postgresql://<host>:<porta>/<banco>?user=<usuario>&password=<senha>"
+$env:DATABASE_URL = "jdbc:postgresql://meu-host:5432/greenhouse?user=meu-usuario&password=minha-senha"
 ```
 
 Substitua os marcadores localmente; não coloque credenciais reais neste arquivo, no código-fonte ou em commits. O Flyway aplica as migrations disponíveis na inicialização e o Hibernate valida o schema. Não execute contra produção para testes locais.
 
-Para executar os testes JVM de integração, crie na raiz o arquivo local `.env.test.local` com a variável `DATABASE_URL` configurada para o banco de teste. Esse arquivo é local e não deve ser versionado nem compartilhado.
+Para executar os testes JVM de integração, deve haver na raiz o arquivo local `.env.test.local` com a variável `DATABASE_URL` configurada para o banco PostreSQL. Esse arquivo é local e não deve ser versionado nem compartilhado.
 
 <h2 align="start"> 
-  <img src="./assets/icon_execucao.png" width="25"/> 
+  <img src=".github/assets/icon_execucao.png" width="25"/> 
   <b>Execução</b>
 </h2>
 
@@ -271,8 +269,16 @@ Para executar os testes JVM de integração, crie na raiz o arquivo local `.env.
 
 Com `DATABASE_URL` configurada:
 
+PowerShell (Windows):
+
+```powershell
+.\gradlew.bat :serverApp:bootRun
+```
+
+Bash (macOS/Linux):
+
 ```bash
-$ .\gradlew.bat :serverApp:bootRun
+./gradlew :serverApp:bootRun
 ```
 
 O backend inicia na porta `8080`.
@@ -281,33 +287,64 @@ O backend inicia na porta `8080`.
 
 Inicie o Docker Desktop e configure `.env.test.local` na raiz. Depois:
 
+PowerShell (Windows):
+
+```powershell
+.\gradlew.bat --no-configuration-cache :serverApp:runTest
+```
+
+Bash (macOS/Linux):
+
 ```bash
-$ .\gradlew.bat --no-configuration-cache :serverApp:runTest
+./gradlew --no-configuration-cache :serverApp:runTest
 ```
 
 A task constrói a imagem local e inicia o container mapeando a porta `8081` da máquina para a porta `8080` do container. Para pará-lo:
 
+PowerShell (Windows):
+
+```powershell
+.\gradlew.bat :serverApp:stopTest
+```
+
+Bash (macOS/Linux):
+
 ```bash
-$ .\gradlew.bat :serverApp:stopTest
+./gradlew :serverApp:stopTest
 ```
 
 ### Aplicações cliente
 
-```bash
+PowerShell (Windows):
+
+```powershell
 # Web em modo de desenvolvimento
-$ .\gradlew.bat devWeb
+.\gradlew.bat devWeb
 
 # Desktop
-$ .\gradlew.bat devDesktop
+.\gradlew.bat devDesktop
 
 # Instalação/execução Android em dispositivo ou emulador conectado
-$ .\gradlew.bat devMobile
+.\gradlew.bat devMobile
+```
+
+Bash (macOS/Linux):
+
+```bash
+# Web em modo de desenvolvimento
+./gradlew devWeb
+
+# Desktop
+./gradlew devDesktop
+
+# Instalação/execução Android em dispositivo ou emulador conectado
+./gradlew devMobile
 ```
 
 Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
 
 <h2 align="start"> 
-  <img src="./assets/icon_doc_api.png" width="25"/> 
+  <img src=".github/assets/icon_doc_api.png" width="25"/> 
   <b>Acesso à API e ao Swagger</b>
 </h2>
 
@@ -322,31 +359,52 @@ Com o container de teste, use `http://localhost:8081` no lugar de `http://localh
 As rotas de negócio exigem autenticação JWT. As rotas de login, status e documentação OpenAPI são públicas. Para testar os endpoints protegidos, autentique-se pelo endpoint de login e informe o token como `Bearer` no Swagger.
 
 <h2 align="start"> 
-  <img src="./assets/icon_testes.png" width="25"/> 
+  <img src=".github/assets/icon_testes.png" width="25"/> 
   <b>Testes e qualidade</b>
 </h2>
 
-```bash
+PowerShell (Windows):
+
+```powershell
 # Testes JVM, incluindo os testes de integração do backend
-$ .\gradlew.bat testDesktop
+.\gradlew.bat testDesktop
 
 # Testes Android host
-$ .\gradlew.bat :shared:testAndroidHostTest
+.\gradlew.bat :shared:testAndroidHostTest
 
 # Testes Web (JavaScript e Wasm)
-$ .\gradlew.bat testWeb
+.\gradlew.bat testWeb
 
 # Verificação de formatação e lint
-$ .\gradlew.bat lintCheck
+.\gradlew.bat lintCheck
 
 # Validar a mensagem do último commit
-$ .\gradlew.bat checkCommitMessage
+.\gradlew.bat checkCommitMessage
 ```
 
-Os testes de integração JVM dependem de `DATABASE_URL` para acessar o PostgreSQL de teste.
+Bash (macOS/Linux):
+
+```bash
+# Testes JVM, incluindo os testes de integração do backend
+./gradlew testDesktop
+
+# Testes Android host
+./gradlew :shared:testAndroidHostTest
+
+# Testes Web (JavaScript e Wasm)
+./gradlew testWeb
+
+# Verificação de formatação e lint
+./gradlew lintCheck
+
+# Validar a mensagem do último commit
+./gradlew checkCommitMessage
+```
+
+Os testes de integração JVM dependem de `DATABASE_URL` para acessar o banco PostgreSQL.
 
 <h2 align="start"> 
-  <img src="./assets/icon_software_license.png" width="25"/> 
+  <img src=".github/assets/icon_software_license.png" width="25"/> 
   <b>Licença</b>
 </h2>
 
