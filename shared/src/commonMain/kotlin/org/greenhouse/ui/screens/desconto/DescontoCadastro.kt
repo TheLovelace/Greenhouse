@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
+import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroForm
@@ -73,9 +74,11 @@ fun DescontoCadastro(
     val typography = AppTypography()
     var form by remember { mutableStateOf(DescontoCadastroForm()) }
     var errors by remember { mutableStateOf(emptyMap<String, String>()) }
+    var showSuccessMessage by remember { mutableStateOf(false) }
 
     fun updateForm(updatedForm: DescontoCadastroForm) {
         form = updatedForm
+        showSuccessMessage = false
         if (errors.isNotEmpty()) {
             errors = validarDescontoCadastro(updatedForm)
         }
@@ -251,7 +254,14 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = { saveForm(form, { data -> onSave(data) }) { errors = it } },
+                            onClick = {
+                                saveForm(
+                                    form = form,
+                                    onSave = onSave,
+                                    onValidationErrors = { errors = it },
+                                    onSaved = { showSuccessMessage = true },
+                                )
+                            },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
@@ -259,6 +269,7 @@ fun DescontoCadastro(
                             onClick = {
                                 form = DescontoCadastroForm()
                                 errors = emptyMap()
+                                showSuccessMessage = false
                             },
                         )
                     }
@@ -267,7 +278,14 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = { saveForm(form, { data -> onSave(data) }) { errors = it } },
+                            onClick = {
+                                saveForm(
+                                    form = form,
+                                    onSave = onSave,
+                                    onValidationErrors = { errors = it },
+                                    onSaved = { showSuccessMessage = true },
+                                )
+                            },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
@@ -275,12 +293,38 @@ fun DescontoCadastro(
                             onClick = {
                                 form = DescontoCadastroForm()
                                 errors = emptyMap()
+                                showSuccessMessage = false
                             },
                         )
                     }
                 }
             }
+
+            if (showSuccessMessage) {
+                Spacer(Modifier.height(16.dp))
+                CadastroSuccessMessage("Desconto cadastrado com sucesso!")
+            }
         }
+    }
+}
+
+@Composable
+private fun CadastroSuccessMessage(message: String) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
+                .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.icon_confirmar),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -467,6 +511,7 @@ private fun saveForm(
     form: DescontoCadastroForm,
     onSave: (DescontoCadastroData) -> Unit,
     onValidationErrors: (Map<String, String>) -> Unit,
+    onSaved: () -> Unit,
 ) {
     val validationErrors = validarDescontoCadastro(form)
     onValidationErrors(validationErrors)
@@ -483,6 +528,7 @@ private fun saveForm(
                 quantidadeMinimaItens = form.quantidadeMinimaItens.trim(),
             ),
         )
+        onSaved()
     }
 }
 
