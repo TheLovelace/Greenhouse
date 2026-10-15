@@ -7,6 +7,7 @@ import kotlin.test.assertTrue
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.integration.fixture.ProdutoFixture
+import java.util.UUID
 
 class TestProdutoGet {
 
@@ -37,6 +38,23 @@ class TestProdutoGet {
             assertTrue(fixture.service.listar().any { it.id == criado.id })
         } finally {
             fixture.limpar(id)
+        }
+
+        @Test
+        fun `deve buscar produtos por correspondencia parcial e sem diferenciar maiusculas`() {
+            val fixture = ProdutoFixture()
+            val termo = "AbC${UUID.randomUUID()}"
+            var id: Long? = null
+
+            try {
+                val criado = fixture.novoProduto(nome = "Produto $termo")
+                id = criado.id
+
+                assertEquals(listOf(criado), fixture.service.listar("aBc"))
+                assertEquals(listOf(criado), fixture.service.listar(termo.substring(0, 3)))
+            } finally {
+                fixture.limpar(id)
+            }
         }
     }
 

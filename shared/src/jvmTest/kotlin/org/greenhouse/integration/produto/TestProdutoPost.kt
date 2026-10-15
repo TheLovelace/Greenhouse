@@ -3,9 +3,9 @@ package org.greenhouse.integration.produto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.dto.request.ProdutoCreateRequestDTO
 import org.greenhouse.integration.fixture.ProdutoFixture
 import java.math.BigDecimal
 import java.util.UUID
@@ -21,31 +21,27 @@ class TestProdutoPost {
             val criado = fixture.novoProduto()
             id = criado.id
 
+            assertEquals("Descrição de teste", criado.descricao)
+            assertEquals(BigDecimal("12.50"), criado.preco)
             assertEquals(true, criado.ativo)
-            assertEquals(true, criado.id != null)
+            assertTrue(criado.id > 0)
+            assertEquals(null, criado.prazoPreparoMinutos)
+            assertEquals(criado, fixture.service.buscarPorId(criado.id!!))
         } finally {
             fixture.limpar(id)
         }
     }
 
     @Test
-    fun `deve ignorar id informado na criacao`() {
+    fun `deve criar produto com prazo de preparo informado`() {
         val fixture = ProdutoFixture()
         var id: Long? = null
 
         try {
-            val criado =
-                fixture.service.criar(
-                    Produto(
-                        id = -1,
-                        codigo = "SKU-${UUID.randomUUID()}",
-                        nome = "Produto com ID informado",
-                        preco = BigDecimal("15.00"),
-                    ),
-                )
+            val criado = fixture.novoProduto(prazoPreparoMinutos = 25)
             id = criado.id
 
-            assertNotEquals(-1L, criado.id)
+            assertEquals(25, criado.prazoPreparoMinutos)
         } finally {
             fixture.limpar(id)
         }
@@ -57,7 +53,21 @@ class TestProdutoPost {
 
         assertFailsWith<UnprocessableEntityException> {
             fixture.service.criar(
-                Produto(nome = "Produto inválido", preco = BigDecimal("-0.01")),
+                ProdutoCreateRequestDTO(nome = "Produto inválido", preco = BigDecimal("-0.01")),
+            )
+        }
+    }
+
+    @Test
+    fun `deve rejeitar preco acima da precisao da coluna`() {
+        val fixture = ProdutoFixture()
+
+        assertFailsWith<UnprocessableEntityException> {
+            fixture.service.criar(
+                ProdutoCreateRequestDTO(
+                    nome = "Produto inválido",
+                    preco = BigDecimal("10000000000.00"),
+                ),
             )
         }
     }

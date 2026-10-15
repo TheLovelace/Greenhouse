@@ -1,6 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.ProdutoDTO as Produto
+import org.greenhouse.dto.request.ProdutoCreateRequestDTO
+import org.greenhouse.dto.response.ProdutoResponseDTO
 import org.greenhouse.model.Estoque
 import org.greenhouse.repository.EstoqueRepository
 import org.greenhouse.repository.ProdutoRepository
@@ -18,13 +19,15 @@ class ProdutoFixture {
         nome: String = "Produto de teste ${UUID.randomUUID()}",
         descricao: String? = "Descrição de teste",
         preco: BigDecimal = BigDecimal("12.50"),
-    ): Produto =
+        prazoPreparoMinutos: Int? = null,
+    ): ProdutoResponseDTO =
         service.criar(
-            Produto(
+            ProdutoCreateRequestDTO(
                 codigo = codigo,
                 nome = nome,
                 descricao = descricao,
                 preco = preco,
+                prazoPreparoMinutos = prazoPreparoMinutos,
             ),
         )
 
