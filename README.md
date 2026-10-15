@@ -9,7 +9,7 @@
 
 - **Projeto:** Greenhouse
 - **Grupo:** Lovelace
-- **Repositório do Github:** https://github.com/Best-of-the-class/Greenhouse
+- **Repositório do Github:** https://github.com/TheLovelace/Greenhouse
 
 <h2 align="start"> 
   <img src=".github/assets/icon_integrantes.png" width="25"/> 
