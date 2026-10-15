@@ -85,11 +85,11 @@ paths:
           description: Token JWT ausente ou inválido
         '403':
           description: O usuário autenticado não possui perfil ADMIN
-    patch:
+    put:
       tags:
         - Funcionário
-      summary: Atualizar funcionário (Apenas ADMIN)
-      description: Atualiza os campos do funcionário. Requer um token JWT de ADMIN.
+      summary: Substituir funcionário (Apenas ADMIN)
+      description: Substitui os dados do funcionário. Campos opcionais omitidos assumem seus valores padrão. Requer um token JWT de ADMIN.
       operationId: atualizarFuncionario
       parameters:
         - name: id
@@ -107,7 +107,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FuncionarioPatch'
+              $ref: '#/components/schemas/Funcionario'
       responses:
         '200':
           description: Funcionário atualizado
@@ -185,40 +185,6 @@ components:
         ativo:
           type: boolean
           default: true
-        dataDeNascimento:
-          type: string
-          format: date
-          nullable: true
-    FuncionarioPatch:
-      type: object
-      additionalProperties: false
-      properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-        nome:
-          type: string
-          maxLength: 150
-        cpf:
-          type: string
-          pattern: '^[0-9]{11}$'
-          nullable: true
-        telefone:
-          type: string
-          maxLength: 20
-          nullable: true
-        email:
-          type: string
-          maxLength: 150
-          nullable: true
-          format: email
-        cargo:
-          type: string
-          maxLength: 100
-          nullable: true
-        ativo:
-          type: boolean
         dataDeNascimento:
           type: string
           format: date
