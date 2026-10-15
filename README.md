@@ -422,3 +422,5 @@ O Greenhouse é um projeto proprietário disponibilizado publicamente para fins 
 Seu código-fonte e demais materiais não podem ser utilizados comercialmente, modificados ou redistribuídos sem autorização prévia. Para mais informações, veja o arquivo de licença em **[LICENSE](LICENSE)**.
 
 Todos os direitos reservados. © Lovelace 2026
+
+Desenvolvido por [Amanda][link-amanda], [Anahi][link-anahi], [Débora][link-debora], [Isabella][link-isabella], [Julia][link-julia] e [Luna][link-luna].
