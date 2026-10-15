@@ -20,6 +20,7 @@ class EstoqueCadastroValidatorTest {
             EstoqueCadastroForm(
                 produtoId = "42",
                 quantidadeFisica = "12",
+                quantidadeReservada = "2",
                 quantidadeMinima = "3",
                 localizacao = " Estante A-01 ",
                 bloqueado = true,
@@ -27,6 +28,7 @@ class EstoqueCadastroValidatorTest {
 
         assertEquals(42L, data?.produtoId)
         assertEquals(12, data?.quantidadeFisica)
+        assertEquals(2, data?.quantidadeReservada)
         assertEquals(3, data?.quantidadeMinima)
         assertEquals("Estante A-01", data?.localizacao)
         assertTrue(data?.bloqueado == true)
@@ -43,6 +45,7 @@ class EstoqueCadastroValidatorTest {
             ).toEstoqueCadastroDataOrNull()
 
         assertEquals(0, data?.quantidadeFisica)
+        assertEquals(0, data?.quantidadeReservada)
         assertEquals(0, data?.quantidadeMinima)
         assertNull(data?.localizacao)
         assertFalse(data?.bloqueado ?: true)
@@ -91,6 +94,23 @@ class EstoqueCadastroValidatorTest {
 
         assertTrue(errors.containsKey("quantidadeFisica"))
         assertTrue(errors.containsKey("quantidadeMinima"))
+    }
+
+    @Test
+    fun validationRejectsReservedQuantityAbovePhysicalQuantity() {
+        val errors =
+            validarEstoqueCadastro(
+                EstoqueCadastroForm(
+                    produtoId = "1",
+                    quantidadeFisica = "4",
+                    quantidadeReservada = "5",
+                ),
+            )
+
+        assertEquals(
+            "A quantidade reservada não pode ser maior que a quantidade física",
+            errors["quantidadeReservada"],
+        )
     }
 
     @Test

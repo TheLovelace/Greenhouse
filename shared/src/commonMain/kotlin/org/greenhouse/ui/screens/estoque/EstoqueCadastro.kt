@@ -149,6 +149,16 @@ fun EstoqueCadastro(
                             keyboardType = KeyboardType.Number,
                         )
                         EstoqueTextField(
+                            label = "Quantidade reservada",
+                            value = form.quantidadeReservada,
+                            onValueChange = { value ->
+                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
+                            },
+                            placeholder = "",
+                            error = errors["quantidadeReservada"],
+                            keyboardType = KeyboardType.Number,
+                        )
+                        EstoqueTextField(
                             label = "Quantidade mínima",
                             value = form.quantidadeMinima,
                             onValueChange = { value ->
@@ -169,6 +179,17 @@ fun EstoqueCadastro(
                             },
                             placeholder = "Ex.: 20",
                             error = errors["quantidadeFisica"],
+                            keyboardType = KeyboardType.Number,
+                            modifier = Modifier.weight(1f),
+                        )
+                        EstoqueTextField(
+                            label = "Quantidade reservada",
+                            value = form.quantidadeReservada,
+                            onValueChange = { value ->
+                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
+                            },
+                            placeholder = "",
+                            error = errors["quantidadeReservada"],
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f),
                         )
