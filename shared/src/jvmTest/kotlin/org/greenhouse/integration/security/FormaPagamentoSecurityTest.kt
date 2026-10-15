@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest(
@@ -78,7 +79,7 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
         Mockito
             .doReturn(formaPagamento)
             .`when`(formaPagamentoService)
-            .atualizar(Mockito.anyLong(), Mockito.anyMap<String, Any?>() ?: emptyMap())
+            .atualizar(Mockito.anyLong(), Mockito.any(FormaPagamento::class.java) ?: formaPagamento)
 
         val expectedStatuses = listOf(201, 200, 200, 200, 204)
         listOf("ADMIN", "FUNCIONARIO").forEach { perfil ->
@@ -106,6 +107,20 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
         assertEquals(true, fragment.contains("BearerAuth"))
     }
 
+    @Test
+    fun `metodo PATCH nao esta mais mapeado`() {
+        val token = jwtService.gerarToken("admin", "ADMIN")
+        val result =
+            mockMvc.perform(
+                patch("/api/forma-pagamento/1")
+                    .header("Authorization", "Bearer $token")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"nome":"Cartão"}"""),
+            ).andReturn()
+
+        assertEquals(405, result.response.status)
+    }
+
     private fun crudRequests(): List<MockHttpServletRequestBuilder> =
         listOf(
             post("/api/forma-pagamento")
@@ -113,7 +128,7 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
                 .content("""{"nome":"PIX"}"""),
             get("/api/forma-pagamento"),
             get("/api/forma-pagamento/1"),
-            patch("/api/forma-pagamento/1")
+            put("/api/forma-pagamento/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"nome":"Cartão"}"""),
             delete("/api/forma-pagamento/1"),

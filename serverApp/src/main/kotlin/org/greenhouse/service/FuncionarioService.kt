@@ -66,30 +66,12 @@ class FuncionarioService(
             ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
 
     @Transactional
-    fun atualizar(id: Long, campos: Map<String, Any?>): Funcionario {
+    fun atualizar(id: Long, funcionario: Funcionario): Funcionario {
         val idValidado = validarId(id)
-        val funcionarioAtual = funcionarioRepository.buscarPorId(idValidado)
-            ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
-
-        val camposPermitidos = setOf("id", "nome", "cpf", "telefone", "email", "cargo", "ativo")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        if (funcionarioRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Funcionário não encontrado")
         }
-        if (campos.keys.none { it != "id" }) {
-            throw BadRequestException("Informe ao menos um campo para atualizar")
-        }
-
-        val funcionarioAtualizado =
-            funcionarioAtual.copy(
-                nome = campos.texto("nome", funcionarioAtual.nome),
-                cpf = campos.texto("cpf", funcionarioAtual.cpf),
-                telefone = campos.textoOpcional("telefone", funcionarioAtual.telefone),
-                email = campos.textoOpcional("email", funcionarioAtual.email),
-                cargo = campos.textoOpcional("cargo", funcionarioAtual.cargo),
-                ativo = campos.booleano("ativo", funcionarioAtual.ativo),
-            )
+        val funcionarioAtualizado = funcionario.copy(id = idValidado)
         validar(funcionarioAtualizado)
 
         return atualizarFuncionario(idValidado, funcionarioAtualizado)
@@ -126,32 +108,6 @@ class FuncionarioService(
             throw BadRequestException("O id do funcionário deve ser maior que zero")
         }
         return id
-    }
-
-    private fun Map<String, Any?>.texto(
-        campo: String,
-        valorAtual: String,
-    ): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.textoOpcional(
-        campo: String,
-        valorAtual: String?,
-    ): String? {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String?
-    }
-
-    private fun Map<String, Any?>.booleano(
-        campo: String,
-        valorAtual: Boolean,
-    ): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
     }
 
     private companion object {

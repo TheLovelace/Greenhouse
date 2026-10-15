@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import java.time.LocalDate
 
 class FuncionarioProvisioningTest {
 
@@ -79,5 +80,65 @@ class FuncionarioProvisioningTest {
         assertThrows(UnprocessableEntityException::class.java) { service.criar(semEmail) }
         assertThrows(UnprocessableEntityException::class.java) { service.criar(emailInvalido) }
         Mockito.verifyNoInteractions(repository, usuarioRepository)
+    }
+
+    @Test
+    fun `substitui os dados do funcionario incluindo data de nascimento`() {
+        val existente =
+            FuncionarioModel(
+                id = 42,
+                nome = "Funcionário",
+                cpf = "12345678901",
+            )
+        Mockito.doReturn(existente).`when`(repository).buscarPorId(42)
+        Mockito.doAnswer { invocation -> invocation.getArgument<FuncionarioModel>(1) }
+            .`when`(repository)
+            .atualizar(Mockito.eq(42L), Mockito.any(FuncionarioModel::class.java) ?: FuncionarioModel())
+
+        val resultado =
+            service.atualizar(
+                42,
+                Funcionario(
+                    nome = "Funcionário atualizado",
+                    cpf = "12345678901",
+                    telefone = "11999999999",
+                    email = "funcionario@example.com",
+                    cargo = "Gerente",
+                    ativo = false,
+                    dataDeNascimento = LocalDate.parse("2000-02-29"),
+                ),
+            )
+
+        assertEquals("Funcionário atualizado", resultado.nome)
+        assertEquals(false, resultado.ativo)
+        assertEquals(LocalDate.parse("2000-02-29"), resultado.dataDeNascimento)
+    }
+
+    @Test
+    fun `substituicao permite limpar campos opcionais`() {
+        val existente =
+            FuncionarioModel(
+                id = 42,
+                nome = "Funcionário",
+                cpf = "12345678901",
+                dataDeNascimento = LocalDate.parse("2000-02-29"),
+            )
+        Mockito.doReturn(existente).`when`(repository).buscarPorId(42)
+        Mockito.doReturn(existente.copy(dataDeNascimento = null))
+            .`when`(repository)
+            .atualizar(Mockito.eq(42L), Mockito.any(FuncionarioModel::class.java) ?: FuncionarioModel())
+
+        val atualizado =
+            service.atualizar(
+                42,
+                Funcionario(
+                    nome = "Funcionário",
+                    cpf = "12345678901",
+                    telefone = null,
+                    dataDeNascimento = null,
+                ),
+            )
+        assertEquals(null, atualizado.dataDeNascimento)
+        assertEquals(null, atualizado.telefone)
     }
 }

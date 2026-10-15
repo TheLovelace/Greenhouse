@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDate
 
 @Entity
 @Table(name = "funcionario")
@@ -25,4 +26,6 @@ data class Funcionario(
     var cargo: String? = null,
     @field:Column(nullable = false)
     var ativo: Boolean = true,
+    @field:Column(name = "data_de_nascimento")
+    var dataDeNascimento: LocalDate? = null,
 )

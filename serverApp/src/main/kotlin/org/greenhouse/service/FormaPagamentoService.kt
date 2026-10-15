@@ -27,28 +27,13 @@ class FormaPagamentoService(
 
     fun atualizar(
         id: Long,
-        campos: Map<String, Any?>,
+        formaPagamento: FormaPagamento,
     ): FormaPagamento {
         val idValidado = validarId(id)
-        val atual =
-            formaPagamentoRepository
-                .buscarPorId(idValidado)
-                ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
-
-        val camposPermitidos = setOf("id", "nome", "ativo")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        if (formaPagamentoRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Forma de pagamento não encontrada")
         }
-        if (campos.keys.none { it != "id" }) {
-            throw BadRequestException("Informe ao menos um campo para atualizar")
-        }
-
-        val atualizada =
-            atual.copy(
-                nome = campos.texto("nome", atual.nome),
-                ativo = campos.booleano("ativo", atual.ativo),
-            )
+        val atualizada = formaPagamento.copy(id = idValidado)
         validar(atualizada)
 
         return formaPagamentoRepository.atualizar(idValidado, formaPagamentoMapper.toModel(atualizada))
@@ -68,6 +53,15 @@ class FormaPagamentoService(
         if (formaPagamento.nome.length > 50) {
             throw UnprocessableEntityException("O nome da forma de pagamento deve ter no máximo 50 caracteres")
         }
+        if (formaPagamento.descricao != null && formaPagamento.descricao.length > 250) {
+            throw UnprocessableEntityException("A descrição deve ter no máximo 250 caracteres")
+        }
+        if (formaPagamento.limiteParcelas < 1) {
+            throw UnprocessableEntityException("O limite de parcelas deve ser maior ou igual a 1")
+        }
+        if (formaPagamento.prazoEstornoDias != null && formaPagamento.prazoEstornoDias < 0) {
+            throw UnprocessableEntityException("O prazo de estorno não pode ser negativo")
+        }
     }
 
     private fun validarId(id: Long): Long {
@@ -77,21 +71,4 @@ class FormaPagamentoService(
         return id
     }
 
-    private fun Map<String, Any?>.texto(
-        campo: String,
-        valorAtual: String,
-    ): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.booleano(
-        campo: String,
-        valorAtual: Boolean,
-    ): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
-    }
 }
