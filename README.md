@@ -421,6 +421,6 @@ Os testes de integração JVM dependem de `DATABASE_URL` para acessar o banco Po
 O Greenhouse é um projeto proprietário disponibilizado publicamente para fins de estudo, consulta e avaliação de portfólio.
 Seu código-fonte e demais materiais não podem ser utilizados comercialmente, modificados ou redistribuídos sem autorização prévia. Para mais informações, veja o arquivo de licença em **[LICENSE](LICENSE)**.
 
-Todos os direitos reservados. © Lovelace 2026
-
 Desenvolvido por [Amanda][link-amanda], [Anahi][link-anahi], [Débora][link-debora], [Isabella][link-isabella], [Julia][link-julia] e [Luna][link-luna].
+
+Todos os direitos reservados. © Lovelace 2026.
