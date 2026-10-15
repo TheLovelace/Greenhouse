@@ -18,8 +18,21 @@ class FormaPagamentoFixture {
     fun novaFormaPagamento(
         nome: String = "Forma ${UUID.randomUUID()}",
         ativo: Boolean = true,
+        descricao: String? = null,
+        limiteParcelas: Int = 1,
+        prazoEstornoDias: Int? = null,
         id: Long? = null,
-    ): FormaPagamento = criarFormaPagamento(FormaPagamento(id = id, nome = nome, ativo = ativo))
+    ): FormaPagamento =
+        criarFormaPagamento(
+            FormaPagamento(
+                id = id,
+                nome = nome,
+                ativo = ativo,
+                descricao = descricao,
+                limiteParcelas = limiteParcelas,
+                prazoEstornoDias = prazoEstornoDias,
+            ),
+        )
 
     fun criarFormaPagamento(formaPagamento: FormaPagamento): FormaPagamento =
         service

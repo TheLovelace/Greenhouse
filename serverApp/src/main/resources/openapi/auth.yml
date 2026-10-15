@@ -1,5 +1,5 @@
 paths:
-  /auth/login:
+  /auth/signin:
     post:
       tags:
         - Acesso
@@ -25,7 +25,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppExceptionError'
 
-  /auth/primeiro-acesso:
+  /auth/signup:
     post:
       tags:
         - Acesso

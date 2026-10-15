@@ -185,6 +185,10 @@ components:
         ativo:
           type: boolean
           default: true
+        dataDeNascimento:
+          type: string
+          format: date
+          nullable: true
     FuncionarioPatch:
       type: object
       additionalProperties: false
@@ -215,6 +219,10 @@ components:
           nullable: true
         ativo:
           type: boolean
+        dataDeNascimento:
+          type: string
+          format: date
+          nullable: true
     FuncionarioCreate:
       allOf:
         - $ref: '#/components/schemas/Funcionario'

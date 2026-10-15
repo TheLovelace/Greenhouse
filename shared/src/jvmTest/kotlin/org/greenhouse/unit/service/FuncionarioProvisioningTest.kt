@@ -1,5 +1,6 @@
 package org.greenhouse.unit.service
 
+import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.dto.FuncionarioDTO as Funcionario
 import org.greenhouse.model.Funcionario as FuncionarioModel
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import java.time.LocalDate
 
 class FuncionarioProvisioningTest {
 
@@ -79,5 +81,46 @@ class FuncionarioProvisioningTest {
         assertThrows(UnprocessableEntityException::class.java) { service.criar(semEmail) }
         assertThrows(UnprocessableEntityException::class.java) { service.criar(emailInvalido) }
         Mockito.verifyNoInteractions(repository, usuarioRepository)
+    }
+
+    @Test
+    fun `atualiza data de nascimento recebida como data ISO`() {
+        val existente =
+            FuncionarioModel(
+                id = 42,
+                nome = "Funcionário",
+                cpf = "12345678901",
+            )
+        Mockito.doReturn(existente).`when`(repository).buscarPorId(42)
+        Mockito.doAnswer { invocation -> invocation.getArgument<FuncionarioModel>(1) }
+            .`when`(repository)
+            .atualizar(Mockito.eq(42L), Mockito.any(FuncionarioModel::class.java) ?: FuncionarioModel())
+
+        val resultado = service.atualizar(42, mapOf("dataDeNascimento" to "2000-02-29"))
+
+        assertEquals(LocalDate.parse("2000-02-29"), resultado.dataDeNascimento)
+    }
+
+    @Test
+    fun `permite limpar e rejeita data de nascimento invalida`() {
+        val existente =
+            FuncionarioModel(
+                id = 42,
+                nome = "Funcionário",
+                cpf = "12345678901",
+                dataDeNascimento = LocalDate.parse("2000-02-29"),
+            )
+        Mockito.doReturn(existente).`when`(repository).buscarPorId(42)
+        Mockito.doReturn(existente.copy(dataDeNascimento = null))
+            .`when`(repository)
+            .atualizar(Mockito.eq(42L), Mockito.any(FuncionarioModel::class.java) ?: FuncionarioModel())
+
+        val atualizado = service.atualizar(42, mapOf("dataDeNascimento" to null))
+        assertEquals(null, atualizado.dataDeNascimento)
+
+        Mockito.doReturn(existente).`when`(repository).buscarPorId(42)
+        assertThrows(BadRequestException::class.java) {
+            service.atualizar(42, mapOf("dataDeNascimento" to "29/02/2000"))
+        }
     }
 }
