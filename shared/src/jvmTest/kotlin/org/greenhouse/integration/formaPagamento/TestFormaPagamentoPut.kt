@@ -59,7 +59,11 @@ class TestFormaPagamentoPut {
                 prazoEstornoDias = 10,
             )
             val id = requireNotNull(criada.id)
-            val substituida = fixture.service.atualizar(id, FormaPagamentoDTO(nome = "PIX"))
+            val substituida =
+                fixture.service.atualizar(
+                    id,
+                    FormaPagamentoDTO(nome = "PIX-${UUID.randomUUID()}"),
+                )
 
             assertEquals(true, substituida.ativo)
             assertEquals(null, substituida.descricao)
