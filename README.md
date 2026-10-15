@@ -20,12 +20,12 @@ Abaixo, estão listadas as integrantes da equipe e suas respectivas responsabili
 
 | ✿ | Integrante | RA | Bloco | Entidades/CRUDs sob responsabilidade | GitHub |
 |---|---|---|---|---|---|
-| <img src="https://github.com/Amanda-Brit0.png" width="30" alt="Amanda"  style="border-radius: 50%;"> | Amanda Brito | 1111392411036 | Plantas/IoT | Espécie/cuidados e configuração de Alertas | [GitHub][link-amanda] |
-| <img src="https://github.com/AnahiMamani.png" width="30" alt="Anahi"  style="border-radius: 50%;"> | Anahi Mamani | 1111392411027 | Vendas | Cliente e Pedido | [GitHub][link-anahi] |
-| <img src="https://github.com/Debora-Carvalho.png" width="30" alt="Débora"  style="border-radius: 50%;"> | Débora Carvalho | 1111392411046 | Estoque/Comercial | Estoque e Desconto | [GitHub][link-debora] |
-| <img src="https://github.com/IsabellaSGoncalves.png" width="30" alt="Isabella"  style="border-radius: 50%;"> | Isabella Gonçalves | 1111392411043 | Catálogo | Categoria e Produto | [GitHub][link-isabella] |
-| <img src="https://github.com/BONJIU.png" width="30" alt="Julia"  style="border-radius: 50%;"> | Julia Bongiovani | 1111392411028 | Compras | Fornecedor e Compra | [GitHub][link-julia] |
-| <img src="https://github.com/LunaLeao.png" width="30" alt="Luna"  style="border-radius: 50%;"> | Luna Leão | 1111392421043 | Acesso | Funcionário, Forma de pagamento, Autenticação | [GitHub][link-luna] |
+| <img src="https://github.com/Amanda-Brit0.png" width="30" alt="Amanda"> | Amanda Brito | 1111392411036 | Plantas/IoT | Espécie e configuração de Alertas | [GitHub][link-amanda] |
+| <img src="https://github.com/AnahiMamani.png" width="30" alt="Anahi"> | Anahi Mamani | 1111392411027 | Compras | Fornecedor e Compra  | [GitHub][link-anahi] |
+| <img src="https://github.com/Debora-Carvalho.png" width="30" alt="Débora"> | Débora Carvalho | 1111392411046 | Estoque/Comercial | Estoque e Desconto | [GitHub][link-debora] |
+| <img src="https://github.com/IsabellaSGoncalves.png" width="30" alt="Isabella"> | Isabella Gonçalves | 1111392411043 | Catálogo | Categoria e Produto | [GitHub][link-isabella] |
+| <img src="https://github.com/BONJIU.png" width="30" alt="Julia"> | Julia Bongiovani | 1111392411028 | Vendas | Cliente e Pedido | [GitHub][link-julia] |
+| <img src="https://github.com/LunaLeao.png" width="30" alt="Luna"> | Luna Leão | 1111392421043 | Acesso | Funcionário, Forma de pagamento, Autenticação | [GitHub][link-luna] |
 
 <!-- Referências dos perfis -->
 [link-amanda]: https://github.com/Amanda-Brit0
