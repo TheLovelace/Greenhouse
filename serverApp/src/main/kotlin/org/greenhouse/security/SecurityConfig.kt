@@ -25,7 +25,7 @@ class SecurityConfig(
 
             .authorizeHttpRequests { auth ->
 
-                auth.requestMatchers("/api/auth/login", "/api/auth/primeiro-acesso").permitAll()
+                auth.requestMatchers("/api/auth/signin", "/api/auth/signup").permitAll()
                 auth.requestMatchers("/api/status").permitAll()
 
                 auth.requestMatchers(

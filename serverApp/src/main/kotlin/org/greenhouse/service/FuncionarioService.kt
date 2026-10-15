@@ -11,6 +11,8 @@ import org.greenhouse.repository.FuncionarioRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import java.util.Locale
 
 @Service
@@ -71,7 +73,7 @@ class FuncionarioService(
         val funcionarioAtual = funcionarioRepository.buscarPorId(idValidado)
             ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
 
-        val camposPermitidos = setOf("id", "nome", "cpf", "telefone", "email", "cargo", "ativo")
+        val camposPermitidos = setOf("id", "nome", "cpf", "telefone", "email", "cargo", "ativo", "dataDeNascimento")
         val camposDesconhecidos = campos.keys - camposPermitidos
 
         if (camposDesconhecidos.isNotEmpty()) {
@@ -89,6 +91,7 @@ class FuncionarioService(
                 email = campos.textoOpcional("email", funcionarioAtual.email),
                 cargo = campos.textoOpcional("cargo", funcionarioAtual.cargo),
                 ativo = campos.booleano("ativo", funcionarioAtual.ativo),
+                dataDeNascimento = campos.data("dataDeNascimento", funcionarioAtual.dataDeNascimento),
             )
         validar(funcionarioAtualizado)
 
@@ -152,6 +155,21 @@ class FuncionarioService(
         if (!containsKey(campo)) return valorAtual
         return this[campo] as? Boolean
             ?: throw BadRequestException("O campo '$campo' deve ser booleano")
+    }
+
+    private fun Map<String, Any?>.data(
+        campo: String,
+        valorAtual: LocalDate?,
+    ): LocalDate? {
+        if (!containsKey(campo)) return valorAtual
+        val valor = this[campo] ?: return null
+        val texto = valor as? String
+            ?: throw BadRequestException("O campo '$campo' deve ser uma data no formato AAAA-MM-DD")
+        return try {
+            LocalDate.parse(texto)
+        } catch (_: DateTimeParseException) {
+            throw BadRequestException("O campo '$campo' deve ser uma data válida no formato AAAA-MM-DD")
+        }
     }
 
     private companion object {

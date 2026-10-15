@@ -145,6 +145,18 @@ components:
         ativo:
           type: boolean
           default: true
+        descricao:
+          type: string
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+          default: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true
     FormaPagamentoPatch:
       type: object
       description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização.
@@ -152,6 +164,9 @@ components:
       anyOf:
         - required: [nome]
         - required: [ativo]
+        - required: [descricao]
+        - required: [limiteParcelas]
+        - required: [prazoEstornoDias]
       properties:
         id:
           type: integer
@@ -164,3 +179,14 @@ components:
           pattern: '.*\S.*'
         ativo:
           type: boolean
+        descricao:
+          type: string
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 import jakarta.persistence.LockModeType
+import java.time.LocalDate
 
 interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
     @Query("SELECT f FROM Funcionario f")
@@ -27,6 +28,7 @@ interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
                 funcionario.email,
                 funcionario.cargo,
                 funcionario.ativo,
+                funcionario.dataDeNascimento,
             ) == 0
         ) {
             return null
@@ -40,7 +42,8 @@ interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
         """
         UPDATE Funcionario f
         SET f.nome = :nome, f.cpf = :cpf, f.telefone = :telefone,
-            f.email = :email, f.cargo = :cargo, f.ativo = :ativo
+            f.email = :email, f.cargo = :cargo, f.ativo = :ativo,
+            f.dataDeNascimento = :dataDeNascimento
         WHERE f.id = :id
         """,
     )
@@ -52,6 +55,7 @@ interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
         @Param("email") email: String?,
         @Param("cargo") cargo: String?,
         @Param("ativo") ativo: Boolean,
+        @Param("dataDeNascimento") dataDeNascimento: LocalDate?,
     ): Int
 
     @Modifying

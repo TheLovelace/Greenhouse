@@ -60,10 +60,10 @@ paths:
     $ref: './openapi/funcionario.yml#/paths/~1'
   /funcionario/{id}:
     $ref: './openapi/funcionario.yml#/paths/~1%7Bid%7D'
-  /auth/login:
-    $ref: 'openapi/auth.yml#/paths/~1auth~1login'
-  /auth/primeiro-acesso:
-    $ref: 'openapi/auth.yml#/paths/~1auth~1primeiro-acesso'
+  /auth/signin:
+    $ref: 'openapi/auth.yml#/paths/~1auth~1signin'
+  /auth/signup:
+    $ref: 'openapi/auth.yml#/paths/~1auth~1signup'
 components:
   schemas:
     Categoria:

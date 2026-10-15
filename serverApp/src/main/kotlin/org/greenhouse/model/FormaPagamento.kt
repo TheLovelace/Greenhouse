@@ -17,4 +17,10 @@ data class FormaPagamento(
     var nome: String = "",
     @field:Column(nullable = false)
     var ativo: Boolean = true,
+    @field:Column(length = 250)
+    var descricao: String? = null,
+    @field:Column(name = "limite_parcelas", nullable = false)
+    var limiteParcelas: Int = 1,
+    @field:Column(name = "prazo_estorno_dias")
+    var prazoEstornoDias: Int? = null,
 )
