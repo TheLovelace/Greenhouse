@@ -7,6 +7,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.greenhouse.ui.screens.desconto.DescontoCadastro
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
+import org.greenhouse.ui.screens.estoque.EstoqueCadastro
+import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
 import org.greenhouse.ui.screens.home.HomeScreen
 import org.greenhouse.ui.screens.home.HomeDestination
 import org.greenhouse.ui.theme.GreenhouseTheme
@@ -15,8 +17,10 @@ import org.greenhouse.ui.theme.GreenhouseTheme
 fun App(
     onNavigate: (HomeDestination) -> Unit = {},
     onSaveDesconto: (DescontoCadastroData) -> Unit = {},
+    onSaveEstoque: (EstoqueCadastroData) -> Unit = {},
 ) {
     var isDescontoCadastroVisible by remember { mutableStateOf(false) }
+    var isEstoqueCadastroVisible by remember { mutableStateOf(false) }
 
     GreenhouseTheme {
         if (isDescontoCadastroVisible) {
@@ -24,13 +28,18 @@ fun App(
                 onBack = { isDescontoCadastroVisible = false },
                 onSave = onSaveDesconto,
             )
+        } else if (isEstoqueCadastroVisible) {
+            EstoqueCadastro(
+                onBack = { isEstoqueCadastroVisible = false },
+                onSave = onSaveEstoque,
+            )
         } else {
             HomeScreen(
                 onNavigate = { destination ->
-                    if (destination == HomeDestination.DESCONTOS) {
-                        isDescontoCadastroVisible = true
-                    } else {
-                        onNavigate(destination)
+                    when (destination) {
+                        HomeDestination.DESCONTOS -> isDescontoCadastroVisible = true
+                        HomeDestination.ESTOQUE -> isEstoqueCadastroVisible = true
+                        else -> onNavigate(destination)
                     }
                 },
             )

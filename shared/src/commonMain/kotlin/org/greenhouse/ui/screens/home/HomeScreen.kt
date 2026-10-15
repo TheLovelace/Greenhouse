@@ -221,6 +221,7 @@ fun HomeScreen(
                     }
                     append(" Copyright Greenhouse 2026. All Rights Reserved. Make with ")
                     appendInlineContent("coffee", "[coffee]")
+                    append(" by Lovelace.")
                 },
             modifier = Modifier.fillMaxWidth(),
             color = TextPrimary,
