@@ -9,6 +9,7 @@ fun validarEstoqueCadastro(form: EstoqueCadastroForm): Map<String, String> {
     val erros = mutableMapOf<String, String>()
     val produtoId = form.produtoId.trim().toLongOrNull()
     val quantidadeFisica = form.quantidadeFisica.trim().ifEmpty { "0" }.toIntOrNull()
+    val quantidadeReservada = form.quantidadeReservada.trim().ifEmpty { "0" }.toIntOrNull()
     val quantidadeMinima = form.quantidadeMinima.trim().ifEmpty { "0" }.toIntOrNull()
     val localizacao = form.localizacao.trim()
 
@@ -22,6 +23,14 @@ fun validarEstoqueCadastro(form: EstoqueCadastroForm): Map<String, String> {
         erros["quantidadeFisica"] = "Informe uma quantidade física válida"
     } else if (quantidadeFisica < 0) {
         erros["quantidadeFisica"] = "A quantidade física não pode ser negativa"
+    }
+
+    if (quantidadeReservada == null) {
+        erros["quantidadeReservada"] = "Informe uma quantidade reservada válida"
+    } else if (quantidadeReservada < 0) {
+        erros["quantidadeReservada"] = "A quantidade reservada não pode ser negativa"
+    } else if (quantidadeFisica != null && quantidadeReservada > quantidadeFisica) {
+        erros["quantidadeReservada"] = "A quantidade reservada não pode ser maior que a quantidade física"
     }
 
     if (quantidadeMinima == null) {
@@ -43,6 +52,7 @@ fun EstoqueCadastroForm.toEstoqueCadastroDataOrNull(): EstoqueCadastroData? {
     return EstoqueCadastroData(
         produtoId = requireNotNull(produtoId.trim().toLongOrNull()),
         quantidadeFisica = quantidadeFisica.trim().ifEmpty { "0" }.toInt(),
+        quantidadeReservada = quantidadeReservada.trim().ifEmpty { "0" }.toInt(),
         quantidadeMinima = quantidadeMinima.trim().ifEmpty { "0" }.toInt(),
         localizacao = localizacao.trim().ifEmpty { null },
         bloqueado = bloqueado,
