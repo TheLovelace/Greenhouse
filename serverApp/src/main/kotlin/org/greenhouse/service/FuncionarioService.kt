@@ -11,8 +11,6 @@ import org.greenhouse.repository.FuncionarioRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import java.util.Locale
 
 @Service
@@ -68,31 +66,12 @@ class FuncionarioService(
             ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
 
     @Transactional
-    fun atualizar(id: Long, campos: Map<String, Any?>): Funcionario {
+    fun atualizar(id: Long, funcionario: Funcionario): Funcionario {
         val idValidado = validarId(id)
-        val funcionarioAtual = funcionarioRepository.buscarPorId(idValidado)
-            ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
-
-        val camposPermitidos = setOf("id", "nome", "cpf", "telefone", "email", "cargo", "ativo", "dataDeNascimento")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        if (funcionarioRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Funcionário não encontrado")
         }
-        if (campos.keys.none { it != "id" }) {
-            throw BadRequestException("Informe ao menos um campo para atualizar")
-        }
-
-        val funcionarioAtualizado =
-            funcionarioAtual.copy(
-                nome = campos.texto("nome", funcionarioAtual.nome),
-                cpf = campos.texto("cpf", funcionarioAtual.cpf),
-                telefone = campos.textoOpcional("telefone", funcionarioAtual.telefone),
-                email = campos.textoOpcional("email", funcionarioAtual.email),
-                cargo = campos.textoOpcional("cargo", funcionarioAtual.cargo),
-                ativo = campos.booleano("ativo", funcionarioAtual.ativo),
-                dataDeNascimento = campos.data("dataDeNascimento", funcionarioAtual.dataDeNascimento),
-            )
+        val funcionarioAtualizado = funcionario.copy(id = idValidado)
         validar(funcionarioAtualizado)
 
         return atualizarFuncionario(idValidado, funcionarioAtualizado)
@@ -129,47 +108,6 @@ class FuncionarioService(
             throw BadRequestException("O id do funcionário deve ser maior que zero")
         }
         return id
-    }
-
-    private fun Map<String, Any?>.texto(
-        campo: String,
-        valorAtual: String,
-    ): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.textoOpcional(
-        campo: String,
-        valorAtual: String?,
-    ): String? {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String?
-    }
-
-    private fun Map<String, Any?>.booleano(
-        campo: String,
-        valorAtual: Boolean,
-    ): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
-    }
-
-    private fun Map<String, Any?>.data(
-        campo: String,
-        valorAtual: LocalDate?,
-    ): LocalDate? {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] ?: return null
-        val texto = valor as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser uma data no formato AAAA-MM-DD")
-        return try {
-            LocalDate.parse(texto)
-        } catch (_: DateTimeParseException) {
-            throw BadRequestException("O campo '$campo' deve ser uma data válida no formato AAAA-MM-DD")
-        }
     }
 
     private companion object {

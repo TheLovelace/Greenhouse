@@ -76,8 +76,6 @@ components:
       $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
     FormaPagamento:
       $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamento'
-    FormaPagamentoPatch:
-      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoPatch'
     EstoqueCreate:
       $ref: './openapi/estoque.yml#/components/schemas/EstoqueCreate'
     Estoque:
@@ -86,8 +84,6 @@ components:
       $ref: './openapi/funcionario.yml#/components/schemas/Funcionario'
     FuncionarioCreate:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioCreate'
-    FuncionarioPatch:
-      $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioPatch'
     Produto:
       $ref: './openapi/produto.yml#/components/schemas/Produto'
     Status:

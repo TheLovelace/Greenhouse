@@ -27,31 +27,13 @@ class FormaPagamentoService(
 
     fun atualizar(
         id: Long,
-        campos: Map<String, Any?>,
+        formaPagamento: FormaPagamento,
     ): FormaPagamento {
         val idValidado = validarId(id)
-        val atual =
-            formaPagamentoRepository
-                .buscarPorId(idValidado)
-                ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
-
-        val camposPermitidos = setOf("id", "nome", "ativo", "descricao", "limiteParcelas", "prazoEstornoDias")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
+        if (formaPagamentoRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Forma de pagamento não encontrada")
         }
-        if (campos.keys.none { it != "id" }) {
-            throw BadRequestException("Informe ao menos um campo para atualizar")
-        }
-
-        val atualizada =
-            atual.copy(
-                nome = campos.texto("nome", atual.nome),
-                ativo = campos.booleano("ativo", atual.ativo),
-                descricao = campos.textoOpcional("descricao", atual.descricao),
-                limiteParcelas = campos.inteiro("limiteParcelas", atual.limiteParcelas),
-                prazoEstornoDias = campos.inteiroOpcional("prazoEstornoDias", atual.prazoEstornoDias),
-            )
+        val atualizada = formaPagamento.copy(id = idValidado)
         validar(atualizada)
 
         return formaPagamentoRepository.atualizar(idValidado, formaPagamentoMapper.toModel(atualizada))
@@ -89,50 +71,4 @@ class FormaPagamentoService(
         return id
     }
 
-    private fun Map<String, Any?>.texto(
-        campo: String,
-        valorAtual: String,
-    ): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.booleano(
-        campo: String,
-        valorAtual: Boolean,
-    ): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
-    }
-
-    private fun Map<String, Any?>.textoOpcional(
-        campo: String,
-        valorAtual: String?,
-    ): String? {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] ?: return null
-        return valor as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.inteiro(
-        campo: String,
-        valorAtual: Int,
-    ): Int {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Int
-            ?: throw BadRequestException("O campo '$campo' deve ser um número inteiro")
-    }
-
-    private fun Map<String, Any?>.inteiroOpcional(
-        campo: String,
-        valorAtual: Int?,
-    ): Int? {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] ?: return null
-        return valor as? Int
-            ?: throw BadRequestException("O campo '$campo' deve ser um número inteiro")
-    }
 }

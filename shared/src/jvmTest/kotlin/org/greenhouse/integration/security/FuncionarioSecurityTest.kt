@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTest(
@@ -81,7 +82,7 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
             .buscarPorId(1)
         Mockito.doReturn(funcionario)
             .`when`(funcionarioService)
-            .atualizar(Mockito.anyLong(), Mockito.anyMap<String, Any?>() ?: emptyMap())
+            .atualizar(Mockito.anyLong(), Mockito.any(Funcionario::class.java) ?: funcionario)
         val token = jwtService.gerarToken("admin", "ADMIN")
         val expectedStatuses = listOf(201, 200, 200, 200, 204)
 
@@ -116,6 +117,20 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
         assert(result.response.status !in setOf(401, 403))
     }
 
+    @Test
+    fun `metodo PATCH nao esta mais mapeado`() {
+        val token = jwtService.gerarToken("admin", "ADMIN")
+        val result =
+            mockMvc.perform(
+                patch("/api/funcionario/1")
+                    .bearer(token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"nome":"Nome atualizado","cpf":"12345678901"}"""),
+            ).andReturn()
+
+        assertEquals(405, result.response.status)
+    }
+
     private fun crudRequests(): List<MockHttpServletRequestBuilder> =
         listOf(
             post("/api/funcionario")
@@ -123,9 +138,9 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
                 .content("""{"nome":"Funcionário de teste","cpf":"12345678901"}"""),
             get("/api/funcionario"),
             get("/api/funcionario/1"),
-            patch("/api/funcionario/1")
+            put("/api/funcionario/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"nome":"Nome atualizado"}"""),
+                .content("""{"nome":"Nome atualizado","cpf":"12345678901"}"""),
             delete("/api/funcionario/1"),
         )
 
