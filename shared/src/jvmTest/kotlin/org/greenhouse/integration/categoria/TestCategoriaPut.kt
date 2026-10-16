@@ -1,5 +1,6 @@
 package org.greenhouse.integration.categoria
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.validation.Validation
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,6 +12,7 @@ import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.dto.request.CategoriaCreateRequestDTO
 import org.greenhouse.dto.request.CategoriaUpdateRequestDTO
 import org.greenhouse.integration.fixture.CategoriaFixture
+import java.util.UUID
 
 class TestCategoriaPut {
 
@@ -25,16 +27,17 @@ class TestCategoriaPut {
             val criada = fixture.novaCategoria(observacao = "Observação anterior")
             id = criada.id
 
+            val novoNome = "Folhagens-${UUID.randomUUID()}"
             val atualizada = fixture.service.atualizar(
                 criada.id!!,
-                CategoriaUpdateRequestDTO(
-                    id = -1,
-                    nome = "Folhagens",
-                ),
+                categoriaUpdateRequest {
+                    id = -1
+                    nome = novoNome
+                },
             )
 
             assertEquals(criada.id, atualizada.id)
-            assertEquals("Folhagens", atualizada.nome)
+            assertEquals(novoNome, atualizada.nome)
             assertEquals(criada.descricao, atualizada.descricao)
             assertEquals(criada.ativo, atualizada.ativo)
             assertEquals(criada.observacao, atualizada.observacao)
@@ -42,6 +45,41 @@ class TestCategoriaPut {
         } finally {
             fixture.limpar(id)
         }
+    }
+
+    @Test
+    fun `deve atualizar e limpar observacao somente quando informada`() {
+        val fixture = CategoriaFixture()
+        var id: Long? = null
+
+        try {
+            val criada = fixture.novaCategoria(observacao = "Observação anterior")
+            id = criada.id
+
+            val atualizada = fixture.service.atualizar(
+                criada.id!!,
+                categoriaUpdateRequest { observacao = "Observação nova" },
+            )
+            assertEquals("Observação nova", atualizada.observacao)
+
+            val limpa = fixture.service.atualizar(
+                criada.id!!,
+                categoriaUpdateRequest { observacao = null },
+            )
+            assertEquals(null, limpa.observacao)
+        } finally {
+            fixture.limpar(id)
+        }
+    }
+
+    @Test
+    fun `update diferencia observacao omitida de observacao nula`() {
+        val objectMapper = ObjectMapper()
+        val omitida = objectMapper.readValue("""{"nome":"Folhagens"}""", CategoriaUpdateRequestDTO::class.java)
+        val nula = objectMapper.readValue("""{"observacao":null}""", CategoriaUpdateRequestDTO::class.java)
+
+        assertTrue(!omitida.observacaoInformada)
+        assertTrue(nula.observacaoInformada)
     }
 
     @Test
@@ -58,9 +96,7 @@ class TestCategoriaPut {
             assertFailsWith<UnprocessableEntityException> {
                 fixture.service.atualizar(
                     segunda.id,
-                    CategoriaUpdateRequestDTO(
-                        nome = primeira.nome,
-                    ),
+                    categoriaUpdateRequest { nome = primeira.nome },
                 )
             }
         } finally {
@@ -71,7 +107,7 @@ class TestCategoriaPut {
     @Test
     fun `deve rejeitar id invalido e inexistente no put`() {
         val fixture = CategoriaFixture()
-        val request = CategoriaUpdateRequestDTO(nome = "Folhagens")
+        val request = categoriaUpdateRequest { nome = "Folhagens" }
 
         assertFailsWith<BadRequestException> {
             fixture.service.atualizar(0, request)
@@ -84,7 +120,7 @@ class TestCategoriaPut {
 
             try {
                 assertFailsWith<BadRequestException> {
-                    fixture.service.atualizar(criada.id!!, CategoriaUpdateRequestDTO(id = -1))
+                    fixture.service.atualizar(criada.id!!, categoriaUpdateRequest { id = -1 })
                 }
             } finally {
                 fixture.limpar(criada.id)
@@ -103,15 +139,17 @@ class TestCategoriaPut {
             observacao = "o".repeat(301),
         )
         val update = CategoriaUpdateRequestDTO(
-            nome = "n".repeat(101),
-            descricao = "d".repeat(1001),
-        )
+        ).apply {
+            nome = "n".repeat(101)
+            descricao = "d".repeat(1001)
+            observacao = "o".repeat(301)
+        }
 
         assertTrue(validator.validate(create).map { it.propertyPath.toString() }.containsAll(
             listOf("nome", "descricao", "observacao"),
         ))
         assertTrue(validator.validate(update).map { it.propertyPath.toString() }.containsAll(
-            listOf("nome", "descricao"),
+            listOf("nome", "descricao", "observacao"),
         ))
     }
 
@@ -129,4 +167,8 @@ class TestCategoriaPut {
         assertTrue(updateRules.contains(jakarta.validation.constraints.Size::class.java))
         assertTrue(updateEmpty.contains("possuiCamposParaAtualizar"))
     }
+
+    private fun categoriaUpdateRequest(
+        configure: CategoriaUpdateRequestDTO.() -> Unit,
+    ) = CategoriaUpdateRequestDTO().apply(configure)
 }

@@ -71,15 +71,42 @@ class TestProdutoPut {
     }
 
     @Test
+    fun `deve atualizar e limpar prazo de preparo quando informado`() {
+        val fixture = ProdutoFixture()
+        var id: Long? = null
+
+        try {
+            val criado = fixture.novoProduto(prazoPreparoMinutos = 15)
+            id = criado.id
+
+            val atualizado = fixture.service.atualizar(
+                criado.id!!,
+                produtoUpdateRequest { prazoPreparoMinutos = 30 },
+            )
+            assertEquals(30, atualizado.prazoPreparoMinutos)
+
+            val limpo = fixture.service.atualizar(
+                criado.id!!,
+                produtoUpdateRequest { prazoPreparoMinutos = null },
+            )
+            assertEquals(null, limpo.prazoPreparoMinutos)
+        } finally {
+            fixture.limpar(id)
+        }
+    }
+
+    @Test
     fun `deve diferenciar campo omitido de campo opcional enviado como null`() {
         val objectMapper = ObjectMapper()
         val omitido = objectMapper.readValue("""{"nome":"Rosa"}""", ProdutoUpdateRequestDTO::class.java)
         val nulo = objectMapper.readValue("""{"codigo":null}""", ProdutoUpdateRequestDTO::class.java)
+        val prazoNulo = objectMapper.readValue("""{"prazoPreparoMinutos":null}""", ProdutoUpdateRequestDTO::class.java)
 
         assertTrue(!omitido.codigoInformado)
         assertTrue(omitido.nomeInformado)
         assertTrue(nulo.codigoInformado)
         assertTrue(nulo.codigo == null)
+        assertTrue(prazoNulo.prazoPreparoMinutosInformado)
     }
 
     @Test
@@ -151,6 +178,7 @@ class TestProdutoPut {
             nome = "n".repeat(151)
             descricao = "d".repeat(1001)
             preco = BigDecimal("-0.01")
+            prazoPreparoMinutos = -1
         }
 
         assertTrue(
@@ -159,7 +187,7 @@ class TestProdutoPut {
         )
         assertTrue(
             validator.validate(update).map { it.propertyPath.toString() }
-                .containsAll(listOf("codigo", "nome", "descricao", "preco")),
+                .containsAll(listOf("codigo", "nome", "descricao", "preco", "prazoPreparoMinutos")),
         )
     }
 
