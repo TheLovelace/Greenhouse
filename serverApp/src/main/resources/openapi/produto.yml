@@ -73,7 +73,7 @@ paths:
       tags:
         - Produto
       summary: Atualizar produto
-      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual, codigo e descricao enviados como null são removidos.
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual, codigo, descricao e prazoPreparoMinutos enviados como null têm seus valores limpos.
       operationId: atualizarProduto
       parameters:
         - name: id
@@ -162,13 +162,14 @@ components:
     ProdutoUpdateRequest:
       type: object
       additionalProperties: false
-      description: Campos omitidos mantêm os valores atuais. O prazo de preparo não é alterado por este endpoint.
+      description: Campos omitidos mantêm os valores atuais, prazoPreparoMinutos pode ser enviado como null para limpar o valor.
       anyOf:
         - required: [codigo]
         - required: [nome]
         - required: [descricao]
         - required: [preco]
         - required: [ativo]
+        - required: [prazoPreparoMinutos]
       properties:
         id:
           type: integer
@@ -194,6 +195,11 @@ components:
           multipleOf: 0.01
         ativo:
           type: boolean
+        prazoPreparoMinutos:
+          type: integer
+          format: int32
+          minimum: 0
+          nullable: true
     ProdutoResponse:
       type: object
       required:
