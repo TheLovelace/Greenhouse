@@ -46,6 +46,7 @@ import org.greenhouse.ui.screens.categoria.model.CategoriaCadastroData
 import org.greenhouse.ui.screens.categoria.model.CategoriaCadastroForm
 import org.greenhouse.ui.screens.categoria.validation.toCategoriaCadastroDataOrNull
 import org.greenhouse.ui.screens.categoria.validation.validarCategoriaCadastro
+import org.greenhouse.ui.screens.desconto.validation.formatarDataBrasileira
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.Gray
@@ -135,6 +136,16 @@ fun CategoriaCadastro(
             Spacer(Modifier.height(16.dp))
 
             CategoriaTextField(
+                label = "Data de cadastro",
+                value = form.dataCadastro,
+                onValueChange = { updateForm(form.copy(dataCadastro = formatarDataBrasileira(it))) },
+                placeholder = "DD/MM/AAAA (opcional)",
+                error = errors["dataCadastro"],
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            CategoriaTextField(
                 label = "Observação",
                 value = form.observacao,
                 onValueChange = { updateForm(form.copy(observacao = it)) },
@@ -175,10 +186,13 @@ fun CategoriaCadastro(
                         errors = emptyMap()
                         showSuccessMessage = false
                     },
-                    modifier = Modifier.width(160.dp).height(52.dp),
+                    modifier =
+                        Modifier
+                            .width(160.dp)
+                            .height(52.dp),
                     shape = RoundedCornerShape(20.dp),
                     border = BorderStroke(1.dp, GreenPrimary),
-                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
                 ) {
                     Text("Limpar campos", style = typography.bodyMedium)
                 }
