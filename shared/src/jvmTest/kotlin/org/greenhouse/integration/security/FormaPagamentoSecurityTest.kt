@@ -1,7 +1,8 @@
 package org.greenhouse.integration.security
 
 import org.greenhouse.GreenhouseApplication
-import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.response.FormaPagamentoResponseDTO
 import org.greenhouse.security.JwtService
 import org.greenhouse.service.FormaPagamentoService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @SpringBootTest(
     classes = [GreenhouseApplication::class],
     properties = [
+        "jwt.secret=test-only-jwt-secret-for-payment-method-tests-0000000000000",
         "spring.autoconfigure.exclude=" +
             "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
             "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
@@ -42,7 +44,15 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
     @MockitoBean
     private lateinit var formaPagamentoService: FormaPagamentoService
 
-    private val formaPagamento = FormaPagamento(id = 1, nome = "PIX")
+    private val formaPagamento =
+        FormaPagamentoResponseDTO(
+            id = 1,
+            nome = "PIX",
+            ativo = true,
+            descricao = null,
+            limiteParcelas = 1,
+            prazoEstornoDias = null,
+        )
 
     @Test
     fun `todas as rotas do CRUD rejeitam requisicoes sem token`() {
@@ -67,11 +77,11 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
         Mockito
             .doReturn(formaPagamento)
             .`when`(formaPagamentoService)
-            .criar(Mockito.any(FormaPagamento::class.java) ?: formaPagamento)
+            .criar(Mockito.any(FormaPagamentoRequestDTO::class.java) ?: FormaPagamentoRequestDTO(nome = "PIX"))
         Mockito
             .doReturn(listOf(formaPagamento))
             .`when`(formaPagamentoService)
-            .listar()
+            .listar(Mockito.any())
         Mockito
             .doReturn(formaPagamento)
             .`when`(formaPagamentoService)
@@ -79,7 +89,10 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
         Mockito
             .doReturn(formaPagamento)
             .`when`(formaPagamentoService)
-            .atualizar(Mockito.anyLong(), Mockito.any(FormaPagamento::class.java) ?: formaPagamento)
+            .atualizar(
+                Mockito.anyLong(),
+                Mockito.any(FormaPagamentoRequestDTO::class.java) ?: FormaPagamentoRequestDTO(nome = "Cartão"),
+            )
 
         val expectedStatuses = listOf(201, 200, 200, 200, 204)
         listOf("ADMIN", "FUNCIONARIO").forEach { perfil ->
@@ -92,6 +105,27 @@ class FormaPagamentoSecurityTest : SpringBootWebTest() {
                 assertEquals(expectedStatus, result.response.status)
             }
         }
+    }
+
+    @Test
+    fun `POST e PUT rejeitam limites invalidos pelo Bean Validation`() {
+        val token = jwtService.gerarToken("admin", "ADMIN")
+        val invalidBody = """{"nome":"Cartão","limiteParcelas":0}"""
+
+        listOf(
+            post("/api/forma-pagamento"),
+            put("/api/forma-pagamento/1"),
+        ).forEach { request ->
+            val result =
+                mockMvc.perform(
+                    request
+                        .header("Authorization", "Bearer $token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody),
+                ).andReturn()
+            assertEquals(400, result.response.status)
+        }
+        Mockito.verifyNoInteractions(formaPagamentoService)
     }
 
     @Test

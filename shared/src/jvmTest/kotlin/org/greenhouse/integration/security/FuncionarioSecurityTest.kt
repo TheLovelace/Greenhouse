@@ -1,7 +1,8 @@
 package org.greenhouse.integration.security
 
 import org.greenhouse.GreenhouseApplication
-import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.dto.response.FuncionarioResponseDTO
 import org.greenhouse.security.JwtService
 import org.greenhouse.service.FuncionarioService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @SpringBootTest(
     classes = [GreenhouseApplication::class],
     properties = [
+        "jwt.secret=test-only-jwt-secret-for-funcionario-tests-0000000000000000",
         "spring.autoconfigure.exclude=" +
             "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
             "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
@@ -45,10 +47,15 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
     private lateinit var funcionarioService: FuncionarioService
 
     private val funcionario =
-        Funcionario(
+        FuncionarioResponseDTO(
             id = 1,
             nome = "Funcionário de teste",
             cpf = "12345678901",
+            telefone = null,
+            email = null,
+            cargo = null,
+            ativo = true,
+            dataDeNascimento = null,
         )
 
     @Test
@@ -73,16 +80,20 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
     fun `token ADMIN autoriza as cinco operacoes do CRUD`() {
         Mockito.doReturn(funcionario)
             .`when`(funcionarioService)
-            .criar(Mockito.any(Funcionario::class.java) ?: funcionario)
+            .criar(Mockito.any(FuncionarioRequestDTO::class.java) ?: FuncionarioRequestDTO("Funcionário de teste", "12345678901"))
         Mockito.doReturn(listOf(funcionario))
             .`when`(funcionarioService)
-            .listar()
+            .listar(Mockito.any())
         Mockito.doReturn(funcionario)
             .`when`(funcionarioService)
             .buscarPorId(1)
         Mockito.doReturn(funcionario)
             .`when`(funcionarioService)
-            .atualizar(Mockito.anyLong(), Mockito.any(Funcionario::class.java) ?: funcionario)
+            .atualizar(
+                Mockito.anyLong(),
+                Mockito.any(FuncionarioRequestDTO::class.java)
+                    ?: FuncionarioRequestDTO("Nome atualizado", "12345678901"),
+            )
         val token = jwtService.gerarToken("admin", "ADMIN")
         val expectedStatuses = listOf(201, 200, 200, 200, 204)
 
@@ -90,6 +101,27 @@ class FuncionarioSecurityTest : SpringBootWebTest() {
             val result = mockMvc.perform(request.bearer(token)).andReturn()
             assertEquals(expectedStatus, result.response.status)
         }
+    }
+
+    @Test
+    fun `POST e PUT rejeitam nome em branco pelo Bean Validation`() {
+        val token = jwtService.gerarToken("admin", "ADMIN")
+        val invalidBody = """{"nome":" ","cpf":"12345678901","email":"test@example.com"}"""
+
+        listOf(
+            post("/api/funcionario"),
+            put("/api/funcionario/1"),
+        ).forEach { request ->
+            val result =
+                mockMvc.perform(
+                    request
+                        .bearer(token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody),
+                ).andReturn()
+            assertEquals(400, result.response.status)
+        }
+        Mockito.verifyNoInteractions(funcionarioService)
     }
 
     @Test

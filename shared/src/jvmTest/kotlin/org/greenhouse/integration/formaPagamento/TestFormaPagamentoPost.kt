@@ -1,12 +1,12 @@
 package org.greenhouse.integration.formaPagamento
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
 import org.greenhouse.integration.fixture.FormaPagamentoFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 
 class TestFormaPagamentoPost {
     @Test
@@ -32,13 +32,13 @@ class TestFormaPagamentoPost {
     }
 
     @Test
-    fun `deve ignorar id informado na criacao`() {
+    fun `deve gerar id persistido na criacao`() {
         val fixture = FormaPagamentoFixture()
 
         try {
-            val criada = fixture.novaFormaPagamento(id = -1)
+            val criada = fixture.novaFormaPagamento()
 
-            assertNotEquals(-1L, criada.id)
+            assertNotNull(criada.id)
         } finally {
             fixture.limpar()
         }
@@ -49,19 +49,19 @@ class TestFormaPagamentoPost {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(FormaPagamento(nome = " "))
+            fixture.service.criar(FormaPagamentoRequestDTO(nome = " "))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(FormaPagamento(nome = "a".repeat(51)))
+            fixture.service.criar(FormaPagamentoRequestDTO(nome = "a".repeat(51)))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(FormaPagamento(nome = "PIX", limiteParcelas = 0))
+            fixture.service.criar(FormaPagamentoRequestDTO(nome = "PIX", limiteParcelas = 0))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(FormaPagamento(nome = "PIX", prazoEstornoDias = -1))
+            fixture.service.criar(FormaPagamentoRequestDTO(nome = "PIX", prazoEstornoDias = -1))
         }
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(FormaPagamento(nome = "PIX", descricao = "a".repeat(251)))
+            fixture.service.criar(FormaPagamentoRequestDTO(nome = "PIX", descricao = "a".repeat(251)))
         }
     }
 }

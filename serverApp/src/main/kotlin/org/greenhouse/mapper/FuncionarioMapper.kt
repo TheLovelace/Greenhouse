@@ -1,14 +1,15 @@
 package org.greenhouse.mapper
 
-import org.greenhouse.dto.FuncionarioDTO
+import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.dto.response.FuncionarioResponseDTO
 import org.greenhouse.model.Funcionario
 import org.springframework.stereotype.Component
 
 @Component
 class FuncionarioMapper {
-    fun toDto(model: Funcionario) =
-        FuncionarioDTO(
-            id = model.id,
+    fun toResponseDto(model: Funcionario) =
+        FuncionarioResponseDTO(
+            id = requireNotNull(model.id),
             nome = model.nome,
             cpf = model.cpf,
             telefone = model.telefone,
@@ -18,9 +19,9 @@ class FuncionarioMapper {
             dataDeNascimento = model.dataDeNascimento,
         )
 
-    fun toModel(dto: FuncionarioDTO) =
+    fun toModel(dto: FuncionarioRequestDTO, id: Long? = null) =
         Funcionario(
-            id = dto.id,
+            id = id,
             nome = dto.nome,
             cpf = dto.cpf,
             telefone = dto.telefone,

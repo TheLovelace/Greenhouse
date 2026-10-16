@@ -78,14 +78,18 @@ components:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     Fornecedor:
       $ref: './openapi/fornecedor.yml#/components/schemas/Fornecedor'
-    FormaPagamento:
-      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamento'
+    FormaPagamentoRequest:
+      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoRequest'
+    FormaPagamentoResponse:
+      $ref: './openapi/forma-pagamento.yml#/components/schemas/FormaPagamentoResponse'
     EstoqueCreate:
       $ref: './openapi/estoque.yml#/components/schemas/EstoqueCreate'
     Estoque:
       $ref: './openapi/estoque.yml#/components/schemas/Estoque'
     Funcionario:
-      $ref: './openapi/funcionario.yml#/components/schemas/Funcionario'
+      $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioResponse'
+    FuncionarioRequest:
+      $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioRequest'
     FuncionarioCreate:
       $ref: './openapi/funcionario.yml#/components/schemas/FuncionarioCreate'
     Produto:

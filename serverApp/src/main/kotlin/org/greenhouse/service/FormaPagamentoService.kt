@@ -3,7 +3,8 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.response.FormaPagamentoResponseDTO
 import org.greenhouse.mapper.FormaPagamentoMapper
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.springframework.stereotype.Service
@@ -13,31 +14,37 @@ class FormaPagamentoService(
     private val formaPagamentoRepository: FormaPagamentoRepository,
     private val formaPagamentoMapper: FormaPagamentoMapper,
 ) {
-    fun criar(formaPagamento: FormaPagamento): FormaPagamento {
+    fun criar(formaPagamento: FormaPagamentoRequestDTO): FormaPagamentoResponseDTO {
         validar(formaPagamento)
-        val model = formaPagamentoMapper.toModel(formaPagamento.copy(id = null))
-        return formaPagamentoMapper.toDto(formaPagamentoRepository.criar(model))
+        val model = formaPagamentoMapper.toModel(formaPagamento)
+        return formaPagamentoMapper.toResponseDto(formaPagamentoRepository.criar(model))
     }
 
-    fun listar(): List<FormaPagamento> = formaPagamentoRepository.listar().map(formaPagamentoMapper::toDto)
+    fun listar(nome: String? = null): List<FormaPagamentoResponseDTO> {
+        val formasPagamento = if (nome.isNullOrBlank()) {
+            formaPagamentoRepository.listar()
+        } else {
+            formaPagamentoRepository.buscarPorNome(nome)
+        }
+        return formasPagamento.map(formaPagamentoMapper::toResponseDto)
+    }
 
-    fun buscarPorId(id: Long): FormaPagamento =
+    fun buscarPorId(id: Long): FormaPagamentoResponseDTO =
         formaPagamentoRepository.buscarPorId(validarId(id))
-            ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
+            ?.let(formaPagamentoMapper::toResponseDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
 
     fun atualizar(
         id: Long,
-        formaPagamento: FormaPagamento,
-    ): FormaPagamento {
+        formaPagamento: FormaPagamentoRequestDTO,
+    ): FormaPagamentoResponseDTO {
         val idValidado = validarId(id)
         if (formaPagamentoRepository.buscarPorId(idValidado) == null) {
             throw NotFoundException("Forma de pagamento não encontrada")
         }
-        val atualizada = formaPagamento.copy(id = idValidado)
-        validar(atualizada)
+        validar(formaPagamento)
 
-        return formaPagamentoRepository.atualizar(idValidado, formaPagamentoMapper.toModel(atualizada))
-            ?.let(formaPagamentoMapper::toDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
+        return formaPagamentoRepository.atualizar(idValidado, formaPagamentoMapper.toModel(formaPagamento, idValidado))
+            ?.let(formaPagamentoMapper::toResponseDto) ?: throw NotFoundException("Forma de pagamento não encontrada")
     }
 
     fun excluir(id: Long) {
@@ -46,7 +53,7 @@ class FormaPagamentoService(
         }
     }
 
-    private fun validar(formaPagamento: FormaPagamento) {
+    private fun validar(formaPagamento: FormaPagamentoRequestDTO) {
         if (formaPagamento.nome.isBlank()) {
             throw UnprocessableEntityException("O nome da forma de pagamento é obrigatório")
         }

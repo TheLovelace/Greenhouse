@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout.core)
 
     testImplementation(libs.spring.boot.starter.test)
+    testRuntimeOnly("com.h2database:h2")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
 

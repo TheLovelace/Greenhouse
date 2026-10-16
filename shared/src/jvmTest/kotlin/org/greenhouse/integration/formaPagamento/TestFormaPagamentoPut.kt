@@ -2,7 +2,7 @@ package org.greenhouse.integration.formaPagamento
 
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FormaPagamentoDTO
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
 import org.greenhouse.integration.fixture.FormaPagamentoFixture
 import java.util.UUID
 import kotlin.test.Test
@@ -26,8 +26,7 @@ class TestFormaPagamentoPut {
             val atualizada =
                 fixture.service.atualizar(
                     id,
-                    FormaPagamentoDTO(
-                        id = Long.MAX_VALUE,
+                    FormaPagamentoRequestDTO(
                         nome = novoNome,
                         ativo = false,
                         descricao = "Nova descrição",
@@ -62,7 +61,7 @@ class TestFormaPagamentoPut {
             val substituida =
                 fixture.service.atualizar(
                     id,
-                    FormaPagamentoDTO(nome = "PIX-${UUID.randomUUID()}"),
+                    FormaPagamentoRequestDTO(nome = "PIX-${UUID.randomUUID()}"),
                 )
 
             assertEquals(true, substituida.ativo)
@@ -70,7 +69,7 @@ class TestFormaPagamentoPut {
             assertEquals(1, substituida.limiteParcelas)
             assertEquals(null, substituida.prazoEstornoDias)
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizar(id, FormaPagamentoDTO(nome = "  "))
+                fixture.service.atualizar(id, FormaPagamentoRequestDTO(nome = "  "))
             }
         } finally {
             fixture.limpar()
@@ -82,7 +81,7 @@ class TestFormaPagamentoPut {
         val fixture = FormaPagamentoFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.atualizar(Long.MAX_VALUE, FormaPagamentoDTO(nome = "PIX"))
+            fixture.service.atualizar(Long.MAX_VALUE, FormaPagamentoRequestDTO(nome = "PIX"))
         }
     }
 
@@ -94,13 +93,13 @@ class TestFormaPagamentoPut {
             val criada = fixture.novaFormaPagamento()
             val id = requireNotNull(criada.id)
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizar(id, FormaPagamentoDTO(nome = "PIX", limiteParcelas = 0))
+                fixture.service.atualizar(id, FormaPagamentoRequestDTO(nome = "PIX", limiteParcelas = 0))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizar(id, FormaPagamentoDTO(nome = "PIX", prazoEstornoDias = -1))
+                fixture.service.atualizar(id, FormaPagamentoRequestDTO(nome = "PIX", prazoEstornoDias = -1))
             }
             assertFailsWith<UnprocessableEntityException> {
-                fixture.service.atualizar(id, FormaPagamentoDTO(nome = "PIX", descricao = "a".repeat(251)))
+                fixture.service.atualizar(id, FormaPagamentoRequestDTO(nome = "PIX", descricao = "a".repeat(251)))
             }
         } finally {
             fixture.limpar()

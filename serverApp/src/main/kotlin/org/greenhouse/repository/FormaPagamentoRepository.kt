@@ -11,6 +11,9 @@ interface FormaPagamentoRepository : JpaRepository<FormaPagamento, Long> {
     @Query("SELECT f FROM FormaPagamento f ORDER BY f.id")
     fun listar(): List<FormaPagamento>
 
+    @Query("SELECT f FROM FormaPagamento f WHERE f.nome LIKE CONCAT('%', :nome, '%') ORDER BY f.id")
+    fun buscarPorNome(@Param("nome") nome: String): List<FormaPagamento>
+
     @Query("SELECT f FROM FormaPagamento f WHERE f.id = :id")
     fun buscarPorId(@Param("id") id: Long): FormaPagamento?
 

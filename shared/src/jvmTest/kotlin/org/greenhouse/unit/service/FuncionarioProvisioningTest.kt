@@ -1,7 +1,7 @@
 package org.greenhouse.unit.service
 
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import org.greenhouse.dto.request.FuncionarioRequestDTO as Funcionario
 import org.greenhouse.model.Funcionario as FuncionarioModel
 import org.greenhouse.model.Usuario as UsuarioModel
 import org.greenhouse.mapper.FuncionarioMapper
