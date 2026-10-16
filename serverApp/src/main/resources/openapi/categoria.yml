@@ -73,7 +73,7 @@ paths:
       tags:
         - Categoria
       summary: Atualizar categoria
-      description: Envie um ou mais campos editáveis. Os campos omitidos mantêm os valores atuais.
+      description: Envie um ou mais campos editáveis. Os campos omitidos mantêm os valores atuais, observacao pode ser enviada como null para limpar o valor.
       operationId: atualizarCategoria
       parameters:
         - name: id
@@ -153,11 +153,12 @@ components:
     CategoriaUpdateRequest:
       type: object
       additionalProperties: false
-      description: Campos omitidos mantêm os valores atuais; id no corpo é ignorado.
+      description: Campos omitidos mantêm os valores atuais, observacao enviada como null limpa o valor. id no corpo é ignorado.
       anyOf:
         - required: [nome]
         - required: [descricao]
         - required: [ativo]
+        - required: [observacao]
       properties:
         id:
           type: integer
@@ -172,6 +173,10 @@ components:
           maxLength: 1000
         ativo:
           type: boolean
+        observacao:
+          type: string
+          maxLength: 300
+          nullable: true
     CategoriaResponse:
       type: object
       required:
