@@ -63,6 +63,7 @@ fun App(
             FormaPagamentoCadastro(
                 onBack = { isFormaPagamentoCadastroVisible = false },
                 onSave = onSaveFormaPagamento,
+            )
         } else if (isProdutoCadastroVisible) {
             ProdutoCadastro(
                 onBack = { isProdutoCadastroVisible = false },
