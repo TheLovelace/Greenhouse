@@ -204,6 +204,21 @@ class EstoqueService(
     }
 
     @Transactional(rollbackFor = [Exception::class])
+    fun registrarEntradaCompra(
+        produtoId: Long,
+        quantidade: Int,
+    ): EstoqueResponseDTO {
+        val estoque = estoqueParaPedido(produtoId, quantidade)
+
+        val novaQuantidadeFisica = estoque.quantidadeFisica.toLong() + quantidade
+        if (novaQuantidadeFisica > Int.MAX_VALUE) {
+            throw UnprocessableEntityException("A quantidade física excede o limite suportado pelo estoque")
+        }
+        estoque.quantidadeFisica = novaQuantidadeFisica.toInt()
+        return estoqueMapper.toResponseDto(estoqueRepository.save(estoque))
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
     fun concluirPedidoAgendado(
         produtoId: Long,
         quantidade: Int,
