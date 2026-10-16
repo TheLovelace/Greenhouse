@@ -38,5 +38,11 @@ class ProdutoMapper {
         descricao = if (dto.descricaoInformada) dto.descricao else current.descricao,
         preco = if (dto.precoInformado) requireNotNull(dto.preco) else current.preco,
         ativo = if (dto.ativoInformado) requireNotNull(dto.ativo) else current.ativo,
+        prazoPreparoMinutos =
+            if (dto.prazoPreparoMinutosInformado) {
+                dto.prazoPreparoMinutos
+            } else {
+                current.prazoPreparoMinutos
+            },
     )
 }
