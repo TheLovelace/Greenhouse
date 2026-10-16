@@ -1,12 +1,16 @@
 package org.greenhouse.integration.security
 
+import org.greenhouse.repository.AlertaRepository
 import org.greenhouse.repository.CategoriaRepository
 import org.greenhouse.repository.ClienteRepository
 import org.greenhouse.repository.DescontoRepository
+import org.greenhouse.repository.DispositivoIotRepository
+import org.greenhouse.repository.EspecieRepository
 import org.greenhouse.repository.EstoqueRepository
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.greenhouse.repository.FornecedorRepository
 import org.greenhouse.repository.FuncionarioRepository
+import org.greenhouse.repository.LeituraIotRepository
 import org.greenhouse.repository.PedidoItemRepository
 import org.greenhouse.repository.PedidoRepository
 import org.greenhouse.repository.ProdutoRepository
@@ -16,6 +20,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 abstract class SpringBootWebTest {
     @MockitoBean
+    private lateinit var alertaRepository: AlertaRepository
+
+    @MockitoBean
     private lateinit var categoriaRepository: CategoriaRepository
 
     @MockitoBean
@@ -23,6 +30,12 @@ abstract class SpringBootWebTest {
 
     @MockitoBean
     private lateinit var descontoRepository: DescontoRepository
+
+    @MockitoBean
+    private lateinit var dispositivoIotRepository: DispositivoIotRepository
+
+    @MockitoBean
+    private lateinit var especieRepository: EspecieRepository
 
     @MockitoBean
     private lateinit var estoqueRepository: EstoqueRepository
@@ -35,6 +48,9 @@ abstract class SpringBootWebTest {
 
     @MockitoBean
     private lateinit var funcionarioRepository: FuncionarioRepository
+
+    @MockitoBean
+    private lateinit var leituraIotRepository: LeituraIotRepository
 
     @MockitoBean
     private lateinit var pedidoItemRepository: PedidoItemRepository
