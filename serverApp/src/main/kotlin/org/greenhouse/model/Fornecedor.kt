@@ -25,4 +25,6 @@ data class Fornecedor(
     var contato: String? = null,
     @field:Column(nullable = false)
     var ativo: Boolean = true,
+    @field:Column(name = "prazo_medio_entrega_dias")
+    var prazoMedioEntregaDias: Int? = null,
 )
