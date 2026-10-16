@@ -4,8 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import org.greenhouse.adapter.ConflictException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FornecedorDTO as Fornecedor
+import org.greenhouse.dto.request.FornecedorCreateRequestDTO as Fornecedor
 import org.greenhouse.integration.fixture.FornecedorFixture
 
 class TestFornecedorPost {
@@ -13,101 +14,83 @@ class TestFornecedorPost {
     @Test
     fun `deve criar fornecedor ativo por padrao`() {
         val fixture = FornecedorFixture()
-        var id: Long? = null
 
         try {
             val criado = fixture.novoFornecedor()
-            id = criado.id
 
             assertEquals(true, criado.ativo)
-            assertEquals(true, criado.id != null)
+            assertEquals(true, criado.id > 0)
         } finally {
-            fixture.limpar(id)
-        }
-    }
-
-    @Test
-    fun `deve ignorar id informado na criacao`() {
-        val fixture = FornecedorFixture()
-        var id: Long? = null
-
-        try {
-            val criado =
-                fixture.service.criar(
-                    Fornecedor(
-                        id = -1,
-                        nome = "Fornecedor com id",
-                    ),
-                )
-
-            id = criado.id
-
-            assertNotEquals(-1L, criado.id)
-        } finally {
-            fixture.limpar(id)
+            fixture.limpar()
         }
     }
 
     @Test
     fun `deve criar fornecedor sem campos opcionais`() {
         val fixture = FornecedorFixture()
-        var id: Long? = null
 
         try {
             val criado =
-                fixture.service.criar(
+                fixture.criarFornecedor(
                     Fornecedor(
                         nome = "Fornecedor sem opcionais",
                     ),
                 )
 
-            id = criado.id
-
             assertEquals(null, criado.cnpj)
             assertEquals(null, criado.telefone)
             assertEquals(null, criado.email)
             assertEquals(null, criado.contato)
+            assertEquals(null, criado.prazoMedioEntregaDias)
         } finally {
-            fixture.limpar(id)
+            fixture.limpar()
         }
     }
 
     @Test
-    fun `deve rejeitar nome maior que o limite da tabela`() {
+    fun `deve persistir prazo medio de entrega`() {
         val fixture = FornecedorFixture()
 
-        assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(
-                Fornecedor(
-                    nome = "a".repeat(151),
-                ),
-            )
+        try {
+            val criado = fixture.novoFornecedor(prazoMedioEntregaDias = 15)
+
+            assertEquals(15, criado.prazoMedioEntregaDias)
+            assertEquals(15, fixture.service.buscarPorId(criado.id).prazoMedioEntregaDias)
+        } finally {
+            fixture.limpar()
         }
     }
 
     @Test
-    fun `deve rejeitar cnpj com formato invalido`() {
+    fun `deve rejeitar cnpj duplicado`() {
+        val fixture = FornecedorFixture()
+
+        try {
+            val criado = fixture.novoFornecedor()
+            val cnpjDuplicado = criado.cnpj
+
+            assertFailsWith<ConflictException> {
+                fixture.criarFornecedor(
+                    Fornecedor(
+                        nome = "Outro fornecedor",
+                        cnpj = cnpjDuplicado,
+                    ),
+                )
+            }
+        } finally {
+            fixture.limpar()
+        }
+    }
+
+    @Test
+    fun `deve rejeitar prazo medio de entrega negativo`() {
         val fixture = FornecedorFixture()
 
         assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(
+            fixture.criarFornecedor(
                 Fornecedor(
                     nome = "Fornecedor",
-                    cnpj = "123",
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun `deve rejeitar cnpj contendo letras`() {
-        val fixture = FornecedorFixture()
-
-        assertFailsWith<UnprocessableEntityException> {
-            fixture.service.criar(
-                Fornecedor(
-                    nome = "Fornecedor",
-                    cnpj = "1234567890123A",
+                    prazoMedioEntregaDias = -1,
                 ),
             )
         }

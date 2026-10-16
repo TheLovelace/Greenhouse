@@ -60,6 +60,7 @@ class TestFornecedorPatch {
                         "email" to "novo@greenhouse.com",
                         "contato" to "Maria",
                         "ativo" to false,
+                        "prazoMedioEntregaDias" to 20,
                     ),
                 )
 
@@ -70,6 +71,7 @@ class TestFornecedorPatch {
             assertEquals("novo@greenhouse.com", atualizado.email)
             assertEquals("Maria", atualizado.contato)
             assertEquals(false, atualizado.ativo)
+            assertEquals(20, atualizado.prazoMedioEntregaDias)
         } finally {
             fixture.limpar(id)
         }
@@ -133,6 +135,26 @@ class TestFornecedorPatch {
                 fixture.service.atualizar(
                     criado.id!!,
                     mapOf("endereco" to "Rua teste"),
+                )
+            }
+        } finally {
+            fixture.limpar(id)
+        }
+    }
+
+    @Test
+    fun `deve rejeitar prazo medio de entrega negativo na atualizacao`() {
+        val fixture = FornecedorFixture()
+        var id: Long? = null
+
+        try {
+            val criado = fixture.novoFornecedor()
+            id = criado.id
+
+            assertFailsWith<UnprocessableEntityException> {
+                fixture.service.atualizar(
+                    criado.id,
+                    mapOf("prazoMedioEntregaDias" to -5),
                 )
             }
         } finally {
