@@ -20,7 +20,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Funcionario'
+                $ref: '#/components/schemas/FuncionarioResponse'
         '400':
           description: E-mail inválido ou login derivado já cadastrado
           content:
@@ -35,10 +35,17 @@ paths:
       tags:
         - Funcionário
       summary: Listar funcionários
-      description: Lista todos os funcionários cadastrados. Requer um token JWT de ADMIN.
+      description: Lista os funcionários cadastrados; o parâmetro nome opcional filtra por correspondência parcial. Requer um token JWT de ADMIN.
       operationId: listarFuncionarios
       security:
         - BearerAuth: []
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Trecho do nome do funcionário para busca parcial
+          schema:
+            type: string
       responses:
         '200':
           description: Funcionários encontrados
@@ -47,7 +54,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Funcionario'
+                  $ref: '#/components/schemas/FuncionarioResponse'
         '401':
           description: Token JWT ausente ou inválido
         '403':
@@ -76,7 +83,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Funcionario'
+                $ref: '#/components/schemas/FuncionarioResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
@@ -107,14 +114,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Funcionario'
+              $ref: '#/components/schemas/FuncionarioRequest'
       responses:
         '200':
           description: Funcionário atualizado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Funcionario'
+                $ref: '#/components/schemas/FuncionarioResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '401':
@@ -151,16 +158,21 @@ paths:
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
-    Funcionario:
+    FuncionarioResponse:
       type: object
       required:
+        - id
         - nome
         - cpf
+        - telefone
+        - email
+        - cargo
+        - ativo
+        - dataDeNascimento
       properties:
         id:
           type: integer
           format: int64
-          nullable: true
           description: Gerado pelo banco.
         nome:
           type: string
@@ -189,9 +201,43 @@ components:
           type: string
           format: date
           nullable: true
+    FuncionarioRequest:
+      allOf:
+        - type: object
+          required:
+            - nome
+            - cpf
+          properties:
+            nome:
+              type: string
+              maxLength: 150
+            cpf:
+              type: string
+              pattern: '^[0-9]{11}$'
+              description: CPF com exatamente 11 dígitos numéricos.
+            telefone:
+              type: string
+              maxLength: 20
+              nullable: true
+            email:
+              type: string
+              maxLength: 150
+              nullable: true
+              format: email
+            cargo:
+              type: string
+              maxLength: 100
+              nullable: true
+            ativo:
+              type: boolean
+              default: true
+            dataDeNascimento:
+              type: string
+              format: date
+              nullable: true
     FuncionarioCreate:
       allOf:
-        - $ref: '#/components/schemas/Funcionario'
+        - $ref: '#/components/schemas/FuncionarioRequest'
         - type: object
           required:
             - email

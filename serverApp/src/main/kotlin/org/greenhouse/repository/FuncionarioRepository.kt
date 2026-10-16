@@ -13,6 +13,9 @@ interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
     @Query("SELECT f FROM Funcionario f")
     fun listar(): List<Funcionario>
 
+    @Query("SELECT f FROM Funcionario f WHERE f.nome LIKE CONCAT('%', :nome, '%')")
+    fun buscarPorNome(@Param("nome") nome: String): List<Funcionario>
+
     @Query("SELECT f FROM Funcionario f WHERE f.id = :id")
     fun buscarPorId(@Param("id") id: Long): Funcionario?
 

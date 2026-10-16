@@ -1,6 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.response.FormaPagamentoResponseDTO
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.greenhouse.service.FormaPagamentoService
 import java.sql.DriverManager
@@ -21,11 +22,9 @@ class FormaPagamentoFixture {
         descricao: String? = null,
         limiteParcelas: Int = 1,
         prazoEstornoDias: Int? = null,
-        id: Long? = null,
-    ): FormaPagamento =
+    ): FormaPagamentoResponseDTO =
         criarFormaPagamento(
-            FormaPagamento(
-                id = id,
+            FormaPagamentoRequestDTO(
                 nome = nome,
                 ativo = ativo,
                 descricao = descricao,
@@ -34,7 +33,7 @@ class FormaPagamentoFixture {
             ),
         )
 
-    fun criarFormaPagamento(formaPagamento: FormaPagamento): FormaPagamento =
+    fun criarFormaPagamento(formaPagamento: FormaPagamentoRequestDTO): FormaPagamentoResponseDTO =
         service
             .criar(formaPagamento)
             .also { criada ->

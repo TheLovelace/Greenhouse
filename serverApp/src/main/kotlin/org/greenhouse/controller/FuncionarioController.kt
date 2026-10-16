@@ -1,6 +1,8 @@
 package org.greenhouse.controller
 
-import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import jakarta.validation.Valid
+import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.dto.response.FuncionarioResponseDTO
 import org.greenhouse.service.FuncionarioService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -21,23 +24,27 @@ class FuncionarioController(
 
     @PostMapping
     fun criar(
-        @RequestBody funcionario: Funcionario,
-    ): ResponseEntity<Funcionario> {
+        @Valid
+        @RequestBody funcionario: FuncionarioRequestDTO,
+    ): ResponseEntity<FuncionarioResponseDTO> {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(funcionarioUseCase.criar(funcionario))
     }
 
     @GetMapping
-    fun listar(): List<Funcionario> = funcionarioUseCase.listar()
+    fun listar(
+        @RequestParam(required = false) nome: String?,
+    ): List<FuncionarioResponseDTO> = funcionarioUseCase.listar(nome)
 
     @GetMapping("/{id}")
-    fun buscarPorId(@PathVariable id: Long): Funcionario = funcionarioUseCase.buscarPorId(id)
+    fun buscarPorId(@PathVariable id: Long): FuncionarioResponseDTO = funcionarioUseCase.buscarPorId(id)
 
     @PutMapping("/{id}")
     fun atualizar(
         @PathVariable id: Long,
-        @RequestBody funcionario: Funcionario,
-    ): Funcionario {
+        @Valid
+        @RequestBody funcionario: FuncionarioRequestDTO,
+    ): FuncionarioResponseDTO {
         return funcionarioUseCase.atualizar(id, funcionario)
     }
 

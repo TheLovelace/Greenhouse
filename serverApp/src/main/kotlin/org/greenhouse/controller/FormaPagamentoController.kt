@@ -1,6 +1,8 @@
 package org.greenhouse.controller
 
-import org.greenhouse.dto.FormaPagamentoDTO as FormaPagamento
+import jakarta.validation.Valid
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.response.FormaPagamentoResponseDTO
 import org.greenhouse.service.FormaPagamentoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -20,27 +23,31 @@ class FormaPagamentoController(
 ) {
     @PostMapping
     fun criar(
-        @RequestBody formaPagamento: FormaPagamento,
-    ): ResponseEntity<FormaPagamento> =
+        @Valid
+        @RequestBody formaPagamento: FormaPagamentoRequestDTO,
+    ): ResponseEntity<FormaPagamentoResponseDTO> =
         ResponseEntity
             .status(HttpStatus.CREATED)
             .body(formaPagamentoUseCase.criar(formaPagamento))
 
     @GetMapping
-    fun listar(): List<FormaPagamento> = formaPagamentoUseCase.listar()
+    fun listar(
+        @RequestParam(required = false) nome: String?,
+    ): List<FormaPagamentoResponseDTO> = formaPagamentoUseCase.listar(nome)
 
     @GetMapping("/{id}")
     fun buscarPorId(
         @PathVariable id: Long,
-    ): FormaPagamento =
+    ): FormaPagamentoResponseDTO =
         formaPagamentoUseCase
             .buscarPorId(id)
 
     @PutMapping("/{id}")
     fun atualizar(
         @PathVariable id: Long,
-        @RequestBody formaPagamento: FormaPagamento,
-    ): FormaPagamento =
+        @Valid
+        @RequestBody formaPagamento: FormaPagamentoRequestDTO,
+    ): FormaPagamentoResponseDTO =
         formaPagamentoUseCase
             .atualizar(id, formaPagamento)
 

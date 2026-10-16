@@ -268,7 +268,9 @@ $env:DATABASE_URL = "jdbc:postgresql://meu-host:5432/greenhouse?user=meu-usuario
 
 Substitua os marcadores localmente; não coloque credenciais reais neste arquivo, no código-fonte ou em commits. O Flyway aplica as migrations disponíveis na inicialização e o Hibernate valida o schema. Não execute contra produção para testes locais.
 
-Para executar os testes JVM de integração, deve haver na raiz o arquivo local `.env.test.local` com a variável `DATABASE_URL` configurada para o banco PostreSQL. Esse arquivo é local e não deve ser versionado nem compartilhado.
+O backend também exige a variável de ambiente `JWT_SECRET`: configure uma chave aleatória com pelo menos 32 bytes, diferente entre `test` e `prod`, no ambiente seguro de execução. A aplicação falha ao iniciar se a propriedade estiver ausente ou se a chave for fraca. Para o container local, inclua `JWT_SECRET` no arquivo local `.env.test.local`; para ambientes implantados, configure-a no gerenciador de variáveis/secrets do runtime. Não reutilize a chave de teste em produção nem armazene valores reais no repositório.
+
+Para executar os testes JVM de integração, deve haver na raiz o arquivo local `.env.test.local` com as variáveis necessárias para o banco PostgreSQL e para a chave JWT de teste. Esse arquivo é local e não deve ser versionado nem compartilhado.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_execucao.png" width="25"/> 

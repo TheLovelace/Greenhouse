@@ -13,6 +13,10 @@ import org.greenhouse.ui.screens.desconto.DescontoCadastro
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.estoque.EstoqueCadastro
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
+import org.greenhouse.ui.screens.funcionario.FuncionarioCadastro
+import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
+import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoCadastro
+import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
 import org.greenhouse.ui.screens.home.HomeScreen
 import org.greenhouse.ui.screens.home.HomeDestination
 import org.greenhouse.ui.screens.pedido.PedidoCadastro
@@ -28,6 +32,8 @@ fun App(
     onSaveCliente: (ClienteCadastroData) -> Unit = {},
     onSaveDesconto: (DescontoCadastroData) -> Unit = {},
     onSaveEstoque: (EstoqueCadastroData) -> Unit = {},
+    onSaveFuncionario: (FuncionarioCadastroData) -> Unit = {},
+    onSaveFormaPagamento: (FormaPagamentoCadastroData) -> Unit = {},
     onSavePedido: (PedidoCadastroData) -> Unit = {},
     onSaveProduto: (ProdutoCadastroData) -> Unit = {},
 ) {
@@ -35,6 +41,8 @@ fun App(
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
     var isDescontoCadastroVisible by remember { mutableStateOf(false) }
     var isEstoqueCadastroVisible by remember { mutableStateOf(false) }
+    var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
+    var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
     var isPedidoCadastroVisible by remember { mutableStateOf(false) }
     var isProdutoCadastroVisible by remember { mutableStateOf(false) }
 
@@ -59,6 +67,16 @@ fun App(
                 onBack = { isEstoqueCadastroVisible = false },
                 onSave = onSaveEstoque,
             )
+        } else if (isFuncionarioCadastroVisible) {
+            FuncionarioCadastro(
+                onBack = { isFuncionarioCadastroVisible = false },
+                onSave = onSaveFuncionario,
+            )
+        } else if (isFormaPagamentoCadastroVisible) {
+            FormaPagamentoCadastro(
+                onBack = { isFormaPagamentoCadastroVisible = false },
+                onSave = onSaveFormaPagamento,
+            )
         } else if (isPedidoCadastroVisible) {
             PedidoCadastro(
                 onBack = { isPedidoCadastroVisible = false },
@@ -77,6 +95,8 @@ fun App(
                         HomeDestination.CLIENTES -> isClienteCadastroVisible = true
                         HomeDestination.DESCONTOS -> isDescontoCadastroVisible = true
                         HomeDestination.ESTOQUE -> isEstoqueCadastroVisible = true
+                        HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
+                        HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
                         HomeDestination.PEDIDOS -> isPedidoCadastroVisible = true
                         HomeDestination.PRODUTOS -> isProdutoCadastroVisible = true
                         else -> onNavigate(destination)
