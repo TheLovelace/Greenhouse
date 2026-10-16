@@ -34,5 +34,6 @@ class CategoriaMapper {
         nome = dto.nome ?: current.nome,
         descricao = dto.descricao ?: current.descricao,
         ativo = dto.ativo ?: current.ativo,
+        observacao = if (dto.observacaoInformada) dto.observacao else current.observacao,
     )
 }

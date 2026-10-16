@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonSetter
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Digits
+import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 
@@ -53,6 +54,14 @@ class ProdutoUpdateRequestDTO {
             ativoInformado = true
         }
 
+    @field:PositiveOrZero
+    var prazoPreparoMinutos: Int? = null
+        @JsonSetter("prazoPreparoMinutos")
+        set(value) {
+            field = value
+            prazoPreparoMinutosInformado = true
+        }
+
     @get:JsonIgnore
     var codigoInformado = false
         private set
@@ -74,14 +83,25 @@ class ProdutoUpdateRequestDTO {
         private set
 
     @get:JsonIgnore
+    var prazoPreparoMinutosInformado = false
+        private set
+
+    @get:JsonIgnore
     @get:AssertTrue(message = "Informe ao menos um campo para atualizar")
     val possuiCamposParaAtualizar: Boolean
-        get() = codigoInformado || nomeInformado || descricaoInformada || precoInformado || ativoInformado
+        get() =
+            codigoInformado ||
+                nomeInformado ||
+                descricaoInformada ||
+                precoInformado ||
+                ativoInformado ||
+                prazoPreparoMinutosInformado
 
     @get:JsonIgnore
     @get:AssertTrue(message = "Nome, preço e ativo não podem ser nulos quando informados")
     val valoresInformadosSaoValidos: Boolean
-        get() = (!nomeInformado || nome != null) &&
-            (!precoInformado || preco != null) &&
-            (!ativoInformado || ativo != null)
+        get() =
+            (!nomeInformado || nome != null) &&
+                (!precoInformado || preco != null) &&
+                (!ativoInformado || ativo != null)
 }
