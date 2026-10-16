@@ -12,14 +12,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormaPagamento'
+              $ref: '#/components/schemas/FormaPagamentoRequest'
       responses:
         '201':
           description: Forma de pagamento criada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FormaPagamento'
+                $ref: '#/components/schemas/FormaPagamentoResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '401':
@@ -28,9 +28,17 @@ paths:
       tags:
         - Forma de Pagamento
       summary: Listar formas de pagamento
+      description: Lista as formas de pagamento; o parâmetro nome opcional filtra por correspondência parcial.
       operationId: listarFormasPagamento
       security:
         - BearerAuth: []
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Trecho do nome da forma de pagamento para busca parcial
+          schema:
+            type: string
       responses:
         '200':
           description: Formas de pagamento cadastradas, ativas e inativas
@@ -39,7 +47,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/FormaPagamento'
+                  $ref: '#/components/schemas/FormaPagamentoResponse'
         '401':
           description: Token JWT ausente ou inválido
   /forma-pagamento/{id}:
@@ -58,7 +66,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FormaPagamento'
+                $ref: '#/components/schemas/FormaPagamentoResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '401':
@@ -80,14 +88,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormaPagamento'
+              $ref: '#/components/schemas/FormaPagamentoRequest'
       responses:
         '200':
           description: Forma de pagamento atualizada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FormaPagamento'
+                $ref: '#/components/schemas/FormaPagamentoResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '401':
@@ -126,16 +134,46 @@ components:
         format: int64
         minimum: 1
   schemas:
-    FormaPagamento:
+    FormaPagamentoRequest:
       type: object
       required:
         - nome
       properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '.*\S.*'
+          example: Cartão de Crédito
+        ativo:
+          type: boolean
+          default: true
+        descricao:
+          type: string
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+          default: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true
+    FormaPagamentoResponse:
+      type: object
+      required:
+        - id
+        - nome
+        - ativo
+        - descricao
+        - limiteParcelas
+        - prazoEstornoDias
+      properties:
         id:
           type: integer
           format: int64
-          nullable: true
-          description: Gerado pelo banco, não é necessário enviar na criação.
+          description: Identificador gerado pelo banco.
         nome:
           type: string
           minLength: 1

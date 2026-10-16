@@ -1,14 +1,15 @@
 package org.greenhouse.mapper
 
-import org.greenhouse.dto.FormaPagamentoDTO
+import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.response.FormaPagamentoResponseDTO
 import org.greenhouse.model.FormaPagamento
 import org.springframework.stereotype.Component
 
 @Component
 class FormaPagamentoMapper {
-    fun toDto(model: FormaPagamento) =
-        FormaPagamentoDTO(
-            id = model.id,
+    fun toResponseDto(model: FormaPagamento) =
+        FormaPagamentoResponseDTO(
+            id = requireNotNull(model.id),
             nome = model.nome,
             ativo = model.ativo,
             descricao = model.descricao,
@@ -16,9 +17,9 @@ class FormaPagamentoMapper {
             prazoEstornoDias = model.prazoEstornoDias,
         )
 
-    fun toModel(dto: FormaPagamentoDTO) =
+    fun toModel(dto: FormaPagamentoRequestDTO, id: Long? = null) =
         FormaPagamento(
-            id = dto.id,
+            id = id,
             nome = dto.nome,
             ativo = dto.ativo,
             descricao = dto.descricao,

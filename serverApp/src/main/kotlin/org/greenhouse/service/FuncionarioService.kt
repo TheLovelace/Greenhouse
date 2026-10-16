@@ -3,10 +3,12 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.FuncionarioDTO as Funcionario
+import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.dto.response.FuncionarioResponseDTO
 import org.greenhouse.dto.UsuarioDTO as Usuario
 import org.greenhouse.mapper.FuncionarioMapper
 import org.greenhouse.mapper.UsuarioMapper
+import org.greenhouse.model.Funcionario
 import org.greenhouse.repository.FuncionarioRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.springframework.stereotype.Service
@@ -25,7 +27,7 @@ class FuncionarioService(
     private val emailRegex = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
 
     @Transactional
-    fun criar(funcionario: Funcionario): Funcionario {
+    fun criar(funcionario: FuncionarioRequestDTO): FuncionarioResponseDTO {
         validar(funcionario)
         val email = funcionario.email
             ?: throw UnprocessableEntityException("E-mail válido é obrigatório para criar um funcionário")
@@ -42,8 +44,7 @@ class FuncionarioService(
             throw UnprocessableEntityException("Já existe um usuário com o login derivado deste e-mail")
         }
 
-        val funcionarioSalvo =
-            funcionarioRepository.criar(funcionarioMapper.toModel(funcionario.copy(id = null)))
+        val funcionarioSalvo = funcionarioRepository.criar(funcionarioMapper.toModel(funcionario))
         usuarioRepository.save(
             usuarioMapper.toModel(
                 Usuario(
@@ -56,47 +57,56 @@ class FuncionarioService(
                 ),
             ),
         )
-        return funcionarioMapper.toDto(funcionarioSalvo)
+        return funcionarioMapper.toResponseDto(funcionarioSalvo)
     }
 
-    fun listar(): List<Funcionario> = funcionarioRepository.listar().map(funcionarioMapper::toDto)
+    fun listar(nome: String? = null): List<FuncionarioResponseDTO> {
+        val funcionarios = if (nome.isNullOrBlank()) {
+            funcionarioRepository.listar()
+        } else {
+            funcionarioRepository.buscarPorNome(nome)
+        }
+        return funcionarios.map(funcionarioMapper::toResponseDto)
+    }
 
-    fun buscarPorId(id: Long): Funcionario =
+    fun buscarPorId(id: Long): FuncionarioResponseDTO =
         funcionarioRepository.buscarPorId(validarId(id))
-            ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
+            ?.let(funcionarioMapper::toResponseDto) ?: throw NotFoundException("Funcionário não encontrado")
 
     @Transactional
-    fun atualizar(id: Long, funcionario: Funcionario): Funcionario {
+    fun atualizar(id: Long, funcionario: FuncionarioRequestDTO): FuncionarioResponseDTO {
         val idValidado = validarId(id)
         if (funcionarioRepository.buscarPorId(idValidado) == null) {
             throw NotFoundException("Funcionário não encontrado")
         }
-        val funcionarioAtualizado = funcionario.copy(id = idValidado)
-        validar(funcionarioAtualizado)
+        validar(funcionario)
 
-        return atualizarFuncionario(idValidado, funcionarioAtualizado)
+        return atualizarFuncionario(idValidado, funcionarioMapper.toModel(funcionario, idValidado))
     }
 
     @Transactional
     fun desativar(id: Long) {
         val idValidado = validarId(id)
         val funcionarioAtual = funcionarioRepository.buscarPorId(idValidado)
-            ?.let(funcionarioMapper::toDto) ?: throw NotFoundException("Funcionário não encontrado")
+            ?: throw NotFoundException("Funcionário não encontrado")
 
         val funcionarioInativado = funcionarioAtual.copy(ativo = false)
         atualizarFuncionario(idValidado, funcionarioInativado)
     }
 
-    private fun atualizarFuncionario(id: Long, funcionario: Funcionario): Funcionario {
-        val atualizado = funcionarioRepository.atualizar(id, funcionarioMapper.toModel(funcionario))
+    private fun atualizarFuncionario(id: Long, funcionario: Funcionario): FuncionarioResponseDTO {
+        val atualizado = funcionarioRepository.atualizar(id, funcionario)
             ?: throw NotFoundException("Funcionário não encontrado")
         usuarioRepository.atualizarAtivoPorFuncionario(id, funcionario.ativo)
-        return funcionarioMapper.toDto(atualizado)
+        return funcionarioMapper.toResponseDto(atualizado)
     }
 
-    private fun validar(funcionario: Funcionario) {
+    private fun validar(funcionario: FuncionarioRequestDTO) {
         if (!funcionario.cpf.matches(cpfRegex)) {
             throw UnprocessableEntityException("CPF inválido. Deve conter exatamente 11 dígitos numéricos.")
+        }
+        if (funcionario.nome.isBlank()) {
+            throw UnprocessableEntityException("O nome do funcionário é obrigatório")
         }
         if (funcionario.nome.length > 150) {
             throw UnprocessableEntityException("O nome do funcionário deve ter no máximo 150 caracteres")

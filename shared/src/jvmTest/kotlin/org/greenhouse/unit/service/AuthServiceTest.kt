@@ -7,9 +7,16 @@ import org.greenhouse.dto.UsuarioDTO as Usuario
 import org.greenhouse.mapper.UsuarioMapper
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
+import org.greenhouse.security.LegacyPasswordAuthenticationProvider
 import org.greenhouse.service.AuthService
 import org.greenhouse.service.LoginRequest
 import org.greenhouse.service.PrimeiroAcessoRequest
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.ProviderManager
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -22,8 +29,24 @@ class AuthServiceTest {
     private val usuarioRepository = Mockito.mock(UsuarioRepository::class.java)
     private val jwtService = JwtService("test-key-which-is-longer-than-thirty-two-characters", 60_000)
     private val usuarioMapper = UsuarioMapper()
-    private val service = AuthService(usuarioRepository, jwtService, usuarioMapper)
     private val encoder = BCryptPasswordEncoder()
+    private val userDetailsService =
+        UserDetailsService { login ->
+            val usuario = usuarioRepository.buscarPorLogin(login)
+                ?: throw org.springframework.security.core.userdetails.UsernameNotFoundException("Credenciais inválidas")
+            User.builder()
+                .username(usuario.login)
+                .password(usuario.senhaHash)
+                .authorities(SimpleGrantedAuthority("ROLE_${usuario.perfil}"))
+                .disabled(!usuario.ativo || !usuario.primeiroAcessoFeito)
+                .build()
+        }
+    private val provider = DaoAuthenticationProvider(userDetailsService).apply {
+        setPasswordEncoder(encoder)
+    }
+    private val legacyProvider = LegacyPasswordAuthenticationProvider(usuarioRepository, encoder)
+    private val authenticationManager: AuthenticationManager = ProviderManager(listOf(legacyProvider, provider))
+    private val service = AuthService(usuarioRepository, jwtService, usuarioMapper, authenticationManager, encoder)
 
     @Test
     fun `login legado da conta existente e migra credencial depois do sucesso`() {
@@ -66,6 +89,18 @@ class AuthServiceTest {
 
         service.login(LoginRequest("admin", senha))
 
+        Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
+    }
+
+    @Test
+    fun `login BCrypt rejeita senha incorreta pelo AuthenticationManager`() {
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = encoder.encode("senha-correta"))))
+            .`when`(usuarioRepository)
+            .buscarPorLogin("admin")
+
+        assertThrows(AuthenticationException::class.java) {
+            service.login(LoginRequest("admin", "senha-incorreta"))
+        }
         Mockito.verify(usuarioRepository, Mockito.never()).atualizarSenha(Mockito.anyLong(), Mockito.anyString() ?: "")
     }
 

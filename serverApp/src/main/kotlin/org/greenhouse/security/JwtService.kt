@@ -9,7 +9,7 @@ import javax.crypto.SecretKey
 
 @Service
 class JwtService(
-    @Value("\${jwt.secret:uma-chave-secreta-muito-segura-com-mais-de-32-caracteres-para-o-greenhouse}")
+    @Value("\${jwt.secret}")
     private val secret: String,
 
     @Value("\${jwt.expiration:86400000}")

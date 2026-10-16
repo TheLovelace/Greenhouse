@@ -7,7 +7,11 @@ import org.greenhouse.adapter.ServerException
 import org.greenhouse.mapper.UsuarioMapper
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.InternalAuthenticationServiceException
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.AuthenticationException as SpringAuthenticationException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 
@@ -16,10 +20,9 @@ class AuthService(
     private val usuarioRepository: UsuarioRepository,
     private val jwtService: JwtService,
     private val usuarioMapper: UsuarioMapper,
+    private val authenticationManager: AuthenticationManager,
+    private val passwordEncoder: PasswordEncoder,
 ) {
-
-    private val passwordEncoder = BCryptPasswordEncoder()
-    private val bcryptHashRegex = Regex("^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$")
 
     fun login(request: LoginRequest): TokenResponse {
         val usuario =
@@ -34,25 +37,7 @@ class AuthService(
             throw AuthenticationException("O primeiro acesso ainda não foi concluído")
         }
 
-        val isBcryptHash = usuario.senhaHash.matches(bcryptHashRegex)
-        val senhaCorreta =
-            if (isBcryptHash) {
-                request.senhaHash.toByteArray(StandardCharsets.UTF_8).size <= BCRYPT_MAX_PASSWORD_BYTES &&
-                    passwordEncoder.matches(request.senhaHash, usuario.senhaHash)
-            } else {
-                usuario.senhaHash == request.senhaHash
-            }
-
-        if (!senhaCorreta) {
-            throw AuthenticationException("Credenciais inválidas")
-        }
-
-        if (!isBcryptHash && request.senhaHash.toByteArray(StandardCharsets.UTF_8).size <= BCRYPT_MAX_PASSWORD_BYTES) {
-            val atualizado = usuarioRepository.atualizarSenha(usuario.id!!, passwordEncoder.encode(request.senhaHash))
-            if (!atualizado) {
-                throw ServerException("Não foi possível atualizar a credencial")
-            }
-        }
+        autenticarComSpringSecurity(request)
 
         val tokenReal = jwtService.gerarToken(usuario.login, usuario.perfil)
 
@@ -60,6 +45,18 @@ class AuthService(
             token = tokenReal,
             perfil = usuario.perfil
         )
+    }
+
+    private fun autenticarComSpringSecurity(request: LoginRequest) {
+        try {
+            authenticationManager.authenticate(
+                UsernamePasswordAuthenticationToken.unauthenticated(request.login, request.senhaHash),
+            )
+        } catch (exception: InternalAuthenticationServiceException) {
+            throw ServerException("Não foi possível autenticar o usuário")
+        } catch (exception: SpringAuthenticationException) {
+            throw AuthenticationException("Credenciais inválidas")
+        }
     }
 
     fun primeiroAcesso(request: PrimeiroAcessoRequest) {

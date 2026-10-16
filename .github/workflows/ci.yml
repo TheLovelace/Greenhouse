@@ -68,6 +68,7 @@ jobs:
         env:
           API_URL: ${{ secrets.API_URL }}
           DATABASE_URL: ${{ secrets.DATABASE_CONN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MQTT_URL: ${{ secrets.MQTT_TEST }}
           MQTT_PASSWORD: ${{ secrets.MQTT_TEST_PASSWORD }}
         run: ./gradlew testDesktop
