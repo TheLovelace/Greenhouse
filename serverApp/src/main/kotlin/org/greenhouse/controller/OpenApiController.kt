@@ -31,6 +31,7 @@ class OpenApiController {
                 "fornecedor",
                 "funcionario",
                 "forma-pagamento",
+                "pedido",
                 "auth" -> "openapi/$fileName.yml"
                 else -> throw NotFoundException("Documento OpenAPI não encontrado")
             }
