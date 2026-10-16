@@ -11,14 +11,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Cliente'
+              $ref: '#/components/schemas/ClienteCreateRequest'
       responses:
         '201':
           description: Cliente cadastrado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cliente'
+                $ref: '#/components/schemas/ClienteResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
     get:
@@ -54,7 +54,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Cliente'
+                  $ref: '#/components/schemas/ClienteResponse'
   /cliente/{id}:
     get:
       tags:
@@ -76,16 +76,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cliente'
+                $ref: '#/components/schemas/ClienteResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
-    patch:
+    put:
       tags:
         - Cliente
       summary: Atualizar cliente
-      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Envie null em cpf ou email para limpar o campo. Também usado para inativar (ativo=false) e reativar (ativo=true). Também aceita o objeto completo do cliente.
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Envie string vazia em cpf ou email para limpar o campo. Também usado para inativar (ativo=false) e reativar (ativo=true). O id no corpo é ignorado.
       operationId: atualizarCliente
       parameters:
         - name: id
@@ -101,31 +101,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClientePatch'
+              $ref: '#/components/schemas/ClienteUpdateRequest'
       responses:
         '200':
           description: Cliente atualizado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cliente'
+                $ref: '#/components/schemas/ClienteResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
-    Cliente:
+    ClienteCreateRequest:
       type: object
       required:
         - nome
         - telefone
       properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-          description: Gerado pelo banco, não é necessário enviar na criação.
         nome:
           type: string
           maxLength: 150
@@ -149,10 +144,10 @@ components:
         ativo:
           type: boolean
           default: true
-          description: Clientes inativos não podem ser selecionados em novos pedidos.
-    ClientePatch:
+          description: Ignorado na criação — o cliente sempre nasce ativo.
+    ClienteUpdateRequest:
       type: object
-      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização. cpf e email aceitam null para limpar o campo.
+      description: Envie um ou mais campos editáveis; campos omitidos mantêm o valor atual. O id é opcional e ignorado. Envie string vazia em cpf ou email para limpar o campo.
       additionalProperties: false
       anyOf:
         - required: [nome]
@@ -185,3 +180,37 @@ components:
           format: email
         ativo:
           type: boolean
+    ClienteResponse:
+      type: object
+      required:
+        - id
+        - nome
+        - telefone
+        - whatsapp
+        - cpf
+        - email
+        - ativo
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        ativo:
+          type: boolean
+          description: Clientes inativos não podem ser selecionados em novos pedidos.

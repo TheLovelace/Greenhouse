@@ -1,0 +1,422 @@
+paths:
+  /pedido:
+    post:
+      tags:
+        - Pedido
+      summary: Registrar pedido
+      description: Cria um pedido no status ABERTO com um ou mais itens. O preço unitário de cada item é copiado do preço atual do produto (snapshot) e os valores de desconto e total são calculados no backend — campos calculados enviados pelo cliente são ignorados. clienteId, descontoId, dataRetiradaPrevista e observacao são opcionais; descontoId deve apontar para um desconto ativo e vigente quando informado. Modalidade AGENDADA exige dataRetiradaPrevista; quando informada, a data deve ser do dia corrente em diante.
+      operationId: criarPedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoCreateRequest'
+      responses:
+        '201':
+          description: Pedido registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+    get:
+      tags:
+        - Pedido
+      summary: Listar pedidos
+      description: Retorna os pedidos com seus itens, ordenados do mais recente para o mais antigo. Todos os filtros são opcionais e podem ser combinados.
+      operationId: listarPedidos
+      parameters:
+        - name: clienteId
+          in: query
+          required: false
+          description: Filtra por identificador do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - name: funcionarioId
+          in: query
+          required: false
+          description: Filtra por identificador do funcionário
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - name: status
+          in: query
+          required: false
+          description: Filtra por status do pedido
+          schema:
+            type: string
+            enum:
+              - ABERTO
+              - CONFIRMADO
+              - PRONTO_RETIRADA
+              - CONCLUIDO
+              - CANCELADO
+        - name: modalidade
+          in: query
+          required: false
+          description: Filtra por modalidade do pedido
+          schema:
+            type: string
+            enum:
+              - IMEDIATA
+              - AGENDADA
+      responses:
+        '200':
+          description: Pedidos cadastrados; retorna uma lista vazia quando não há registros.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+  /pedido/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico do pedido
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    get:
+      tags:
+        - Pedido
+      summary: Buscar pedido por ID
+      description: Retorna o pedido com seus itens, cliente, status, modalidade, datas, desconto, total e observação.
+      operationId: buscarPedidoPorId
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Pedido
+      summary: Atualizar pedido
+      description: Atualiza parcialmente os dados do pedido; campos omitidos mantêm os valores atuais e o campo id, se enviado, é ignorado. Somente pedidos ABERTOS podem ser alterados. itens enviados substituem integralmente os atuais, com revalidação de produto, disponibilidade e recálculo de preço unitário e totais. status, modalidade, dataPedido, dataRetirada, valorDesconto e valorTotal não são editáveis por esta rota. dataRetiradaPrevista, quando informada, deve ser do dia corrente em diante e não pode ser nula em pedidos AGENDADOS.
+      operationId: atualizarPedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoUpdateRequest'
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+  /pedido/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico do pedido
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    patch:
+      tags:
+        - Pedido
+      summary: Atualizar status do pedido
+      description: |
+        Executa a transição de status do pedido com os efeitos de estoque correspondentes, na mesma transação. Transições válidas:
+
+        - `ABERTO → CONFIRMADO`: pedido AGENDADO reserva o estoque dos itens; IMEDIATO não altera o estoque.
+        - `CONFIRMADO → PRONTO_RETIRADA`: mantém a reserva, sem alterar o estoque.
+        - `PRONTO_RETIRADA → CONCLUIDO`: baixa o estoque físico e libera a reserva (AGENDADA) por item.
+        - `CONFIRMADO → CONCLUIDO`: somente pedidos IMEDIATOS; baixa o estoque físico por item.
+        - `ABERTO → CANCELADO`, `CONFIRMADO → CANCELADO`, `PRONTO_RETIRADA → CANCELADO`: cancelamento preserva o pedido e os itens; pedidos AGENDADOS com reserva têm a reserva liberada.
+
+        CONCLUIDO e CANCELADO são status terminais. Ao concluir, dataRetirada é preenchida com o instante atual.
+      operationId: atualizarStatusPedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarStatusPedidoRequest'
+      responses:
+        '200':
+          description: Status do pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PedidoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+components:
+  schemas:
+    PedidoItemRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - produtoId
+        - quantidade
+      properties:
+        produtoId:
+          type: integer
+          format: int64
+          minimum: 1
+        quantidade:
+          type: integer
+          format: int32
+          minimum: 1
+    PedidoCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - funcionarioId
+        - formaPagamentoId
+        - modalidade
+        - itens
+      properties:
+        clienteId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Opcional; quando informado deve apontar para um cliente existente e ativo.
+        funcionarioId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Deve apontar para um funcionário existente e ativo.
+        descontoId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Opcional; deve apontar para um desconto ativo e vigente quando informado.
+        formaPagamentoId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Deve apontar para uma forma de pagamento existente e ativa.
+        modalidade:
+          type: string
+          enum:
+            - IMEDIATA
+            - AGENDADA
+        dataRetiradaPrevista:
+          type: string
+          format: date-time
+          nullable: true
+          description: Obrigatória para AGENDADA; quando informada deve ser do dia corrente em diante.
+        observacao:
+          type: string
+          maxLength: 1000
+          nullable: true
+        embalagemPresente:
+          type: boolean
+          default: false
+          description: Indica se o pedido inclui embalagem de presente.
+        numeroVolumes:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+        itens:
+          type: array
+          minItems: 1
+          description: Um ou mais itens, sem produtoId repetido; produto deve existir, estar ativo e ter disponibilidade suficiente.
+          items:
+            $ref: '#/components/schemas/PedidoItemRequest'
+    PedidoUpdateRequest:
+      type: object
+      description: Aceita qualquer combinação de campos editáveis; campos omitidos mantêm o valor atual. Somente pedidos ABERTOS aceitam alteração.
+      additionalProperties: false
+      anyOf:
+        - required: [clienteId]
+        - required: [funcionarioId]
+        - required: [descontoId]
+        - required: [formaPagamentoId]
+        - required: [dataRetiradaPrevista]
+        - required: [observacao]
+        - required: [embalagemPresente]
+        - required: [numeroVolumes]
+        - required: [itens]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Ignorado na atualização.
+        clienteId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+        funcionarioId:
+          type: integer
+          format: int64
+          minimum: 1
+        descontoId:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Alterar o desconto recalcula valorDesconto e valorTotal.
+        formaPagamentoId:
+          type: integer
+          format: int64
+          minimum: 1
+        dataRetiradaPrevista:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deve ser do dia corrente em diante; não pode ser nula em pedidos AGENDADOS.
+        observacao:
+          type: string
+          maxLength: 1000
+          nullable: true
+        embalagemPresente:
+          type: boolean
+        numeroVolumes:
+          type: integer
+          format: int32
+          minimum: 1
+        itens:
+          type: array
+          minItems: 1
+          description: Substitui integralmente os itens atuais, com revalidação e recálculo de totais.
+          items:
+            $ref: '#/components/schemas/PedidoItemRequest'
+    AtualizarStatusPedidoRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ABERTO
+            - CONFIRMADO
+            - PRONTO_RETIRADA
+            - CONCLUIDO
+            - CANCELADO
+    PedidoItemResponse:
+      type: object
+      required:
+        - id
+        - produtoId
+        - quantidade
+        - precoUnitario
+      properties:
+        id:
+          type: integer
+          format: int64
+        produtoId:
+          type: integer
+          format: int64
+        quantidade:
+          type: integer
+          format: int32
+          minimum: 1
+        precoUnitario:
+          type: number
+          minimum: 0
+          description: Snapshot do preço do produto no momento do pedido.
+    PedidoResponse:
+      type: object
+      required:
+        - id
+        - funcionarioId
+        - formaPagamentoId
+        - modalidade
+        - status
+        - dataPedido
+        - valorDesconto
+        - valorTotal
+        - embalagemPresente
+        - numeroVolumes
+        - itens
+      properties:
+        id:
+          type: integer
+          format: int64
+        clienteId:
+          type: integer
+          format: int64
+          nullable: true
+        funcionarioId:
+          type: integer
+          format: int64
+        descontoId:
+          type: integer
+          format: int64
+          nullable: true
+        formaPagamentoId:
+          type: integer
+          format: int64
+        modalidade:
+          type: string
+          enum:
+            - IMEDIATA
+            - AGENDADA
+        status:
+          type: string
+          enum:
+            - ABERTO
+            - CONFIRMADO
+            - PRONTO_RETIRADA
+            - CONCLUIDO
+            - CANCELADO
+        dataPedido:
+          type: string
+          format: date-time
+        dataRetiradaPrevista:
+          type: string
+          format: date-time
+          nullable: true
+        dataRetirada:
+          type: string
+          format: date-time
+          nullable: true
+          description: Preenchida automaticamente na conclusão do pedido.
+        valorDesconto:
+          type: number
+          minimum: 0
+          description: NUMERIC(12,2), calculado a partir do desconto vigente.
+        valorTotal:
+          type: number
+          minimum: 0
+          description: NUMERIC(12,2); subtotal dos itens menos o desconto, nunca negativo.
+        observacao:
+          type: string
+          nullable: true
+        embalagemPresente:
+          type: boolean
+        numeroVolumes:
+          type: integer
+          format: int32
+          minimum: 1
+        itens:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/PedidoItemResponse'

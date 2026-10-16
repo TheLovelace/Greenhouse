@@ -1,6 +1,7 @@
 package org.greenhouse.integration.fixture
 
-import org.greenhouse.dto.ClienteDTO as Cliente
+import org.greenhouse.dto.request.ClienteCreateRequestDTO
+import org.greenhouse.dto.response.ClienteResponseDTO
 import org.greenhouse.repository.ClienteRepository
 import org.greenhouse.service.ClienteService
 import java.util.UUID
@@ -15,9 +16,9 @@ class ClienteFixture {
         whatsapp: Boolean = false,
         cpf: String? = null,
         email: String? = null,
-    ): Cliente =
+    ): ClienteResponseDTO =
         service.criar(
-            Cliente(
+            ClienteCreateRequestDTO(
                 nome = nome,
                 telefone = telefone,
                 whatsapp = whatsapp,

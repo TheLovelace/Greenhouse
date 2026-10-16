@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.dto.request.ClienteUpdateRequestDTO
 import org.greenhouse.integration.fixture.ClienteFixture
 
 class TestClienteGet {
@@ -18,7 +19,7 @@ class TestClienteGet {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            assertEquals(criado, fixture.service.buscarPorId(criado.id!!))
+            assertEquals(criado, fixture.service.buscarPorId(criado.id))
         } finally {
             fixture.limpar(id)
         }
@@ -32,7 +33,7 @@ class TestClienteGet {
         try {
             val criado = fixture.novoCliente()
             id = criado.id
-            fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
+            fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(ativo = false))
 
             assertEquals(true, fixture.service.listar().any { it.id == criado.id })
         } finally {
@@ -48,7 +49,7 @@ class TestClienteGet {
         try {
             val criado = fixture.novoCliente()
             id = criado.id
-            fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
+            fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(ativo = false))
 
             assertEquals(false, fixture.service.listar(ativo = true).any { it.id == criado.id })
             assertEquals(true, fixture.service.listar(ativo = false).any { it.id == criado.id })

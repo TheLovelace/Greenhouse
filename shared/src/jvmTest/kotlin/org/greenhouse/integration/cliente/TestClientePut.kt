@@ -6,9 +6,11 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.adapter.UnprocessableEntityException
+import org.greenhouse.dto.request.ClienteUpdateRequestDTO
 import org.greenhouse.integration.fixture.ClienteFixture
 
-class TestClientePatch {
+class TestClientePut {
 
     @Test
     fun `deve atualizar apenas campos enviados`() {
@@ -19,7 +21,8 @@ class TestClientePatch {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            val atualizado = fixture.service.atualizar(criado.id!!, mapOf("nome" to "Nome Atualizado"))
+            val atualizado =
+                fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(nome = "Nome Atualizado"))
 
             assertEquals(criado.id, atualizado.id)
             assertEquals("Nome Atualizado", atualizado.nome)
@@ -31,27 +34,27 @@ class TestClientePatch {
     }
 
     @Test
-    fun `deve aceitar entidade completa na atualizacao`() {
+    fun `deve aceitar objeto completo na atualizacao`() {
         val fixture = ClienteFixture()
         var id: Long? = null
 
         try {
             val criado = fixture.novoCliente()
             id = criado.id
-            val idCliente = criado.id!!
 
-            val atualizado = fixture.service.atualizar(
-                idCliente,
-                mapOf(
-                    "id" to idCliente,
-                    "nome" to "Nome Completo",
-                    "telefone" to "11888887777",
-                    "whatsapp" to true,
-                    "ativo" to false,
-                ),
-            )
+            val atualizado =
+                fixture.service.atualizar(
+                    criado.id,
+                    ClienteUpdateRequestDTO(
+                        id = criado.id,
+                        nome = "Nome Completo",
+                        telefone = "11888887777",
+                        whatsapp = true,
+                        ativo = false,
+                    ),
+                )
 
-            assertEquals(idCliente, atualizado.id)
+            assertEquals(criado.id, atualizado.id)
             assertEquals("Nome Completo", atualizado.nome)
             assertEquals("11888887777", atualizado.telefone)
             assertEquals(true, atualizado.whatsapp)
@@ -70,10 +73,10 @@ class TestClientePatch {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            val inativado = fixture.service.atualizar(criado.id!!, mapOf("ativo" to false))
+            val inativado = fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(ativo = false))
             assertEquals(false, inativado.ativo)
 
-            val reativado = fixture.service.atualizar(criado.id!!, mapOf("ativo" to true))
+            val reativado = fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(ativo = true))
             assertEquals(true, reativado.ativo)
         } finally {
             fixture.limpar(id)
@@ -81,21 +84,23 @@ class TestClientePatch {
     }
 
     @Test
-    fun `deve limpar cpf e email com null`() {
+    fun `deve limpar cpf e email com string vazia`() {
         val fixture = ClienteFixture()
         var id: Long? = null
 
         try {
-            val criado = fixture.novoCliente(
-                cpf = fixture.digitosUnicos(),
-                email = "cliente@greenhouse.com",
-            )
+            val criado =
+                fixture.novoCliente(
+                    cpf = fixture.digitosUnicos(),
+                    email = "cliente@greenhouse.com",
+                )
             id = criado.id
 
-            val atualizado = fixture.service.atualizar(
-                criado.id!!,
-                mapOf("cpf" to null, "email" to null),
-            )
+            val atualizado =
+                fixture.service.atualizar(
+                    criado.id,
+                    ClienteUpdateRequestDTO(cpf = "", email = ""),
+                )
 
             assertNull(atualizado.cpf)
             assertNull(atualizado.email)
@@ -114,7 +119,7 @@ class TestClientePatch {
             val criado = fixture.novoCliente(cpf = cpf)
             id = criado.id
 
-            val atualizado = fixture.service.atualizar(criado.id!!, mapOf("cpf" to cpf))
+            val atualizado = fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(cpf = cpf))
 
             assertEquals(cpf, atualizado.cpf)
         } finally {
@@ -130,11 +135,13 @@ class TestClientePatch {
         val cpf = fixture.digitosUnicos()
 
         try {
-            idA = fixture.novoCliente(cpf = cpf).id
-            idB = fixture.novoCliente().id
+            val clienteA = fixture.novoCliente(cpf = cpf)
+            idA = clienteA.id
+            val clienteB = fixture.novoCliente()
+            idB = clienteB.id
 
             assertFailsWith<BadRequestException> {
-                fixture.service.atualizar(idB!!, mapOf("cpf" to cpf))
+                fixture.service.atualizar(clienteB.id, ClienteUpdateRequestDTO(cpf = cpf))
             }
         } finally {
             fixture.limpar(idA)
@@ -143,7 +150,7 @@ class TestClientePatch {
     }
 
     @Test
-    fun `deve rejeitar campo desconhecido`() {
+    fun `deve rejeitar nome em branco na atualizacao`() {
         val fixture = ClienteFixture()
         var id: Long? = null
 
@@ -151,8 +158,8 @@ class TestClientePatch {
             val criado = fixture.novoCliente()
             id = criado.id
 
-            assertFailsWith<BadRequestException> {
-                fixture.service.atualizar(criado.id!!, mapOf("endereco" to "Rua X"))
+            assertFailsWith<UnprocessableEntityException> {
+                fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO(nome = "   "))
             }
         } finally {
             fixture.limpar(id)
@@ -169,24 +176,7 @@ class TestClientePatch {
             id = criado.id
 
             assertFailsWith<BadRequestException> {
-                fixture.service.atualizar(criado.id!!, emptyMap())
-            }
-        } finally {
-            fixture.limpar(id)
-        }
-    }
-
-    @Test
-    fun `deve rejeitar campos com tipo invalido`() {
-        val fixture = ClienteFixture()
-        var id: Long? = null
-
-        try {
-            val criado = fixture.novoCliente()
-            id = criado.id
-
-            assertFailsWith<BadRequestException> {
-                fixture.service.atualizar(criado.id!!, mapOf("ativo" to "false"))
+                fixture.service.atualizar(criado.id, ClienteUpdateRequestDTO())
             }
         } finally {
             fixture.limpar(id)
@@ -198,7 +188,7 @@ class TestClientePatch {
         val fixture = ClienteFixture()
 
         assertFailsWith<BadRequestException> {
-            fixture.service.atualizar(0, mapOf("nome" to "Nome"))
+            fixture.service.atualizar(0, ClienteUpdateRequestDTO(nome = "Nome"))
         }
     }
 
@@ -207,7 +197,7 @@ class TestClientePatch {
         val fixture = ClienteFixture()
 
         assertFailsWith<NotFoundException> {
-            fixture.service.atualizar(Long.MAX_VALUE, mapOf("nome" to "Nome"))
+            fixture.service.atualizar(Long.MAX_VALUE, ClienteUpdateRequestDTO(nome = "Nome"))
         }
     }
 }
