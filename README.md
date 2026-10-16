@@ -27,7 +27,6 @@ Abaixo, estão listadas as integrantes da equipe e suas respectivas responsabili
 | <img src="https://github.com/BONJIU.png" width="30" alt="Julia"> | Julia Bongiovani | 1111392411028 | Vendas | Cliente e Pedido | [GitHub][link-julia] |
 | <img src="https://github.com/LunaLeao.png" width="30" alt="Luna"> | Luna Leão | 1111392421043 | Acesso | Funcionário, Forma de pagamento, Autenticação | [GitHub][link-luna] |
 
-<!-- Referências dos perfis -->
 [link-amanda]: https://github.com/Amanda-Brit0
 [link-anahi]: https://github.com/AnahiMamani
 [link-debora]: https://github.com/Debora-Carvalho
@@ -107,9 +106,16 @@ Greenhouse/
 │   └── src/
 │       ├── commonMain/
 │       │   ├── kotlin/org/greenhouse/
-│       │   │   ├── App.kt                      # Raiz da interface Compose
+│       │   │   ├── App.kt                      # Raiz da interface e navegação local
 │       │   │   └── ui/
-│       │   │       ├── screens/home/           # Tela inicial
+│       │   │       ├── screens/                # Home e telas de cadastro
+│       │   │       │   ├── home/               # Tela inicial e menu
+│       │   │       │   ├── categoria/
+│       │   │       │   ├── cliente/
+│       │   │       │   ├── desconto/
+│       │   │       │   ├── estoque/
+│       │   │       │   ├── pedido/
+│       │   │       │   └── produto/
 │       │   │       └── theme/                  # Cores, fontes e tema
 │       │   └── composeResources/drawable/      # Ícones e imagens compartilhados
 │       ├── androidMain/                        # Implementações específicas do Android
@@ -188,11 +194,17 @@ A interface compartilhada está em `shared/src/commonMain/kotlin/org/greenhouse/
 
 | Pasta/arquivo | Responsabilidade |
 |---|---|
-| `App.kt` | Raiz da interface: aplica o tema e exibe a tela inicial |
-| `ui/screens/` | Telas da aplicação; atualmente, contém a Home |
-| `ui/screens/home/HomeScreen.kt` | Tela inicial, com boas-vindas, botões e footer |
+| `App.kt` | Raiz da interface: aplica o tema e gerencia a navegação local |
+| `ui/screens/` | Telas e formulários de cadastro organizados por funcionalidade |
+| `ui/screens/home/HomeScreen.kt` | Home, menu e opções de navegação |
+| `ui/screens/{categoria,cliente,desconto,estoque,pedido,produto}/` | Formulários de cadastro disponíveis |
+| `ui/screens/<funcionalidade>/model/` | Modelos dos formulários e dados de cadastro, quando aplicável |
+| `ui/screens/<funcionalidade>/validation/` | Formatação e validação dos campos, quando aplicável |
+| `ui/screens/<funcionalidade>/<Nome>Cadastro.kt` | Página Compose do formulário, quando implementada |
 | `ui/theme/` | Cores, tipografia e configuração do tema |
 | `shared/src/commonMain/composeResources/drawable/` | Imagens e ícones compartilhados pela interface |
+
+Nas telas de cadastro que separam essas responsabilidades, `model/` e `validation/` ficam dentro da pasta da funcionalidade, junto à página do formulário. Essa organização não se aplica à Home, que é uma tela de navegação, nem deve ser presumida para telas que ainda não tenham formulário implementado.
 
 Os testes também são organizados por source set em `shared/src/`: `commonTest`, `androidHostTest`, `iosTest`, `jvmTest` e `webTest`.
 
@@ -227,7 +239,7 @@ flowchart LR
     H[Tipografia] -.-> D
 ```
 
-A Home já define navegação para os formulários de cadastro das principais entidades, por meio de botões.
+A Home reúne opções de navegação para as funcionalidades do sistema. Atualmente, `App.kt` abre localmente os formulários de Desconto e Estoque; as demais opções são encaminhadas pelo callback `onNavigate` para o módulo hospedeiro.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_requisitos.png" width="25"/> 
@@ -249,7 +261,7 @@ A Home já define navegação para os formulários de cadastro das principais en
 Clone o repositório e entre na pasta:
 
 ```sh
-git clone https://github.com/Best-of-the-class/Greenhouse.git
+git clone https://github.com/TheLovelace/Greenhouse.git
 cd Greenhouse
 ```
 
@@ -257,20 +269,37 @@ Use os comandos da seção correspondente ao seu sistema: PowerShell no Windows 
 
 <h2 align="start"> 
   <img src=".github/assets/icon_banco_dados.png" width="25"/> 
-  <b>Configuração do banco de dados</b>
+  <b>Configuração local: Banco de dados e JWT</b>
 </h2>
 
-O backend exige a variável de ambiente `DATABASE_URL`, no formato de URL JDBC PostgreSQL. Configure-a com os dados de um banco de **desenvolvimento/teste** fornecidos pela equipe. O exemplo abaixo usa PowerShell. No Bash (macOS/Linux), use `export DATABASE_URL="jdbc:postgresql://<host>:5432/<banco>?user=<usuario>&password=<senha>"`.
+O backend precisa de `DATABASE_URL`, uma URL JDBC para PostgreSQL e usa `JWT_SECRET` como chave de assinatura dos tokens JWT. Use o banco de dados fornecido pela equipe e uma chave aleatória com pelo menos 32 bytes (vide `.env.test.local`). Os exemplos abaixo contêm apenas marcadores: substitua-os localmente. Nunca publique credenciais ou a chave real no README, no código-fonte ou em commits.
 
-```bash
-$env:DATABASE_URL = "jdbc:postgresql://meu-host:5432/greenhouse?user=meu-usuario&password=minha-senha"
+Para iniciar o backend diretamente com Gradle, configure as duas variáveis no terminal antes de executar `bootRun`.
+
+PowerShell (Windows):
+
+```powershell
+$env:DATABASE_URL = "jdbc:postgresql://<host>:5432/<banco>?user=<usuario>&password=<senha>&sslmode=require&channel_binding=require"
+$env:JWT_SECRET = "<chave-aleatoria-do-jwt>"
 ```
 
-Substitua os marcadores localmente; não coloque credenciais reais neste arquivo, no código-fonte ou em commits. O Flyway aplica as migrations disponíveis na inicialização e o Hibernate valida o schema. Não execute contra produção para testes locais.
+Bash (macOS/Linux):
 
-O backend também exige a variável de ambiente `JWT_SECRET`: configure uma chave aleatória com pelo menos 32 bytes, diferente entre `test` e `prod`, no ambiente seguro de execução. A aplicação falha ao iniciar se a propriedade estiver ausente ou se a chave for fraca. Para o container local, inclua `JWT_SECRET` no arquivo local `.env.test.local`; para ambientes implantados, configure-a no gerenciador de variáveis/secrets do runtime. Não reutilize a chave de teste em produção nem armazene valores reais no repositório.
+```bash
+export DATABASE_URL="jdbc:postgresql://<host>:5432/<banco>?user=<usuario>&password=<senha>&sslmode=require&channel_binding=require"
+export JWT_SECRET="<chave-aleatoria-do-jwt>"
+```
 
-Para executar os testes JVM de integração, deve haver na raiz o arquivo local `.env.test.local` com as variáveis necessárias para o banco PostgreSQL e para a chave JWT de teste. Esse arquivo é local e não deve ser versionado nem compartilhado.
+O Flyway aplica as migrations disponíveis na inicialização e o Hibernate valida o schema. Não execute contra produção para testes locais.
+
+Para os testes JVM e para o container local de teste, crie `.env.test.local` na raiz com as duas variáveis abaixo. O arquivo é ignorado pelo Git; mantenha nele somente credenciais locais e não o compartilhe.
+
+```env
+DATABASE_URL=jdbc:postgresql://<host>:5432/<banco>?user=<usuario>&password=<senha>&sslmode=require&channel_binding=require
+JWT_SECRET=<chave-aleatoria-do-jwt>
+```
+
+Substitua todos os marcadores por valores locais válidos e não use aspas no arquivo. O Gradle carrega esse arquivo para os testes do módulo `shared`; a task Docker `runTest` também o passa ao container via `--env-file`. O `bootRun` local não carrega esse arquivo automaticamente: configure as variáveis no terminal, como mostrado acima. O backend ainda possui um valor padrão de JWT no código; defina `JWT_SECRET` explicitamente para usar uma chave privada, sobretudo em ambientes compartilhados, de teste ou produção.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_execucao.png" width="25"/> 
@@ -279,7 +308,7 @@ Para executar os testes JVM de integração, deve haver na raiz o arquivo local 
 
 ### Backend local
 
-Com `DATABASE_URL` configurada:
+Com `DATABASE_URL` e `JWT_SECRET` configuradas conforme a seção anterior:
 
 PowerShell (Windows):
 
@@ -336,7 +365,7 @@ PowerShell (Windows):
 # Desktop
 .\gradlew.bat devDesktop
 
-# Instalação/execução Android em dispositivo ou emulador conectado
+# Instala o app Android debug em dispositivo ou emulador conectado
 .\gradlew.bat devMobile
 ```
 
@@ -349,11 +378,11 @@ Bash (macOS/Linux):
 # Desktop
 ./gradlew devDesktop
 
-# Instalação/execução Android em dispositivo ou emulador conectado
+# Instala o app Android debug em dispositivo ou emulador conectado
 ./gradlew devMobile
 ```
 
-Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
+Esses comandos executam/buildam somente a aplicação cliente; eles não iniciam o backend. Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_doc_api.png" width="25"/> 
@@ -413,7 +442,7 @@ Bash (macOS/Linux):
 ./gradlew checkCommitMessage
 ```
 
-Os testes de integração JVM dependem de `DATABASE_URL` para acessar o banco PostgreSQL.
+Os testes de integração JVM dependem de `DATABASE_URL` para acessar o banco PostgreSQL. O workflow atual do CI fornece essa variável pelos secrets do GitHub; `JWT_SECRET` pode ser configurada separadamente quando for necessário usar uma chave de assinatura específica nos testes.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_software_license.png" width="25"/> 
@@ -425,4 +454,4 @@ Seu código-fonte e demais materiais não podem ser utilizados comercialmente, m
 
 Desenvolvido por [Amanda][link-amanda], [Anahi][link-anahi], [Débora][link-debora], [Isabella][link-isabella], [Julia][link-julia] e [Luna][link-luna].
 
-Todos os direitos reservados. © Lovelace 2026.
+Todos os direitos reservados. © 2026 Lovelace.
