@@ -27,6 +27,10 @@ tags:
     description: Verificação da disponibilidade da API e do banco de dados
   - name: Pedido
     description: Registro, consulta e gerenciamento de status de pedidos
+  - name: Espécie
+    description: Cadastro, consulta, atualização e status de espécies
+  - name: Alerta
+    description: Cadastro, consulta, atualização e status de regras de alerta
 paths:
   /categoria:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
@@ -68,6 +72,23 @@ paths:
     $ref: './openapi/funcionario.yml#/paths/~1'
   /funcionario/{id}:
     $ref: './openapi/funcionario.yml#/paths/~1%7Bid%7D'
+
+  /especies:
+    $ref: './openapi/especie.yml#/paths/~1especies'
+  /especies/{id}:
+    $ref: './openapi/especie.yml#/paths/~1especies~1%7Bid%7D'
+  /especies/{id}/status:
+    $ref: './openapi/especie.yml#/paths/~1especies~1%7Bid%7D~1status'
+
+  /alertas:
+    $ref: './openapi/alerta.yml#/paths/~1alertas'
+  /alertas/dispositivos:
+    $ref: './openapi/alerta.yml#/paths/~1alertas~1dispositivos'
+  /alertas/{id}:
+    $ref: './openapi/alerta.yml#/paths/~1alertas~1%7Bid%7D'
+  /alertas/{id}/status:
+    $ref: './openapi/alerta.yml#/paths/~1alertas~1%7Bid%7D~1status'
+
   /auth/signin:
     $ref: 'openapi/auth.yml#/paths/~1auth~1signin'
   /auth/signup:
@@ -118,6 +139,16 @@ components:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:
       $ref: './openapi/status.yml#/components/schemas/Erro'
+    EspecieRequest:
+      $ref: './openapi/especie.yml#/components/schemas/EspecieRequest'
+    EspecieResponse:
+      $ref: './openapi/especie.yml#/components/schemas/EspecieResponse'
+    AlertaRequest:
+      $ref: './openapi/alerta.yml#/components/schemas/AlertaRequest'
+    AlertaResponse:
+      $ref: './openapi/alerta.yml#/components/schemas/AlertaResponse'
+    DispositivoIotResponse:
+      $ref: './openapi/alerta.yml#/components/schemas/DispositivoIotResponse'
   securitySchemes:
     BearerAuth:
       type: http

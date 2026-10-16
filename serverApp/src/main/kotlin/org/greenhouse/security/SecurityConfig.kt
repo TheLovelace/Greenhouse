@@ -2,6 +2,8 @@ package org.greenhouse.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.ProviderManager
@@ -18,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@Profile("!nosecurity")
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
@@ -59,6 +62,11 @@ class SecurityConfig(
                 ).permitAll()
 
                 auth.requestMatchers("/api/funcionario", "/api/funcionario/**").hasRole("ADMIN")
+
+                // Alertas: consulta/avaliacao para qualquer autenticado; escrita somente ADMIN.
+                auth.requestMatchers(HttpMethod.GET, "/api/alertas", "/api/alertas/**").authenticated()
+                auth.requestMatchers("/api/alertas", "/api/alertas/**").hasRole("ADMIN")
+
                 auth.anyRequest().authenticated()
             }
             .exceptionHandling {

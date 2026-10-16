@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
 import org.greenhouse.ui.screens.categoria.CategoriaCadastro
 import org.greenhouse.ui.screens.categoria.model.CategoriaCadastroData
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
@@ -13,6 +14,7 @@ import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
 import org.greenhouse.ui.screens.desconto.DescontoCadastro
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
+import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
 import org.greenhouse.ui.screens.estoque.EstoqueCadastro
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
 import org.greenhouse.ui.screens.funcionario.FuncionarioCadastro
@@ -44,6 +46,8 @@ fun App(
     onSaveProduto: (ProdutoCadastroData) -> Unit = {},
 ) {
     var isCategoriaCadastroVisible by remember { mutableStateOf(false) }
+    var isAlertaCadastroVisible by remember { mutableStateOf(false) }
+    var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
     var isCompraFornecedorCadastroVisible by remember { mutableStateOf(false) }
     var isDescontoCadastroVisible by remember { mutableStateOf(false) }
@@ -105,6 +109,16 @@ fun App(
                 onBack = { isProdutoCadastroVisible = false },
                 onSave = onSaveProduto,
             )
+        } else if (isAlertaCadastroVisible) {
+            CadastrarAlertaIotScreen(
+                onBackClick = { isAlertaCadastroVisible = false },
+                onSalvarClick = { _, _, _, _, _, _, _, _ -> isAlertaCadastroVisible = false },
+            )
+        } else if (isEspecieCadastroVisible) {
+            CadastrarEspecieScreen(
+                onBackClick = { isEspecieCadastroVisible = false },
+                onSalvarClick = { _ -> isEspecieCadastroVisible = false },
+            )
         } else {
             HomeScreen(
                 onNavigate = { destination ->
@@ -119,6 +133,8 @@ fun App(
                         HomeDestination.FORNECEDORES -> isFornecedorCadastroVisible = true
                         HomeDestination.PEDIDOS -> isPedidoCadastroVisible = true
                         HomeDestination.PRODUTOS -> isProdutoCadastroVisible = true
+                        HomeDestination.ESPECIES -> isEspecieCadastroVisible = true
+                        HomeDestination.ALERTAS -> isAlertaCadastroVisible = true
                         else -> onNavigate(destination)
                     }
                 },
