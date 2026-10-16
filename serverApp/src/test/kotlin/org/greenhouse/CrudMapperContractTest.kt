@@ -1,13 +1,22 @@
 package org.greenhouse
 
+import org.greenhouse.dto.request.CompraFornecedorCreateRequestDTO
+import org.greenhouse.dto.request.CompraItemRequestDTO
 import org.greenhouse.dto.request.FormaPagamentoRequestDTO
+import org.greenhouse.dto.request.FornecedorCreateRequestDTO
 import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.mapper.CompraFornecedorMapper
 import org.greenhouse.mapper.FormaPagamentoMapper
+import org.greenhouse.mapper.FornecedorMapper
 import org.greenhouse.mapper.FuncionarioMapper
+import org.greenhouse.model.CompraFornecedor
+import org.greenhouse.model.CompraItem
 import org.greenhouse.model.FormaPagamento
+import org.greenhouse.model.Fornecedor
 import org.greenhouse.model.Funcionario
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 
 class CrudMapperContractTest {
@@ -74,5 +83,105 @@ class CrudMapperContractTest {
         assertEquals("Luna", funcionario.nome)
         assertEquals(null, formaPagamento.id)
         assertEquals("Cartão", formaPagamento.nome)
+    }
+
+    @Test
+    fun `fornecedor response preserves existing fields`() {
+        val response = FornecedorMapper().toResponseDto(
+            Fornecedor(
+                id = 5,
+                nome = "Flores do Campo",
+                cnpj = "12345678901234",
+                telefone = "11999999999",
+                email = "flores@example.com",
+                contato = "Maria",
+                ativo = false,
+                prazoMedioEntregaDias = 10,
+            ),
+        )
+
+        assertEquals(5, response.id)
+        assertEquals("Flores do Campo", response.nome)
+        assertEquals("12345678901234", response.cnpj)
+        assertEquals("11999999999", response.telefone)
+        assertEquals("flores@example.com", response.email)
+        assertEquals("Maria", response.contato)
+        assertEquals(false, response.ativo)
+        assertEquals(10, response.prazoMedioEntregaDias)
+    }
+
+    @Test
+    fun `fornecedor request maps fields without accepting response identifiers`() {
+        val fornecedor = FornecedorMapper().toModel(
+            FornecedorCreateRequestDTO(
+                nome = "Flores do Campo",
+                cnpj = "12345678901234",
+                prazoMedioEntregaDias = 10,
+            ),
+        )
+
+        assertEquals(null, fornecedor.id)
+        assertEquals("Flores do Campo", fornecedor.nome)
+        assertEquals(10, fornecedor.prazoMedioEntregaDias)
+    }
+
+    @Test
+    fun `compra fornecedor response preserves compra and item fields`() {
+        val mapper = CompraFornecedorMapper()
+        val response = mapper.toResponse(
+            CompraFornecedor(
+                id = 9,
+                funcionarioId = 1,
+                fornecedorId = 2,
+                formaPagamentoId = 3,
+                valorTotal = BigDecimal("25.00"),
+                valorFrete = BigDecimal("5.00"),
+                freteIncluso = false,
+                observacao = "Reposição",
+            ),
+            listOf(
+                CompraItem(
+                    id = 4,
+                    compraId = 9,
+                    produtoId = 7,
+                    quantidade = 2,
+                    valorUnitario = BigDecimal("10.00"),
+                ),
+            ),
+        )
+
+        assertEquals(9, response.id)
+        assertEquals(2, response.fornecedorId)
+        assertEquals(BigDecimal("25.00"), response.valorTotal)
+        assertEquals(BigDecimal("5.00"), response.valorFrete)
+        assertEquals(1, response.itens.size)
+        assertEquals(7, response.itens.first().produtoId)
+        assertEquals(2, response.itens.first().quantidade)
+        assertEquals(BigDecimal("10.00"), response.itens.first().valorUnitario)
+    }
+
+    @Test
+    fun `compra request maps fields without accepting response identifiers`() {
+        val compra = CompraFornecedorMapper().toModel(
+            CompraFornecedorCreateRequestDTO(
+                funcionarioId = 1,
+                fornecedorId = 2,
+                formaPagamentoId = 3,
+                observacao = "Reposição",
+                itens =
+                    listOf(
+                        CompraItemRequestDTO(
+                            produtoId = 7,
+                            quantidade = 2,
+                            valorUnitario = BigDecimal("10.00"),
+                        ),
+                    ),
+            ),
+        )
+
+        assertEquals(null, compra.id)
+        assertEquals(1, compra.funcionarioId)
+        assertEquals(2, compra.fornecedorId)
+        assertEquals("Reposição", compra.observacao)
     }
 }
