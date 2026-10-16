@@ -21,6 +21,7 @@ class EstoqueFixture {
         quantidadeMinima: Int,
         localizacao: String? = null,
         bloqueado: Boolean = false,
+        preco: BigDecimal = BigDecimal("10.00"),
     ): Long {
         val produtoId =
             DriverManager.getConnection(databaseUrl).use { connection ->
@@ -34,7 +35,7 @@ class EstoqueFixture {
                     ).use { statement ->
                         statement.setString(1, "TEST-${UUID.randomUUID()}")
                         statement.setString(2, "Produto teste ${UUID.randomUUID()}")
-                        statement.setBigDecimal(3, BigDecimal("10.00"))
+                        statement.setBigDecimal(3, preco)
                         statement.executeQuery().use { resultSet ->
                             check(resultSet.next()) { "O banco não retornou o ID do produto criado" }
                             resultSet.getLong("id")

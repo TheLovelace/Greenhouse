@@ -3,10 +3,9 @@ package org.greenhouse.integration.cliente
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotEquals
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.ClienteDTO as Cliente
+import org.greenhouse.dto.request.ClienteCreateRequestDTO as Cliente
 import org.greenhouse.integration.fixture.ClienteFixture
 
 class TestClientePost {
@@ -28,17 +27,16 @@ class TestClientePost {
     }
 
     @Test
-    fun `deve ignorar id e ativo informados na criacao`() {
+    fun `deve ignorar ativo informado na criacao`() {
         val fixture = ClienteFixture()
         var id: Long? = null
 
         try {
             val criado = fixture.service.criar(
-                Cliente(id = -1, nome = "Cliente com id", telefone = "11999990000", ativo = false),
+                Cliente(nome = "Cliente criado ativo", telefone = "11999990000", ativo = false),
             )
             id = criado.id
 
-            assertNotEquals(-1L, criado.id)
             assertEquals(true, criado.ativo)
         } finally {
             fixture.limpar(id)

@@ -25,6 +25,8 @@ tags:
     description: Cadastro, consulta e gerenciamento de funcionários
   - name: Status
     description: Verificação da disponibilidade da API e do banco de dados
+  - name: Pedido
+    description: Registro, consulta e gerenciamento de status de pedidos
 paths:
   /categoria:
     $ref: './openapi/categoria.yml#/paths/~1categoria'
@@ -50,6 +52,12 @@ paths:
     $ref: './openapi/forma-pagamento.yml#/paths/~1forma-pagamento'
   /forma-pagamento/{id}:
     $ref: './openapi/forma-pagamento.yml#/paths/~1forma-pagamento~1%7Bid%7D'
+  /pedido:
+    $ref: './openapi/pedido.yml#/paths/~1pedido'
+  /pedido/{id}:
+    $ref: './openapi/pedido.yml#/paths/~1pedido~1%7Bid%7D'
+  /pedido/{id}/status:
+    $ref: './openapi/pedido.yml#/paths/~1pedido~1%7Bid%7D~1status'
   /produto:
     $ref: './openapi/produto.yml#/paths/~1produto'
   /produto/{id}:
@@ -73,7 +81,7 @@ components:
     CategoriaUpdateRequest:
       $ref: './openapi/categoria.yml#/components/schemas/CategoriaUpdateRequest'
     Cliente:
-      $ref: './openapi/cliente.yml#/components/schemas/Cliente'
+      $ref: './openapi/cliente.yml#/components/schemas/ClienteResponse'
     Desconto:
       $ref: './openapi/desconto.yml#/components/schemas/Desconto'
     Fornecedor:
@@ -94,6 +102,14 @@ components:
       $ref: './openapi/produto.yml#/components/schemas/ProdutoCreateRequest'
     ProdutoUpdateRequest:
       $ref: './openapi/produto.yml#/components/schemas/ProdutoUpdateRequest'
+    Pedido:
+      $ref: './openapi/pedido.yml#/components/schemas/PedidoResponse'
+    PedidoCreateRequest:
+      $ref: './openapi/pedido.yml#/components/schemas/PedidoCreateRequest'
+    PedidoUpdateRequest:
+      $ref: './openapi/pedido.yml#/components/schemas/PedidoUpdateRequest'
+    AtualizarStatusPedidoRequest:
+      $ref: './openapi/pedido.yml#/components/schemas/AtualizarStatusPedidoRequest'
     Status:
       $ref: './openapi/status.yml#/components/schemas/Status'
     Erro:

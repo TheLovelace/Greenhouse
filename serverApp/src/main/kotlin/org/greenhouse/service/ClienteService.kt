@@ -3,8 +3,11 @@ package org.greenhouse.service
 import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.UnprocessableEntityException
-import org.greenhouse.dto.ClienteDTO as Cliente
+import org.greenhouse.dto.request.ClienteCreateRequestDTO
+import org.greenhouse.dto.request.ClienteUpdateRequestDTO
+import org.greenhouse.dto.response.ClienteResponseDTO
 import org.greenhouse.mapper.ClienteMapper
+import org.greenhouse.model.Cliente
 import org.greenhouse.repository.ClienteRepository
 import org.springframework.stereotype.Service
 
@@ -14,65 +17,51 @@ class ClienteService(
     private val clienteMapper: ClienteMapper,
 ) {
 
-    fun criar(cliente: Cliente): Cliente {
+    fun criar(request: ClienteCreateRequestDTO): ClienteResponseDTO {
         val clienteNormalizado =
-            cliente.copy(
+            clienteMapper.toModel(request).copy(
                 id = null,
                 ativo = true,
-                cpf = cliente.cpf?.takeIf { it.isNotBlank() },
-                email = cliente.email?.takeIf { it.isNotBlank() },
+                cpf = request.cpf?.takeIf { it.isNotBlank() },
+                email = request.email?.takeIf { it.isNotBlank() },
             )
         validar(clienteNormalizado)
         validarCpfUnico(clienteNormalizado.cpf)
-        val model = clienteMapper.toModel(clienteNormalizado)
-        return clienteMapper.toDto(clienteRepository.criar(model))
+        return clienteMapper.toResponse(clienteRepository.criar(clienteNormalizado))
     }
 
     fun listar(
         nome: String? = null,
         telefone: String? = null,
         ativo: Boolean? = null,
-    ): List<Cliente> =
+    ): List<ClienteResponseDTO> =
         clienteRepository.listar(
             nome?.takeIf { it.isNotBlank() },
             telefone?.takeIf { it.isNotBlank() },
             ativo,
-        ).map(clienteMapper::toDto)
+        ).map(clienteMapper::toResponse)
 
-    fun buscarPorId(id: Long): Cliente =
+    fun buscarPorId(id: Long): ClienteResponseDTO =
         clienteRepository.buscarPorId(validarId(id))
-            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
+            ?.let(clienteMapper::toResponse) ?: throw NotFoundException("Cliente não encontrado")
 
-    fun atualizar(id: Long, campos: Map<String, Any?>): Cliente {
+    fun atualizar(id: Long, request: ClienteUpdateRequestDTO): ClienteResponseDTO {
         val idValidado = validarId(id)
-        val clienteAtual = clienteRepository.buscarPorId(idValidado)
-            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
-
-        val camposPermitidos = setOf("id", "nome", "telefone", "whatsapp", "cpf", "email", "ativo")
-        val camposDesconhecidos = campos.keys - camposPermitidos
-        if (camposDesconhecidos.isNotEmpty()) {
-            throw BadRequestException("Campo(s) não reconhecido(s): ${camposDesconhecidos.joinToString()}")
-        }
-        if (campos.keys.none { it != "id" }) {
+        val clienteAtual =
+            clienteRepository.buscarPorId(idValidado)
+                ?: throw NotFoundException("Cliente não encontrado")
+        if (!request.possuiCamposParaAtualizar) {
             throw BadRequestException("Informe ao menos um campo para atualizar")
         }
 
-        val clienteAtualizado =
-            clienteAtual.copy(
-                nome = campos.texto("nome", clienteAtual.nome),
-                telefone = campos.texto("telefone", clienteAtual.telefone),
-                whatsapp = campos.booleano("whatsapp", clienteAtual.whatsapp),
-                cpf = campos.textoOpcional("cpf", clienteAtual.cpf),
-                email = campos.textoOpcional("email", clienteAtual.email),
-                ativo = campos.booleano("ativo", clienteAtual.ativo),
-            )
+        val clienteAtualizado = clienteMapper.toModel(request, clienteAtual)
         validar(clienteAtualizado)
         if (clienteAtualizado.cpf != clienteAtual.cpf) {
             validarCpfUnico(clienteAtualizado.cpf, ignorarId = idValidado)
         }
 
-        return clienteRepository.atualizar(idValidado, clienteMapper.toModel(clienteAtualizado))
-            ?.let(clienteMapper::toDto) ?: throw NotFoundException("Cliente não encontrado")
+        return clienteRepository.atualizar(idValidado, clienteAtualizado)
+            ?.let(clienteMapper::toResponse) ?: throw NotFoundException("Cliente não encontrado")
     }
 
     private fun validar(cliente: Cliente) {
@@ -108,7 +97,7 @@ class ClienteService(
         ignorarId: Long? = null,
     ) {
         cpf ?: return
-        val existente = clienteRepository.buscarPorCpf(cpf)?.let(clienteMapper::toDto)
+        val existente = clienteRepository.buscarPorCpf(cpf)
         if (existente != null && existente.id != ignorarId) {
             throw BadRequestException("CPF já cadastrado para outro cliente")
         }
@@ -119,34 +108,5 @@ class ClienteService(
             throw BadRequestException("O id do cliente deve ser maior que zero")
         }
         return id
-    }
-
-    private fun Map<String, Any?>.texto(
-        campo: String,
-        valorAtual: String,
-    ): String {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-    }
-
-    private fun Map<String, Any?>.textoOpcional(
-        campo: String,
-        valorAtual: String?,
-    ): String? {
-        if (!containsKey(campo)) return valorAtual
-        val valor = this[campo] ?: return null
-        val texto = valor as? String
-            ?: throw BadRequestException("O campo '$campo' deve ser texto")
-        return texto.takeIf { it.isNotBlank() }
-    }
-
-    private fun Map<String, Any?>.booleano(
-        campo: String,
-        valorAtual: Boolean,
-    ): Boolean {
-        if (!containsKey(campo)) return valorAtual
-        return this[campo] as? Boolean
-            ?: throw BadRequestException("O campo '$campo' deve ser booleano")
     }
 }
