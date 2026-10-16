@@ -11,6 +11,8 @@ import org.greenhouse.repository.PedidoItemRepository
 import org.greenhouse.repository.PedidoRepository
 import org.greenhouse.repository.ProdutoRepository
 import org.greenhouse.repository.UsuarioRepository
+import org.greenhouse.repository.CompraFornecedorRepository
+import org.greenhouse.repository.CompraItemRepository
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
@@ -47,6 +49,12 @@ abstract class SpringBootWebTest {
 
     @MockitoBean
     private lateinit var usuarioRepository: UsuarioRepository
+
+    @MockitoBean
+    private lateinit var compraFornecedorRepository: CompraFornecedorRepository
+
+    @MockitoBean
+    private lateinit var compraItemRepository: CompraItemRepository
 
     @MockitoBean
     private lateinit var jdbcTemplate: JdbcTemplate
