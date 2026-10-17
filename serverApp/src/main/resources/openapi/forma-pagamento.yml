@@ -1,0 +1,197 @@
+paths:
+  /forma-pagamento:
+    post:
+      tags:
+        - Forma de Pagamento
+      summary: Criar forma de pagamento
+      operationId: criarFormaPagamento
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormaPagamentoRequest'
+      responses:
+        '201':
+          description: Forma de pagamento criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamentoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+    get:
+      tags:
+        - Forma de Pagamento
+      summary: Listar formas de pagamento
+      description: Lista as formas de pagamento; o parâmetro nome opcional filtra por correspondência parcial.
+      operationId: listarFormasPagamento
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Trecho do nome da forma de pagamento para busca parcial
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Formas de pagamento cadastradas, ativas e inativas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormaPagamentoResponse'
+        '401':
+          description: Token JWT ausente ou inválido
+  /forma-pagamento/{id}:
+    get:
+      tags:
+        - Forma de Pagamento
+      summary: Buscar forma de pagamento por ID
+      operationId: buscarFormaPagamentoPorId
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      responses:
+        '200':
+          description: Forma de pagamento encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamentoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Forma de Pagamento
+      summary: Substituir forma de pagamento
+      description: Substitui os dados da forma de pagamento. Campos opcionais omitidos assumem seus valores padrão. O campo id, se enviado, é ignorado.
+      operationId: atualizarFormaPagamento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormaPagamentoRequest'
+      responses:
+        '200':
+          description: Forma de pagamento atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormaPagamentoResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Forma de Pagamento
+      summary: Inativar forma de pagamento
+      description: Define ativo como false sem remover o registro, preservando pagamentos relacionados.
+      operationId: inativarFormaPagamento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FormaPagamentoId'
+      responses:
+        '204':
+          description: Forma de pagamento inativada
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '401':
+          description: Token JWT ausente ou inválido
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+
+components:
+  parameters:
+    FormaPagamentoId:
+      name: id
+      in: path
+      required: true
+      description: Identificador numérico da forma de pagamento
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    FormaPagamentoRequest:
+      type: object
+      required:
+        - nome
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '.*\S.*'
+          example: Cartão de Crédito
+        ativo:
+          type: boolean
+          default: true
+        descricao:
+          type: string
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+          default: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true
+    FormaPagamentoResponse:
+      type: object
+      required:
+        - id
+        - nome
+        - ativo
+        - descricao
+        - limiteParcelas
+        - prazoEstornoDias
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Identificador gerado pelo banco.
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '.*\S.*'
+          example: Cartão de Crédito
+        ativo:
+          type: boolean
+          default: true
+        descricao:
+          type: string
+          maxLength: 250
+          nullable: true
+        limiteParcelas:
+          type: integer
+          minimum: 1
+          default: 1
+        prazoEstornoDias:
+          type: integer
+          minimum: 0
+          nullable: true

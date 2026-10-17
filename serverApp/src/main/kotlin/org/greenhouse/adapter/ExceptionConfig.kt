@@ -17,9 +17,9 @@ class DatabaseConnectionException(cause: Throwable? = null) :
     )
 
 /** 401 - Credenciais inválidas ou ausentes. */
-class AuthenticationException(cause: Throwable? = null) :
+class AuthenticationException(message: String = "Falha de autenticação", cause: Throwable? = null) :
     AppException(
-        message = "Falha de autenticação",
+        message = message,
         statusCode = HttpStatus.UNAUTHORIZED,
         cause = cause,
     )
@@ -45,6 +45,14 @@ class NotFoundException(message: String = "Recurso não encontrado", cause: Thro
     AppException(
         message = message,
         statusCode = HttpStatus.NOT_FOUND,
+        cause = cause,
+    )
+
+/** 409 - O recurso já existe e não pode ser criado novamente. */
+class ConflictException(message: String = "Conflito com o estado atual do recurso", cause: Throwable? = null) :
+    AppException(
+        message = message,
+        statusCode = HttpStatus.CONFLICT,
         cause = cause,
     )
 

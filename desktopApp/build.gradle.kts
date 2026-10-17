@@ -26,3 +26,12 @@ compose.desktop {
         }
     }
 }
+
+tasks.withType<JavaExec>().configureEach {
+    if (System.getProperty("os.name").startsWith("Linux", ignoreCase = true)) {
+        environment(
+            "FONTCONFIG_FILE",
+            layout.projectDirectory.file("fontconfig-linux.xml").asFile.absolutePath,
+        )
+    }
+}

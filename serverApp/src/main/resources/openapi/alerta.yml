@@ -1,0 +1,264 @@
+openapi: 3.0.3
+
+paths:
+  /alertas:
+    get:
+      tags:
+        - Alerta
+      summary: Listar regras de alerta
+      description: Lista as regras. O filtro titulo usa LIKE sem diferenciar maiúsculas.
+      parameters:
+        - name: titulo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: ativo
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: dispositivoId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: especieId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Regras retornadas com sucesso.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertaResponse'
+        '401':
+          description: Não autorizado.
+
+    post:
+      tags:
+        - Alerta
+      summary: Cadastrar regra de alerta
+      description: Cadastra a regra de alerta (ADMIN). Os limites monitorados vêm da espécie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertaRequest'
+      responses:
+        '201':
+          description: Regra cadastrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaResponse'
+        '400':
+          description: Dados inválidos.
+        '401':
+          description: Não autorizado.
+        '403':
+          description: Sem permissão.
+
+  /alertas/dispositivos:
+    get:
+      tags:
+        - Alerta
+      summary: Listar dispositivos IoT
+      description: Dispositivos disponíveis para vincular a uma regra.
+      responses:
+        '200':
+          description: Dispositivos retornados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DispositivoIotResponse'
+        '401':
+          description: Não autorizado.
+
+  /alertas/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AlertaId'
+
+    get:
+      tags:
+        - Alerta
+      summary: Consultar regra por ID
+      responses:
+        '200':
+          description: Regra encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaResponse'
+        '400':
+          description: ID inválido.
+        '404':
+          description: Regra não encontrada.
+        '401':
+          description: Não autorizado.
+
+    put:
+      tags:
+        - Alerta
+      summary: Atualizar regra
+      description: Atualiza todos os campos da regra (ADMIN). O status é alterado em /status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertaRequest'
+      responses:
+        '200':
+          description: Regra atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaResponse'
+        '400':
+          description: Dados inválidos.
+        '404':
+          description: Regra não encontrada.
+        '401':
+          description: Não autorizado.
+        '403':
+          description: Sem permissão.
+
+  /alertas/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/AlertaId'
+
+    patch:
+      tags:
+        - Alerta
+      summary: Ativar/inativar regra
+      description: Regra inativa não participa de novas avaliações. Nada é apagado.
+      responses:
+        '200':
+          description: Status alterado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaResponse'
+        '400':
+          description: ID inválido ou reativação com dispositivo/espécie inativos.
+        '404':
+          description: Regra não encontrada.
+        '401':
+          description: Não autorizado.
+        '403':
+          description: Sem permissão.
+
+components:
+  parameters:
+    AlertaId:
+      name: id
+      in: path
+      required: true
+      description: Identificador da regra.
+      schema:
+        type: integer
+        format: int64
+        example: 1
+
+  schemas:
+    AlertaRequest:
+      type: object
+      required:
+        - dispositivoIotId
+        - especieId
+        - titulo
+      properties:
+        dispositivoIotId:
+          type: integer
+          format: int64
+          example: 1
+        especieId:
+          type: integer
+          format: int64
+          example: 1
+        titulo:
+          type: string
+          maxLength: 150
+          example: Temperatura alta na estufa
+        mensagem:
+          type: string
+          nullable: true
+          maxLength: 1000
+          example: Conferir ventilação.
+        prioridade:
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 2
+          description: 1 = alta, 2 = média, 3 = baixa.
+        monitorarTemperatura:
+          type: boolean
+          default: false
+        monitorarUmidadeAr:
+          type: boolean
+          default: false
+        monitorarUmidadeSolo:
+          type: boolean
+          default: false
+          description: Ao menos um indicador deve ser verdadeiro. Os limites vêm da espécie.
+
+    AlertaResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        dispositivoIotId:
+          type: integer
+          format: int64
+        dispositivoCodigo:
+          type: string
+        dispositivoNome:
+          type: string
+        especieId:
+          type: integer
+          format: int64
+        especieNomePopular:
+          type: string
+        titulo:
+          type: string
+        mensagem:
+          type: string
+          nullable: true
+        prioridade:
+          type: integer
+        monitorarTemperatura:
+          type: boolean
+        monitorarUmidadeAr:
+          type: boolean
+        monitorarUmidadeSolo:
+          type: boolean
+        ativo:
+          type: boolean
+
+    DispositivoIotResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        codigo:
+          type: string
+        nome:
+          type: string
+        localizacao:
+          type: string
+          nullable: true
+        ativo:
+          type: boolean

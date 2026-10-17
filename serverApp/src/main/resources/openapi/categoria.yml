@@ -10,21 +10,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Categoria'
+              $ref: '#/components/schemas/CategoriaCreateRequest'
       responses:
         '201':
           description: Categoria criada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Categoria'
+                $ref: '#/components/schemas/CategoriaResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
+        '422':
+          description: Nome de categoria já utilizado
     get:
       tags:
         - Categoria
       summary: Listar categorias
       operationId: listarCategorias
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Filtro parcial e case-insensitive pelo nome
+          schema:
+            type: string
       responses:
         '200':
           description: Categorias cadastradas
@@ -33,106 +42,166 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Categoria'
+                  $ref: '#/components/schemas/CategoriaResponse'
   /categoria/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        description: Identificador numérico da categoria
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
     get:
       tags:
         - Categoria
       summary: Buscar categoria por ID
       operationId: buscarCategoriaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '200':
           description: Categoria encontrada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Categoria'
+                $ref: '#/components/schemas/CategoriaResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
-    patch:
+    put:
       tags:
         - Categoria
       summary: Atualizar categoria
-      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Também aceita o objeto completo da categoria.
+      description: Envie um ou mais campos editáveis. Os campos omitidos mantêm os valores atuais, observacao pode ser enviada como null para limpar o valor.
       operationId: atualizarCategoria
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CategoriaPatch'
+              $ref: '#/components/schemas/CategoriaUpdateRequest'
       responses:
         '200':
           description: Categoria atualizada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Categoria'
+                $ref: '#/components/schemas/CategoriaResponse'
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '422':
+          description: Nome de categoria já utilizado
     delete:
       tags:
         - Categoria
       summary: Excluir categoria
       operationId: excluirCategoria
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico da categoria
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
       responses:
         '204':
-          description: Categoria excluida
+          description: Categoria excluída
         '400':
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
 components:
   schemas:
-    Categoria:
+    CategoriaCreateRequest:
       type: object
       required:
         - nome
         - descricao
       properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-          description: Gerado pelo banco, não é necessário enviar na criação.
         nome:
           type: string
           maxLength: 100
         descricao:
           type: string
+          maxLength: 1000
         ativo:
           type: boolean
           default: true
-    CategoriaPatch:
+        observacao:
+          type: string
+          maxLength: 300
+          nullable: true
+        dataCadastro:
+          type: string
+          format: date
+          nullable: true
+          description: Se omitida ou null, o banco aplica CURRENT_DATE.
+    CategoriaUpdateRequest:
       type: object
-      description: Aceita qualquer combinação de campos editáveis; id é opcional e ignorado na atualização.
       additionalProperties: false
+      description: Campos omitidos mantêm os valores atuais, observacao enviada como null limpa o valor. id no corpo é ignorado.
       anyOf:
         - required: [nome]
         - required: [descricao]
         - required: [ativo]
+        - required: [observacao]
       properties:
         id:
           type: integer
           format: int64
           nullable: true
+          description: Compatibilidade com clientes existentes; o identificador da rota prevalece.
         nome:
           type: string
           maxLength: 100
         descricao:
           type: string
+          maxLength: 1000
         ativo:
           type: boolean
+        observacao:
+          type: string
+          maxLength: 300
+          nullable: true
+    CategoriaResponse:
+      type: object
+      required:
+        - id
+        - nome
+        - descricao
+        - ativo
+        - observacao
+        - dataCadastro
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+          maxLength: 100
+        descricao:
+          type: string
+          maxLength: 1000
+        ativo:
+          type: boolean
+        observacao:
+          type: string
+          maxLength: 300
+          nullable: true
+        dataCadastro:
+          type: string
+          format: date

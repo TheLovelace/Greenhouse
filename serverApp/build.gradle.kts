@@ -2,8 +2,17 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.springBoot)
     alias(libs.plugins.kotlinSpring)
+    alias(libs.plugins.kotlinJpa)
     application
     alias(libs.plugins.jib)
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+}
+
+noArg {
+    annotation("jakarta.persistence.Entity")
 }
 
 application {
@@ -14,13 +23,29 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
 
     implementation(libs.spring.boot.starter.web)
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation(libs.springdoc.openapi)
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.jdbc)
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation(libs.postgresql)
 
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
+    implementation(libs.androidx.constraintlayout.core)
+
     testImplementation(libs.spring.boot.starter.test)
+    testRuntimeOnly("com.h2database:h2")
+
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // Biblioteca JJWT para criar, assinar e extrair dados dos tokens JWT
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 val registryOwner: String? = System.getenv("REGISTRY_OWNER")?.lowercase()

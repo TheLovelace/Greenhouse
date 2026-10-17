@@ -2,6 +2,7 @@
 .kotlin
 .gradle
 **/build/
+**/bin/
 xcuserdata
 !src/**/build/
 local.properties
@@ -18,3 +19,5 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 .env.*.local
+.devin/
+General

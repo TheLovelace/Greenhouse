@@ -1,0 +1,126 @@
+package org.greenhouse.integration.estoque
+
+import org.greenhouse.adapter.BadRequestException
+import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.dto.response.EstoqueResponseDTO as Estoque
+import org.greenhouse.integration.fixture.EstoqueFixture
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+
+class TestEstoqueGet {
+    @Test
+    fun `deve listar estoques cadastrados`() {
+        val fixture = EstoqueFixture()
+
+        try {
+            val primeiroProdutoId =
+                fixture.novoProdutoComEstoque(
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                )
+            val segundoProdutoId =
+                fixture.novoProdutoComEstoque(
+                    quantidadeFisica = 8,
+                    quantidadeReservada = 0,
+                    quantidadeMinima = 1,
+                    localizacao = "Estante B-02",
+                )
+
+            val estoques = fixture.service.listarRegistrosEstoque()
+
+            assertTrue(
+                Estoque(
+                    produtoId = primeiroProdutoId,
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeDisponivel = 10,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                ) in estoques,
+            )
+            assertTrue(
+                Estoque(
+                    produtoId = segundoProdutoId,
+                    quantidadeFisica = 8,
+                    quantidadeReservada = 0,
+                    quantidadeDisponivel = 8,
+                    quantidadeMinima = 1,
+                    localizacao = "Estante B-02",
+                    bloqueado = false,
+                ) in estoques,
+            )
+        } finally {
+            fixture.limpar()
+        }
+    }
+
+    @Test
+    fun `deve consultar estoque com quantidade disponivel calculada`() {
+        val fixture = EstoqueFixture()
+
+        try {
+            val produtoId =
+                fixture.novoProdutoComEstoque(
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                )
+
+            assertEquals(
+                Estoque(
+                    produtoId = produtoId,
+                    quantidadeFisica = 12,
+                    quantidadeReservada = 2,
+                    quantidadeDisponivel = 10,
+                    quantidadeMinima = 3,
+                    localizacao = "Estante A-01",
+                    bloqueado = true,
+                ),
+                fixture.service.buscarRegistroEstoquePorProdutoId(produtoId),
+            )
+        } finally {
+            fixture.limpar()
+        }
+    }
+
+    @Test
+    fun `deve retornar not found para produto sem estoque cadastrado`() {
+        val fixture = EstoqueFixture()
+
+        try {
+            val produtoId = fixture.novoProdutoSemEstoque()
+
+            assertFailsWith<NotFoundException> {
+                fixture.service.buscarRegistroEstoquePorProdutoId(produtoId)
+            }
+        } finally {
+            fixture.limpar()
+        }
+    }
+
+    @Test
+    fun `deve retornar not found para produto inexistente`() {
+        val fixture = EstoqueFixture()
+
+        assertFailsWith<NotFoundException> {
+            fixture.service.buscarRegistroEstoquePorProdutoId(Long.MAX_VALUE)
+        }
+    }
+
+    @Test
+    fun `deve rejeitar id de produto invalido`() {
+        val fixture = EstoqueFixture()
+
+        assertFailsWith<BadRequestException> {
+            fixture.service.buscarRegistroEstoquePorProdutoId(0)
+        }
+    }
+}

@@ -1,0 +1,272 @@
+paths:
+  /estoque:
+    post:
+      tags:
+        - Estoque
+      summary: Cadastrar informações de estoque para um produto
+      description: Cria o estoque somente se ainda não houver um registro para o produto. A quantidade reservada inicia em zero e é controlada pelo fluxo de pedidos.
+      operationId: criarRegistroEstoque
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoqueCreate'
+      responses:
+        '201':
+          description: Informações de estoque criadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '409':
+          description: O produto já possui informações de estoque cadastradas
+          content:
+            application/json:
+              schema:
+                $ref: './status.yml#/components/schemas/Erro'
+    get:
+      tags:
+        - Estoque
+      summary: Listar informações de estoque
+      description: Retorna todos os registros na tabela de estoque. Não inclui produtos que ainda não possuem estoque.
+      operationId: listarRegistrosEstoque
+      responses:
+        '200':
+          description: Lista de registros de estoque
+          content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Estoque'
+  /estoque/{produtoId}:
+    get:
+      tags:
+        - Estoque
+      summary: Consultar informações de estoque por produto
+      description: Retorna os saldos e os dados de controle do estoque. Se o produto não existir ou não houver registro de estoque para ele, retorna 404.
+      operationId: consultarEstoquePorProduto
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Informações de estoque do produto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Estoque
+      summary: Atualizar informações de estoque (registro completo)
+      description: Substitui quantidade física, quantidade mínima, localização e bloqueio do estoque existente. Envie os campos obrigatórios; localização omitida ou null limpa a localização. A quantidade reservada não é editável e deve continuar compatível com a quantidade física.
+      operationId: substituirRegistroEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoqueUpdate'
+      responses:
+        '200':
+          description: Informações de estoque substituídas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    patch:
+      tags:
+        - Estoque
+      summary: Atualizar informações de estoque (campos parciais)
+      description: Atualiza parcialmente os campos quantidadeFisica, quantidadeMinima, localizacao e bloqueado. A quantidade reservada é controlada exclusivamente pelo fluxo de pedidos. A quantidade física não pode ficar abaixo da quantidade reservada.
+      operationId: atualizarRegistroEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstoquePatch'
+      responses:
+        '200':
+          description: Informações de estoque atualizadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estoque'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Estoque
+      summary: Excluir informações de estoque do produto
+      description: Exclui o estoque de um produto. A exclusão é impedida enquanto houver quantidade reservada; saldo físico e demais campos não impedem a exclusão.
+      operationId: excluirRegistroEstoque
+      parameters:
+        - name: produtoId
+          in: path
+          required: true
+          description: Identificador numérico do produto
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Informações de estoque excluídas
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+components:
+  schemas:
+    EstoqueCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - produtoId
+      properties:
+        produtoId:
+          type: integer
+          format: int64
+          minimum: 1
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+          default: false
+    EstoquePatch:
+      type: object
+      additionalProperties: false
+      anyOf:
+        - required: [quantidadeFisica]
+        - required: [quantidadeMinima]
+        - required: [localizacao]
+        - required: [bloqueado]
+      properties:
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+    EstoqueUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - quantidadeFisica
+        - quantidadeMinima
+        - bloqueado
+      properties:
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+    Estoque:
+      type: object
+      required:
+        - produtoId
+        - quantidadeFisica
+        - quantidadeReservada
+        - quantidadeDisponivel
+        - quantidadeMinima
+        - localizacao
+        - bloqueado
+      properties:
+        produtoId:
+          type: integer
+          format: int64
+        quantidadeFisica:
+          type: integer
+          format: int32
+          minimum: 0
+        quantidadeReservada:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Controlada exclusivamente pelo fluxo de pedidos.
+        quantidadeDisponivel:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Quantidade física menos quantidade reservada.
+        quantidadeMinima:
+          type: integer
+          format: int32
+          minimum: 0
+        localizacao:
+          type: string
+          nullable: true
+          maxLength: 100
+        bloqueado:
+          type: boolean
+          description: Produtos bloqueados não podem ser reservados ou vendidos em pedidos imediatos.

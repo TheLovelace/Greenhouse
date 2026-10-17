@@ -1,0 +1,256 @@
+paths:
+  /cliente:
+    post:
+      tags:
+        - Cliente
+      summary: Cadastrar cliente
+      description: Cria um cliente ativo por padrão. Campos id e ativo enviados no payload são ignorados.
+      operationId: criarCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteCreateRequest'
+      responses:
+        '201':
+          description: Cliente cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+    get:
+      tags:
+        - Cliente
+      summary: Listar clientes
+      description: Lista clientes ativos e inativos. Aceita filtros opcionais por nome (parcial, sem diferenciar maiúsculas), telefone (parcial) e status ativo.
+      operationId: listarClientes
+      parameters:
+        - name: nome
+          in: query
+          required: false
+          description: Trecho do nome do cliente
+          schema:
+            type: string
+        - name: telefone
+          in: query
+          required: false
+          description: Trecho do telefone do cliente
+          schema:
+            type: string
+        - name: ativo
+          in: query
+          required: false
+          description: Filtra por clientes ativos (true) ou inativos (false)
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Clientes encontrados (lista vazia quando nenhum corresponde aos filtros)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClienteResponse'
+  /cliente/{id}:
+    get:
+      tags:
+        - Cliente
+      summary: Buscar cliente por ID
+      operationId: buscarClientePorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    put:
+      tags:
+        - Cliente
+      summary: Atualizar cliente
+      description: Envie um ou mais campos editáveis. Campos omitidos mantêm o valor atual. Envie string vazia em cpf ou email para limpar o campo. Também usado para inativar (ativo=false) e reativar (ativo=true). O id no corpo é ignorado.
+      operationId: atualizarCliente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteUpdateRequest'
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClienteResponse'
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Cliente
+      summary: Excluir cliente
+      description: Exclui um cliente sem pedidos vinculados. Clientes com pedidos não podem ser excluídos — inative o cliente nesse caso.
+      operationId: excluirCliente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Cliente excluído
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '422':
+          description: Cliente possui pedidos vinculados
+components:
+  schemas:
+    ClienteCreateRequest:
+      type: object
+      required:
+        - nome
+        - telefone
+      properties:
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+          default: false
+          description: Indica se o telefone possui WhatsApp.
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+          description: CPF com exatamente 11 dígitos numéricos. Deve ser único entre clientes.
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
+          description: Data de nascimento (formato ISO yyyy-MM-dd).
+        ativo:
+          type: boolean
+          default: true
+          description: Ignorado na criação — o cliente sempre nasce ativo.
+    ClienteUpdateRequest:
+      type: object
+      description: Envie um ou mais campos editáveis; campos omitidos mantêm o valor atual. O id é opcional e ignorado. Envie string vazia em cpf ou email para limpar o campo.
+      additionalProperties: false
+      anyOf:
+        - required: [nome]
+        - required: [telefone]
+        - required: [whatsapp]
+        - required: [cpf]
+        - required: [email]
+        - required: [dataNascimento]
+        - required: [ativo]
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
+          description: Campos omitidos mantêm o valor atual.
+        ativo:
+          type: boolean
+    ClienteResponse:
+      type: object
+      required:
+        - id
+        - nome
+        - telefone
+        - whatsapp
+        - cpf
+        - email
+        - dataNascimento
+        - ativo
+      properties:
+        id:
+          type: integer
+          format: int64
+        nome:
+          type: string
+          maxLength: 150
+        telefone:
+          type: string
+          maxLength: 20
+        whatsapp:
+          type: boolean
+        cpf:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{11}$'
+        email:
+          type: string
+          nullable: true
+          maxLength: 150
+          format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
+        ativo:
+          type: boolean
+          description: Clientes inativos não podem ser selecionados em novos pedidos.
