@@ -5,6 +5,7 @@ paths:
         - Acesso
       summary: Login de funcionário ou administrador
       description: Valida a credencial e retorna um JWT. Contas pendentes de primeiro acesso não podem autenticar. Credenciais legadas são convertidas para BCrypt após autenticação bem-sucedida quando compatíveis.
+      security: []
       requestBody:
         required: true
         content:
@@ -31,6 +32,7 @@ paths:
         - Acesso
       summary: Definir senha no primeiro acesso
       description: Valida CPF e e-mail do funcionário, armazena a senha com BCrypt e conclui o primeiro acesso. A senha deve ter no mínimo 6 caracteres e no máximo 72 bytes em UTF-8; senhas maiores são rejeitadas sem truncamento.
+      security: []
       requestBody:
         required: true
         content:

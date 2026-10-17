@@ -5,6 +5,7 @@ paths:
         - Status
       summary: Verificar disponibilidade da API e do banco
       operationId: verificarStatus
+      security: []
       responses:
         '200':
           description: API e banco disponíveis
