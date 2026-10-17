@@ -8,6 +8,7 @@ import org.greenhouse.dto.response.PedidoResponseDTO
 import org.greenhouse.service.PedidoService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -37,7 +38,9 @@ class PedidoController(
         @RequestParam(required = false) funcionarioId: Long?,
         @RequestParam(required = false) status: String?,
         @RequestParam(required = false) modalidade: String?,
-    ): List<PedidoResponseDTO> = pedidoUseCase.listar(clienteId, funcionarioId, status, modalidade)
+        @RequestParam(required = false) observacao: String?,
+    ): List<PedidoResponseDTO> =
+        pedidoUseCase.listar(clienteId, funcionarioId, status, modalidade, observacao)
 
     @GetMapping("/{id}")
     fun buscarPorId(
@@ -55,4 +58,10 @@ class PedidoController(
         @PathVariable id: Long,
         @Valid @RequestBody request: AtualizarStatusRequestDTO,
     ): PedidoResponseDTO = pedidoUseCase.atualizarStatus(id, request.status)
+
+    @DeleteMapping("/{id}")
+    fun excluir(@PathVariable id: Long): ResponseEntity<Unit> {
+        pedidoUseCase.excluir(id)
+        return ResponseEntity.noContent().build()
+    }
 }

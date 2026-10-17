@@ -2,6 +2,7 @@ package org.greenhouse.dto.request
 
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 
 data class ClienteCreateRequestDTO(
     @field:NotNull
@@ -14,5 +15,6 @@ data class ClienteCreateRequestDTO(
     val cpf: String? = null,
     @field:Size(max = 150)
     val email: String? = null,
+    val dataNascimento: LocalDate? = null,
     val ativo: Boolean = true,
 )

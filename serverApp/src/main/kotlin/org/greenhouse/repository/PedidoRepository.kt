@@ -17,6 +17,7 @@ interface PedidoRepository : JpaRepository<Pedido, Long> {
         funcionarioId: Long? = null,
         status: StatusPedido? = null,
         modalidade: ModalidadePedido? = null,
+        observacao: String? = null,
     ): List<Pedido> =
         buscarFiltrados(
             filtrarCliente = clienteId != null,
@@ -27,6 +28,8 @@ interface PedidoRepository : JpaRepository<Pedido, Long> {
             status = status ?: StatusPedido.ABERTO,
             filtrarModalidade = modalidade != null,
             modalidade = modalidade ?: ModalidadePedido.IMEDIATA,
+            filtrarObservacao = observacao != null,
+            observacao = observacao.orEmpty(),
         )
 
     @Query(
@@ -36,6 +39,8 @@ interface PedidoRepository : JpaRepository<Pedido, Long> {
           AND (:filtrarFuncionario = false OR p.funcionarioId = :funcionarioId)
           AND (:filtrarStatus = false OR p.status = :status)
           AND (:filtrarModalidade = false OR p.modalidade = :modalidade)
+          AND (:filtrarObservacao = false
+               OR LOWER(p.observacao) LIKE CONCAT('%', LOWER(:observacao), '%'))
         ORDER BY p.dataPedido DESC, p.id DESC
         """,
     )
@@ -48,6 +53,8 @@ interface PedidoRepository : JpaRepository<Pedido, Long> {
         @Param("status") status: StatusPedido,
         @Param("filtrarModalidade") filtrarModalidade: Boolean,
         @Param("modalidade") modalidade: ModalidadePedido,
+        @Param("filtrarObservacao") filtrarObservacao: Boolean,
+        @Param("observacao") observacao: String,
     ): List<Pedido>
 
     @Query("SELECT p FROM Pedido p WHERE p.id = :id")

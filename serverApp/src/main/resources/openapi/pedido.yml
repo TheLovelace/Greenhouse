@@ -65,6 +65,12 @@ paths:
             enum:
               - IMEDIATA
               - AGENDADA
+        - name: observacao
+          in: query
+          required: false
+          description: Trecho da observação do pedido (parcial, sem diferenciar maiúsculas)
+          schema:
+            type: string
       responses:
         '200':
           description: Pedidos cadastrados; retorna uma lista vazia quando não há registros.
@@ -126,6 +132,22 @@ paths:
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Pedido
+      summary: Excluir pedido
+      description: |
+        Exclui um pedido que não movimentou estoque. Pedidos CONCLUIDOS e pedidos AGENDADOS com reserva ativa (CONFIRMADO ou PRONTO_RETIRADA) não podem ser excluídos — cancele o pedido antes de excluí-lo. Os itens do pedido são removidos em cascata.
+      operationId: excluirPedido
+      responses:
+        '204':
+          description: Pedido excluído
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '422':
+          description: Pedido movimentou ou reserva estoque
   /pedido/{id}/status:
     parameters:
       - name: id

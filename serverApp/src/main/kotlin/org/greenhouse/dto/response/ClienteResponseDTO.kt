@@ -1,5 +1,7 @@
 package org.greenhouse.dto.response
 
+import java.time.LocalDate
+
 data class ClienteResponseDTO(
     val id: Long,
     val nome: String,
@@ -7,5 +9,6 @@ data class ClienteResponseDTO(
     val whatsapp: Boolean,
     val cpf: String?,
     val email: String?,
+    val dataNascimento: LocalDate?,
     val ativo: Boolean,
 )
