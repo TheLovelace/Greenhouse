@@ -6,6 +6,8 @@ info:
 servers:
   - url: /api
     description: Prefixo padrão da API
+security:
+  - BearerAuth: []
 tags:
   - name: Categoria
     description: Operações de cadastro e consulta de categorias
@@ -123,3 +125,4 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Use o token retornado por /auth/signin, sem o prefixo "Bearer".
