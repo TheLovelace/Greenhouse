@@ -7,6 +7,7 @@ import org.greenhouse.dto.response.ClienteResponseDTO
 import org.greenhouse.service.ClienteService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -42,4 +43,10 @@ class ClienteController(
         @PathVariable id: Long,
         @Valid @RequestBody cliente: ClienteUpdateRequestDTO,
     ): ClienteResponseDTO = clienteUseCase.atualizar(id, cliente)
+
+    @DeleteMapping("/{id}")
+    fun excluir(@PathVariable id: Long): ResponseEntity<Unit> {
+        clienteUseCase.excluir(id)
+        return ResponseEntity.noContent().build()
+    }
 }

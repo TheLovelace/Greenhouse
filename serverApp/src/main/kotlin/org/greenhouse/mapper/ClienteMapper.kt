@@ -16,6 +16,7 @@ class ClienteMapper {
             whatsapp = model.whatsapp,
             cpf = model.cpf,
             email = model.email,
+            dataNascimento = model.dataNascimento,
             ativo = model.ativo,
         )
 
@@ -26,6 +27,7 @@ class ClienteMapper {
             whatsapp = dto.whatsapp,
             cpf = dto.cpf,
             email = dto.email,
+            dataNascimento = dto.dataNascimento,
             ativo = dto.ativo,
         )
 
@@ -39,6 +41,7 @@ class ClienteMapper {
         // Empty string clears the field; null keeps the current value.
         cpf = if (dto.cpf != null) dto.cpf.takeIf { it.isNotBlank() } else current.cpf,
         email = if (dto.email != null) dto.email.takeIf { it.isNotBlank() } else current.email,
+        dataNascimento = dto.dataNascimento ?: current.dataNascimento,
         ativo = dto.ativo ?: current.ativo,
     )
 }

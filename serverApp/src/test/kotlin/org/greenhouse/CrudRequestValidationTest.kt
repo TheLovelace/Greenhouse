@@ -6,6 +6,7 @@ import org.greenhouse.dto.request.CompraItemRequestDTO
 import org.greenhouse.dto.request.FormaPagamentoRequestDTO
 import org.greenhouse.dto.request.FornecedorCreateRequestDTO
 import org.greenhouse.dto.request.FuncionarioRequestDTO
+import org.greenhouse.dto.request.PedidoItemRequestDTO
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -144,6 +145,21 @@ class CrudRequestValidationTest {
             ),
             errors,
         )
+    }
+
+    @Test
+    fun `pedido item request rejects non-positive and excessive quantity`() {
+        val zeroQuantity =
+            validator.validate(PedidoItemRequestDTO(produtoId = 0, quantidade = 0))
+                .map { it.propertyPath.toString() }
+                .toSet()
+        val excessiveQuantity =
+            validator.validate(PedidoItemRequestDTO(produtoId = 1, quantidade = 10000))
+                .map { it.propertyPath.toString() }
+                .toSet()
+
+        assertEquals(setOf("produtoId", "quantidade"), zeroQuantity)
+        assertEquals(setOf("quantidade"), excessiveQuantity)
     }
 
     @AfterAll

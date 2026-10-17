@@ -70,6 +70,7 @@ class PedidoService(
         funcionarioId: Long? = null,
         status: String? = null,
         modalidade: String? = null,
+        observacao: String? = null,
     ): List<PedidoResponseDTO> {
         val pedidos =
             pedidoRepository.listar(
@@ -77,6 +78,7 @@ class PedidoService(
                 funcionarioId = funcionarioId,
                 status = status?.let(::parseStatus),
                 modalidade = modalidade?.let(::parseModalidade),
+                observacao = observacao?.takeIf { it.isNotBlank() },
             )
         val itensPorPedido =
             if (pedidos.isEmpty()) {
@@ -95,6 +97,28 @@ class PedidoService(
             pedidoRepository.buscarPorId(idValidado)
                 ?: throw NotFoundException("Pedido não encontrado")
         return pedidoMapper.toResponse(pedido, pedidoItemRepository.buscarPorPedidoId(idValidado))
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun excluir(id: Long) {
+        val idValidado = validarId(id)
+        val pedido =
+            pedidoRepository.buscarPorId(idValidado)
+                ?: throw NotFoundException("Pedido não encontrado")
+        val possuiEstoqueMovimentado =
+            pedido.status == StatusPedido.CONCLUIDO ||
+                (
+                    pedido.modalidade == ModalidadePedido.AGENDADA &&
+                        pedido.status in setOf(StatusPedido.CONFIRMADO, StatusPedido.PRONTO_RETIRADA)
+                )
+        if (possuiEstoqueMovimentado) {
+            throw UnprocessableEntityException(
+                "Pedido não pode ser excluído porque movimentou estoque; cancele o pedido antes de excluí-lo",
+            )
+        }
+        if (!pedidoRepository.excluir(idValidado)) {
+            throw NotFoundException("Pedido não encontrado")
+        }
     }
 
     @Transactional(rollbackFor = [Exception::class])

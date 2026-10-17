@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 interface ClienteRepository : JpaRepository<Cliente, Long> {
     fun listar(
@@ -56,6 +57,7 @@ interface ClienteRepository : JpaRepository<Cliente, Long> {
                 cliente.whatsapp,
                 cliente.cpf,
                 cliente.email,
+                cliente.dataNascimento,
                 cliente.ativo,
             ) == 0
         ) {
@@ -70,7 +72,8 @@ interface ClienteRepository : JpaRepository<Cliente, Long> {
         """
         UPDATE Cliente c
         SET c.nome = :nome, c.telefone = :telefone, c.whatsapp = :whatsapp,
-            c.cpf = :cpf, c.email = :email, c.ativo = :ativo
+            c.cpf = :cpf, c.email = :email, c.dataNascimento = :dataNascimento,
+            c.ativo = :ativo
         WHERE c.id = :id
         """,
     )
@@ -81,8 +84,15 @@ interface ClienteRepository : JpaRepository<Cliente, Long> {
         @Param("whatsapp") whatsapp: Boolean,
         @Param("cpf") cpf: String?,
         @Param("email") email: String?,
+        @Param("dataNascimento") dataNascimento: LocalDate?,
         @Param("ativo") ativo: Boolean,
     ): Int
+
+    @Query(
+        value = "SELECT EXISTS (SELECT 1 FROM pedido WHERE cliente_id = :id)",
+        nativeQuery = true,
+    )
+    fun possuiDependencias(@Param("id") id: Long): Boolean
 
     fun excluir(id: Long): Boolean = excluirPorId(id) > 0
 

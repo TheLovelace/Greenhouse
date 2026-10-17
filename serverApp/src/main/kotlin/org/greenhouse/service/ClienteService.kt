@@ -64,6 +64,21 @@ class ClienteService(
             ?.let(clienteMapper::toResponse) ?: throw NotFoundException("Cliente não encontrado")
     }
 
+    fun excluir(id: Long) {
+        val idValidado = validarId(id)
+        if (clienteRepository.buscarPorId(idValidado) == null) {
+            throw NotFoundException("Cliente não encontrado")
+        }
+        if (clienteRepository.possuiDependencias(idValidado)) {
+            throw UnprocessableEntityException(
+                "Cliente não pode ser excluído porque possui pedidos vinculados; inative o cliente nesse caso",
+            )
+        }
+        if (!clienteRepository.excluir(idValidado)) {
+            throw NotFoundException("Cliente não encontrado")
+        }
+    }
+
     private fun validar(cliente: Cliente) {
         if (cliente.nome.isBlank()) {
             throw UnprocessableEntityException("O nome do cliente é obrigatório")

@@ -113,6 +113,30 @@ paths:
           $ref: './status.yml#/components/responses/ErroRequisicao'
         '404':
           $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+    delete:
+      tags:
+        - Cliente
+      summary: Excluir cliente
+      description: Exclui um cliente sem pedidos vinculados. Clientes com pedidos não podem ser excluídos — inative o cliente nesse caso.
+      operationId: excluirCliente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador numérico do cliente
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Cliente excluído
+        '400':
+          $ref: './status.yml#/components/responses/ErroRequisicao'
+        '404':
+          $ref: './status.yml#/components/responses/RecursoNaoEncontrado'
+        '422':
+          description: Cliente possui pedidos vinculados
 components:
   schemas:
     ClienteCreateRequest:
@@ -141,6 +165,11 @@ components:
           nullable: true
           maxLength: 150
           format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
+          description: Data de nascimento (formato ISO yyyy-MM-dd).
         ativo:
           type: boolean
           default: true
@@ -155,6 +184,7 @@ components:
         - required: [whatsapp]
         - required: [cpf]
         - required: [email]
+        - required: [dataNascimento]
         - required: [ativo]
       properties:
         id:
@@ -178,6 +208,11 @@ components:
           nullable: true
           maxLength: 150
           format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
+          description: Campos omitidos mantêm o valor atual.
         ativo:
           type: boolean
     ClienteResponse:
@@ -189,6 +224,7 @@ components:
         - whatsapp
         - cpf
         - email
+        - dataNascimento
         - ativo
       properties:
         id:
@@ -211,6 +247,10 @@ components:
           nullable: true
           maxLength: 150
           format: email
+        dataNascimento:
+          type: string
+          format: date
+          nullable: true
         ativo:
           type: boolean
           description: Clientes inativos não podem ser selecionados em novos pedidos.

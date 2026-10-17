@@ -3,6 +3,7 @@ package org.greenhouse.dto.request
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Size
+import java.time.LocalDate
 
 data class ClienteUpdateRequestDTO(
     val id: Long? = null,
@@ -14,6 +15,7 @@ data class ClienteUpdateRequestDTO(
     val cpf: String? = null,
     @field:Size(max = 150)
     val email: String? = null,
+    val dataNascimento: LocalDate? = null,
     val ativo: Boolean? = null,
 ) {
     @get:JsonIgnore
@@ -25,5 +27,6 @@ data class ClienteUpdateRequestDTO(
                 whatsapp != null ||
                 cpf != null ||
                 email != null ||
+                dataNascimento != null ||
                 ativo != null
 }
