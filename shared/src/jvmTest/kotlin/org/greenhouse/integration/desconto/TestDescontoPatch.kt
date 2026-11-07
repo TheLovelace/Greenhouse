@@ -107,8 +107,13 @@ class TestDescontoPatch {
         assertFailsWith<BadRequestException> {
             fixture.service.atualizar(0, mapOf("titulo" to "Atualizado"))
         }
-        assertFailsWith<BadRequestException> {
-            fixture.service.atualizar(1, mapOf("id" to 10))
+        val id = fixture.novoDesconto()
+        try {
+            assertFailsWith<BadRequestException> {
+                fixture.service.atualizar(id, mapOf("id" to 10))
+            }
+        } finally {
+            fixture.limpar()
         }
     }
 
