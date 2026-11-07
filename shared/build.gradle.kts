@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    jacoco
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
 }
 
 kotlin {
@@ -97,4 +102,8 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    val isBackendTest = name == "jvmTest"
+    extensions.configure<JacocoTaskExtension> {
+        isEnabled = isBackendTest
+    }
 }
