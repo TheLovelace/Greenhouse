@@ -144,36 +144,127 @@ tasks.register("testDesktop") {
     dependsOn(":shared:jvmTest")
 }
 
+object CommitMessageChecker {
+    val tipos = listOf("feat", "fix", "docs", "style", "refactor", "test", "tests", "chore", "perf", "ci", "build", "hotfix")
+
+    private val alternativas = tipos.sortedByDescending { it.length }.joinToString("|")
+
+    private val padraoComDoisPontos =
+        Regex("""(?<![\p{L}\p{N}_-])($alternativas)(\([^)]*\))?!?:""", RegexOption.IGNORE_CASE)
+
+    private val padraoEntreColchetes =
+        Regex("""\[($alternativas)(\([^)]*\))?\]""", RegexOption.IGNORE_CASE)
+
+    private val padraoAmend = Regex("""^--amend(\s|$)""", RegexOption.IGNORE_CASE)
+
+    fun identificarTipo(mensagem: String): String? {
+        val assunto =
+            mensagem
+                .trim()
+                .lineSequence()
+                .firstOrNull()
+                .orEmpty()
+        if (padraoAmend.containsMatchIn(assunto)) return "amend"
+        val encontrado = padraoComDoisPontos.find(assunto) ?: padraoEntreColchetes.find(assunto)
+        return encontrado?.groupValues?.get(1)?.lowercase()
+    }
+
+    fun isMerge(mensagem: String): Boolean = mensagem.trimStart().startsWith("Merge ")
+}
+
 tasks.register("checkCommitMessage") {
     group = "verification"
-    description = "Valida se a mensagem do último commit segue Conventional Commits"
+    description = "Verifica se a mensagem do commit (-PcommitRef, padrão HEAD, ou -PcommitMessage) contém um tipo de commit reconhecido"
 
     val execOps = serviceOf<ExecOperations>()
+    val mensagemInformada = providers.gradleProperty("commitMessage")
+    val commitRef = providers.gradleProperty("commitRef").orElse("HEAD")
 
     doLast {
-        val output = java.io.ByteArrayOutputStream()
-        execOps.exec {
-            commandLine("git", "log", "-1", "--pretty=%B")
-            standardOutput = output
-        }
-        val commitMsg = output.toString().trim()
-        val firstLine = commitMsg.lines().first()
+        val commitMsg =
+            mensagemInformada.orNull ?: run {
+                val output = java.io.ByteArrayOutputStream()
+                execOps.exec {
+                    commandLine("git", "log", "-1", "--pretty=%B", commitRef.get())
+                    standardOutput = output
+                }
+                output.toString()
+            }
+        val assunto =
+            commitMsg
+                .trim()
+                .lineSequence()
+                .firstOrNull()
+                .orEmpty()
 
-        if (firstLine.startsWith("Merge ")) {
-            println("Commit de merge detectado, pulando validação: \"$firstLine\"")
+        if (CommitMessageChecker.isMerge(commitMsg)) {
+            println("Commit de merge detectado, pulando validação: \"$assunto\"")
             return@doLast
         }
 
-        val pattern = Regex("^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\\(.+\\))?: .{1,100}")
+        val tipo =
+            CommitMessageChecker.identificarTipo(commitMsg)
+                ?: throw GradleException(
+                    "Mensagem de commit sem tipo reconhecido: \"$assunto\"\n" +
+                        "Inclua um tipo na mensagem, ex.: \"feat: descrição\", \"[fix] descrição\" ou \"✨ docs: descrição\"\n" +
+                        "Tipos válidos: ${CommitMessageChecker.tipos.joinToString()}",
+                )
 
-        if (!pattern.matches(firstLine)) {
-            throw GradleException(
-                "Mensagem de commit inválida: \"$firstLine\"\n" +
-                    "Formato esperado: tipo(escopo opcional): descrição\n" +
-                    "Tipos válidos: feat, fix, docs, style, refactor, test, chore, perf, ci, build",
+        println("Mensagem de commit válida (tipo: $tipo): \"$assunto\"")
+    }
+}
+
+tasks.register("checkCommitMessageTest") {
+    group = "verification"
+    description = "Testa a identificação de tipos da task checkCommitMessage"
+
+    doLast {
+        val casos =
+            listOf(
+                "feat: adiciona cadastro de categoria" to "feat",
+                "docs: atualiza documentação" to "docs",
+                "tests: adiciona testes para categoria" to "tests",
+                "test: adiciona testes" to "test",
+                "fix: corrige bug no produto" to "fix",
+                "refactor: extrai validador" to "refactor",
+                "chore: atualiza dependências" to "chore",
+                "Implementa feat: cadastro de produto" to "feat",
+                "[feat] adiciona cadastro" to "feat",
+                "✨ feat: adiciona cadastro" to "feat",
+                ":sparkles: feat: adiciona formulário" to "feat",
+                ":fire: Hotfix: Consertando o problema do Authorize" to "hotfix",
+                "feat(api): adiciona rota" to "feat",
+                "feat!: remove endpoint antigo" to "feat",
+                "Fix: corrige login" to "fix",
+                "feat:sem espaço depois dos dois pontos" to "feat",
+                "adiciona cadastro de categoria" to null,
+                "corrige bug no produto" to null,
+                "implementação inicial" to null,
+                "asuhashuashau" to null,
+                "--amend" to "amend",
+                "--amend corrige typo" to "amend",
+                "--amendment não é amend" to null,
+                "prefix: não é um tipo" to null,
+                "hotfix: corrige login em produção" to "hotfix",
+                "superhotfix: não é um tipo" to null,
+                "feature: não é um tipo" to null,
+                "adiciona cadastro\n\nfeat: tipo só no corpo não conta" to null,
+                "" to null,
             )
+
+        val falhas =
+            casos.mapNotNull { (mensagem, esperado) ->
+                val obtido = CommitMessageChecker.identificarTipo(mensagem)
+                val ok = obtido == esperado
+                val status = if (ok) "PASSED" else "FAILED"
+                println("  $status  \"${mensagem.replace("\n", "\\n")}\" -> ${obtido ?: "inválida"}")
+                if (ok) null else "\"$mensagem\": esperado ${esperado ?: "inválida"}, obtido ${obtido ?: "inválida"}"
+            }
+
+        println("${casos.size} casos: ${casos.size - falhas.size} passed, ${falhas.size} failed")
+        if (falhas.isNotEmpty()) {
+            throw GradleException("Falhas na identificação de tipo:\n" + falhas.joinToString("\n"))
         }
-        println("Mensagem de commit válida: \"$firstLine\"")
     }
 }
 
