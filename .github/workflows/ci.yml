@@ -88,7 +88,15 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MQTT_URL: ${{ secrets.MQTT_TEST }}
           MQTT_PASSWORD: ${{ secrets.MQTT_TEST_PASSWORD }}
-        run: ./gradlew testDesktop
+        run: ./gradlew coverage
+
+      - name: Publicar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-cobertura
+          path: build/reports/jacoco/coverage/html
+          if-no-files-found: warn
 
   test-mobile:
     name: Testes Mobile (Android)
@@ -166,6 +174,12 @@ jobs:
           echo "REGISTRY_OWNER=${OWNER}" >> "$GITHUB_ENV"
           echo "IMAGE_TAG=${GITHUB_SHA}" >> "$GITHUB_ENV"
           echo "IMAGE_URL=ghcr.io/${OWNER}/app:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Baixar relatório de cobertura (servido em /jacoco/)
+        uses: actions/download-artifact@v4
+        with:
+          name: relatorio-cobertura
+          path: build/reports/jacoco/coverage/html
 
       - name: Build e push da imagem no GHCR (Jib)
         env:
