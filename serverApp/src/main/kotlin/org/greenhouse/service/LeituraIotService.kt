@@ -39,6 +39,7 @@ class LeituraIotService(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
+    private val cem = BigDecimal(100)
 
     fun iniciarMonitoramento(): Int {
         if (fila == null) {
@@ -174,9 +175,9 @@ class LeituraIotService(
 
         val percentual =
                 BigDecimal(seco - raw)
-                        .multiply(CEM)
+                        .multiply(cem)
                         .divide(BigDecimal(seco - umido), 2, RoundingMode.HALF_UP)
-        return percentual.max(BigDecimal.ZERO.setScale(2)).min(CEM.setScale(2))
+        return percentual.max(BigDecimal.ZERO.setScale(2)).min(cem.setScale(2))
     }
 
     @Transactional(readOnly = true)
@@ -255,9 +256,5 @@ class LeituraIotService(
     private fun amplitude(especie: Especie, parametro: ParametroAmbiental): BigDecimal? {
         val (min, max) = faixaDe(especie, parametro)
         return if (min != null && max != null) max - min else null
-    }
-
-    private companion object {
-        val CEM = BigDecimal(100)
     }
 }
