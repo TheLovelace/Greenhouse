@@ -92,10 +92,26 @@ jib {
         tags = setOf(imageTag)
     }
 
+    val relatorioCobertura = rootProject.layout.buildDirectory.dir("reports/jacoco/coverage/html").get().asFile
+    if (relatorioCobertura.isDirectory) {
+        extraDirectories {
+            paths {
+                path {
+                    setFrom(relatorioCobertura.toPath())
+                    into = "/app/jacoco"
+                }
+            }
+        }
+    }
+
     container {
         ports = listOf("8080")
 
-        environment = mapOf("SPRING_PROFILES_ACTIVE" to "prod")
+        environment =
+            mapOf(
+                "SPRING_PROFILES_ACTIVE" to "prod",
+                "JACOCO_REPORT_DIR" to "file:/app/jacoco/",
+            )
 
         jvmFlags = listOf(
             "-XX:MaxRAMPercentage=75",
