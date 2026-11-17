@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:function-naming")
+
 package org.greenhouse
 
 import androidx.compose.runtime.Composable
@@ -5,9 +7,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.greenhouse.app.repository.CategoriaRepositorioRemoto
+import org.greenhouse.app.repository.ProdutoRepositorioRemoto
+import org.greenhouse.app.repository.createHttpClient
+import org.greenhouse.app.viewmodel.CategoriaViewModel
+import org.greenhouse.app.viewmodel.PrincipalViewModel
+import org.greenhouse.app.viewmodel.ProdutoViewModel
+import org.greenhouse.ui.navigation.ModulosRotas
 import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
-import org.greenhouse.ui.screens.categoria.CategoriaCadastro
-import org.greenhouse.ui.screens.categoria.model.CategoriaCadastroData
+import org.greenhouse.ui.screens.catalogo.CatalogoScreen
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
 import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
@@ -27,14 +36,11 @@ import org.greenhouse.ui.screens.home.HomeScreen
 import org.greenhouse.ui.screens.home.HomeDestination
 import org.greenhouse.ui.screens.pedido.PedidoCadastro
 import org.greenhouse.ui.screens.pedido.model.PedidoCadastroData
-import org.greenhouse.ui.screens.produto.ProdutoCadastro
-import org.greenhouse.ui.screens.produto.model.ProdutoCadastroData
 import org.greenhouse.ui.theme.GreenhouseTheme
 
 @Composable
 fun App(
     onNavigate: (HomeDestination) -> Unit = {},
-    onSaveCategoria: (CategoriaCadastroData) -> Unit = {},
     onSaveCliente: (ClienteCadastroData) -> Unit = {},
     onSaveCompraFornecedor: (CompraFornecedorCadastroData) -> Unit = {},
     onSaveDesconto: (DescontoCadastroData) -> Unit = {},
@@ -43,9 +49,13 @@ fun App(
     onSaveFormaPagamento: (FormaPagamentoCadastroData) -> Unit = {},
     onSaveFornecedor: (FornecedorCadastroData) -> Unit = {},
     onSavePedido: (PedidoCadastroData) -> Unit = {},
-    onSaveProduto: (ProdutoCadastroData) -> Unit = {},
 ) {
-    var isCategoriaCadastroVisible by remember { mutableStateOf(false) }
+    val httpClient = remember { createHttpClient() }
+    val principalViewModel = viewModel { PrincipalViewModel() }
+    val categoriaViewModel = viewModel { CategoriaViewModel(CategoriaRepositorioRemoto(httpClient)) }
+    val produtoViewModel = viewModel { ProdutoViewModel(ProdutoRepositorioRemoto(httpClient)) }
+
+    var isCatalogoVisible by remember { mutableStateOf(false) }
     var isAlertaCadastroVisible by remember { mutableStateOf(false) }
     var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
@@ -56,13 +66,14 @@ fun App(
     var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
     var isFornecedorCadastroVisible by remember { mutableStateOf(false) }
     var isPedidoCadastroVisible by remember { mutableStateOf(false) }
-    var isProdutoCadastroVisible by remember { mutableStateOf(false) }
 
     GreenhouseTheme {
-        if (isCategoriaCadastroVisible) {
-            CategoriaCadastro(
-                onBack = { isCategoriaCadastroVisible = false },
-                onSave = onSaveCategoria,
+        if (isCatalogoVisible) {
+            CatalogoScreen(
+                principalViewModel = principalViewModel,
+                categoriaViewModel = categoriaViewModel,
+                produtoViewModel = produtoViewModel,
+                onVoltarHome = { isCatalogoVisible = false },
             )
         } else if (isClienteCadastroVisible) {
             ClienteCadastro(
@@ -104,11 +115,6 @@ fun App(
                 onBack = { isPedidoCadastroVisible = false },
                 onSave = onSavePedido,
             )
-        } else if (isProdutoCadastroVisible) {
-            ProdutoCadastro(
-                onBack = { isProdutoCadastroVisible = false },
-                onSave = onSaveProduto,
-            )
         } else if (isAlertaCadastroVisible) {
             CadastrarAlertaIotScreen(
                 onBackClick = { isAlertaCadastroVisible = false },
@@ -123,7 +129,10 @@ fun App(
             HomeScreen(
                 onNavigate = { destination ->
                     when (destination) {
-                        HomeDestination.CATEGORIAS -> isCategoriaCadastroVisible = true
+                        HomeDestination.CATEGORIAS -> {
+                            principalViewModel.abrirModulo(ModulosRotas.categorias)
+                            isCatalogoVisible = true
+                        }
                         HomeDestination.CLIENTES -> isClienteCadastroVisible = true
                         HomeDestination.COMPRAS -> isCompraFornecedorCadastroVisible = true
                         HomeDestination.DESCONTOS -> isDescontoCadastroVisible = true
@@ -132,7 +141,10 @@ fun App(
                         HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
                         HomeDestination.FORNECEDORES -> isFornecedorCadastroVisible = true
                         HomeDestination.PEDIDOS -> isPedidoCadastroVisible = true
-                        HomeDestination.PRODUTOS -> isProdutoCadastroVisible = true
+                        HomeDestination.PRODUTOS -> {
+                            principalViewModel.abrirModulo(ModulosRotas.produtos)
+                            isCatalogoVisible = true
+                        }
                         HomeDestination.ESPECIES -> isEspecieCadastroVisible = true
                         HomeDestination.ALERTAS -> isAlertaCadastroVisible = true
                         else -> onNavigate(destination)
