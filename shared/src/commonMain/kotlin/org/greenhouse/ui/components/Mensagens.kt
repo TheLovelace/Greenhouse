@@ -15,8 +15,13 @@ fun MostrarMensagem(
     LaunchedEffect(mensagem.value) {
         val texto = mensagem.value
         if (texto.isNotEmpty()) {
-            mensagem.value = ""
-            snackbar.showSnackbar(texto)
+            try {
+                snackbar.showSnackbar(texto)
+            } finally {
+                if (mensagem.value == texto) {
+                    mensagem.value = ""
+                }
+            }
         }
     }
 }
