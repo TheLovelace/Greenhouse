@@ -65,6 +65,8 @@ fun DescontoLista(
     onCreate: () -> Unit,
     onEdit: (DescontoItem) -> Unit,
     onDelete: (DescontoItem) -> Unit,
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
     var busca by remember { mutableStateOf("") }
@@ -87,22 +89,28 @@ fun DescontoLista(
         }
 
     BoxWithConstraints(
-        modifier = Modifier.fillMaxSize().background(Background).padding(horizontal = 24.dp, vertical = 18.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Background)
+                .padding(horizontal = 24.dp, vertical = 18.dp),
     ) {
         val compactLayout = maxWidth < 600.dp
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
-                Text("Descontos", color = TextPrimary, style = typography.titleMedium)
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).size(48.dp)) {
-                    Image(
-                        painter = painterResource(Res.drawable.icon_voltar),
-                        contentDescription = "Voltar",
-                        modifier = Modifier.size(32.dp),
-                    )
+            if (!embedded) {
+                Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                    Text("Descontos", color = TextPrimary, style = typography.titleMedium)
+                    IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).size(48.dp)) {
+                        Image(
+                            painter = painterResource(Res.drawable.icon_voltar),
+                            contentDescription = "Voltar",
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
                 }
+                Spacer(Modifier.height(20.dp))
             }
-
-            Spacer(Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -178,7 +186,7 @@ fun DescontoLista(
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(bottom = 92.dp),
+                    contentPadding = PaddingValues(bottom = if (embedded) 16.dp else 92.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     items(descontosFiltrados, key = { it.id }) { desconto ->
@@ -190,29 +198,33 @@ fun DescontoLista(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
-            Footer()
+            if (!embedded) {
+                Spacer(Modifier.height(12.dp))
+                Footer()
+            }
         }
 
-        FloatingActionButton(
-            onClick = onCreate,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 48.dp),
-            shape = RoundedCornerShape(18.dp),
-            containerColor = GreenPrimary,
-            contentColor = androidx.compose.ui.graphics.Color.White,
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = if (compactLayout) 0.dp else 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        if (!embedded) {
+            FloatingActionButton(
+                onClick = onCreate,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 48.dp),
+                shape = RoundedCornerShape(18.dp),
+                containerColor = GreenPrimary,
+                contentColor = androidx.compose.ui.graphics.Color.White,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_adicionar_light),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                )
-                if (!compactLayout) {
-                    Text("Cadastrar desconto", color = TextSecondary, style = typography.labelLarge)
+                Row(
+                    modifier = Modifier.padding(horizontal = if (compactLayout) 0.dp else 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_adicionar_light),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    if (!compactLayout) {
+                        Text("Cadastrar desconto", color = TextSecondary, style = typography.labelLarge)
+                    }
                 }
             }
         }

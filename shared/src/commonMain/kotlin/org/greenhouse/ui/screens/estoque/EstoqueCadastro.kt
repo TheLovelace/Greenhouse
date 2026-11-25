@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -67,6 +68,8 @@ fun EstoqueCadastro(
     produtoIdReadOnly: Boolean = false,
     quantidadeReservadaAtual: Int? = null,
     existingProdutoIds: Set<Long> = emptySet(),
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
     var form by remember(initialForm) { mutableStateOf(initialForm) }
@@ -92,32 +95,34 @@ fun EstoqueCadastro(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .background(Background)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Estoque",
-                color = TextPrimary,
-                style = typography.titleMedium,
-            )
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        if (!embedded) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_voltar),
-                    contentDescription = "Voltar",
-                    modifier = Modifier.size(32.dp),
+                Text(
+                    text = "Estoque",
+                    color = TextPrimary,
+                    style = typography.titleMedium,
                 )
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_voltar),
+                        contentDescription = "Voltar",
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
             }
+            Spacer(Modifier.height(24.dp))
         }
-
-        Spacer(Modifier.height(24.dp))
 
         Column(
             modifier =

@@ -2,6 +2,7 @@
 
 package org.greenhouse.ui.screens.estoque
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
@@ -14,6 +15,8 @@ fun EstoqueEdicao(
     onBack: () -> Unit,
     onSave: (EstoqueCadastroData) -> Unit,
     existingProdutoIds: Set<Long> = emptySet(),
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val initialForm =
         remember(estoque) {
@@ -36,5 +39,7 @@ fun EstoqueEdicao(
         produtoIdReadOnly = estoque != null,
         quantidadeReservadaAtual = estoque?.quantidadeReservada,
         existingProdutoIds = existingProdutoIds,
+        padding = padding,
+        embedded = embedded,
     )
 }

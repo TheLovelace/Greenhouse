@@ -2,6 +2,7 @@
 
 package org.greenhouse.ui.screens.desconto
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
@@ -13,6 +14,8 @@ fun DescontoEdicao(
     desconto: DescontoItem?,
     onBack: () -> Unit,
     onSave: (DescontoCadastroData) -> Unit,
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val initialForm = remember(desconto) { desconto?.toCadastroForm() ?: DescontoCadastroForm() }
     DescontoCadastro(
@@ -20,6 +23,8 @@ fun DescontoEdicao(
         onSave = onSave,
         initialForm = initialForm,
         title = if (desconto == null) "Cadastrar Desconto" else "Editar Desconto #${desconto.id}",
+        padding = padding,
+        embedded = embedded,
     )
 }
 
