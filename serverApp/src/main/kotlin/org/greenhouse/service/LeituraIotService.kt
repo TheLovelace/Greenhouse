@@ -4,8 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.OffsetDateTime
+import org.greenhouse.adapter.AppException
 import org.greenhouse.adapter.BadRequestException
+import org.greenhouse.adapter.GlobalExceptionHandler
 import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.adapter.NotificacaoAlertaAdapter
+import org.greenhouse.adapter.ServerException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.dto.AvaliacaoLeituraDTO
 import org.greenhouse.dto.LeituraIotPayloadDTO
@@ -38,6 +42,8 @@ class LeituraIotService(
         private val alertaRepository: AlertaRepository,
         private val objectMapper: ObjectMapper,
         private val fila: FilaLeituraIot?,
+        private val notificacaoAlerta: NotificacaoAlertaAdapter?,
+        private val exceptionHandler: GlobalExceptionHandler,
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -94,15 +100,18 @@ class LeituraIotService(
                         .filter { it.especie.ativo }
                         .flatMap { identificarOcorrencias(it, leitura) }
 
-        return AvaliacaoLeituraDTO(
-                leituraId = leitura.id,
-                dispositivoId = dispositivoId,
-                temperatura = leitura.temperatura,
-                umidadeAr = leitura.umidadeAr,
-                umidadeSolo = leitura.umidadeSolo,
-                dataLeitura = leitura.dataLeitura,
-                ocorrencias = ocorrencias,
-        )
+        val avaliacao =
+                AvaliacaoLeituraDTO(
+                        leituraId = leitura.id,
+                        dispositivoId = dispositivoId,
+                        temperatura = leitura.temperatura,
+                        umidadeAr = leitura.umidadeAr,
+                        umidadeSolo = leitura.umidadeSolo,
+                        dataLeitura = leitura.dataLeitura,
+                        ocorrencias = ocorrencias,
+                )
+        if (ocorrencias.isNotEmpty()) notificacaoAlerta?.notificar(dispositivo, avaliacao)
+        return avaliacao
     }
 
     fun avaliarCondicoes(
@@ -202,7 +211,8 @@ class LeituraIotService(
         try {
             processarMensagem(topico, payload)
         } catch (e: Exception) {
-            log.warn("Leitura IoT descartada no tópico {}: {}", topico, e.message)
+            val erro = e as? AppException ?: ServerException("Falha ao processar a leitura IoT", e)
+            exceptionHandler.registrar(erro, "Fila IoT - leitura descartada no tópico $topico")
         }
     }
 

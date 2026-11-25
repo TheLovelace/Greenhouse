@@ -16,6 +16,14 @@ class DatabaseConnectionException(cause: Throwable? = null) :
         cause = cause,
     )
 
+/** 503 - Falha ao conectar ou se comunicar com o broker MQTT dos dispositivos IoT. */
+class BrokerConnectionException(message: String = "Falha ao conectar ao broker MQTT", cause: Throwable? = null) :
+    AppException(
+        message = message,
+        statusCode = HttpStatus.SERVICE_UNAVAILABLE,
+        cause = cause,
+    )
+
 /** 401 - Credenciais inválidas ou ausentes. */
 class AuthenticationException(message: String = "Falha de autenticação", cause: Throwable? = null) :
     AppException(
