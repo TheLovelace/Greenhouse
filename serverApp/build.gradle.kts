@@ -41,6 +41,9 @@ dependencies {
     // Cliente MQTT para assinar os tópicos dos dispositivos IoT no broker
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 
+    // Envio de e-mail (SMTP) para notificar o admin quando uma leitura sai da faixa ideal
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly("com.h2database:h2")
 

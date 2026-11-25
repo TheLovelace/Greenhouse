@@ -4,8 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.math.BigDecimal
 import java.time.OffsetDateTime
+import org.greenhouse.adapter.AppException
 import org.greenhouse.adapter.BadRequestException
+import org.greenhouse.adapter.GlobalExceptionHandler
 import org.greenhouse.adapter.NotFoundException
+import org.greenhouse.adapter.NotificacaoAlertaAdapter
+import org.greenhouse.adapter.ServerException
 import org.greenhouse.adapter.UnprocessableEntityException
 import org.greenhouse.enums.CondicaoAmbiental.ABAIXO_DO_IDEAL
 import org.greenhouse.enums.CondicaoAmbiental.ACIMA_DO_IDEAL
@@ -66,6 +70,10 @@ import org.mockito.junit.jupiter.MockitoExtension
  * service é capturado e chamado à mão, simulando o broker entregando uma mensagem, o teste age como
  * DRIVER da fila.
  * - MOCKS [repository], [dispositivoRepository], [alertaRepository]: substituem o banco.
+ * - MOCK [notificacaoAlerta]: substitui o envio de e-mail ao admin; os testes verificam se a
+ * notificação é disparada só quando a leitura gera ocorrências.
+ * - MOCK [exceptionHandler]: GlobalExceptionHandler que registra os erros da fila; os testes
+ * verificam que uma mensagem descartada é registrada por ele.
  * - SPY [objectMapper]: ObjectMapper real do Jackson embrulhado em spy para ser injetado pelo
  * @InjectMocks.
  * - FIXTURE: dispositivo, espécie, regras de alerta e payloads reais de MonitoramentoFixture.
@@ -106,6 +114,10 @@ class LeituraIotServiceTest {
     @Mock lateinit var alertaRepository: AlertaRepository
 
     @Mock lateinit var fila: FilaLeituraIot
+
+    @Mock lateinit var notificacaoAlerta: NotificacaoAlertaAdapter
+
+    @Mock lateinit var exceptionHandler: GlobalExceptionHandler
 
     @Spy var objectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -222,7 +234,9 @@ class LeituraIotServiceTest {
                         dispositivoRepository,
                         alertaRepository,
                         objectMapper,
-                        null
+                        null,
+                        null,
+                        exceptionHandler,
                 )
 
         val quantidadeDeTopicosAssinados = serviceSemFila.iniciarMonitoramento()
@@ -257,6 +271,26 @@ class LeituraIotServiceTest {
             brokerEntregaMensagem(mensagemQueNaoEJson)
         }
         nenhumaLeituraFoiSalva()
+
+        val erroRegistrado = ArgumentCaptor.forClass(AppException::class.java)
+        val contexto = ArgumentCaptor.forClass(String::class.java)
+        verify(exceptionHandler)
+                .registrar(erroRegistrado.capture() ?: ServerException(), contexto.capture() ?: "")
+        assertAll(
+                "erro registrado pelo GlobalExceptionHandler",
+                {
+                    assertTrue(
+                            erroRegistrado.value is BadRequestException,
+                            "payload inválido é registrado como BadRequestException"
+                    )
+                },
+                {
+                    assertTrue(
+                            contexto.value.contains(topico),
+                            "o contexto do log identifica o tópico da mensagem descartada"
+                    )
+                },
+        )
     }
 
     // RN03: Os parâmetros configurados na espécie devem ser usados para avaliar e categorizar os
@@ -1308,5 +1342,34 @@ class LeituraIotServiceTest {
                 service.precoCompativel(especieDeComplexidadeMedia, umCentavoAbaixoDoMinimo),
                 "R$ 29,99 não cobre a complexidade média (mínimo R$ 30,00)"
         )
+    }
+
+    // RN04: Situações fora dos limites estabelecidos devem ficar identificadas para possível
+    // geração de alertas.
+    // CT46 - Fluxo principal: leitura fora da faixa notifica o admin com o dispositivo e as
+    // ocorrências
+    @Test
+    fun `deve notificar o admin quando a leitura gera ocorrencias`() {
+        val dispositivoDaEstufa = dispositivoNoTopico()
+        bancoSalvaLeituraEGeraId()
+        regrasAtivasDoDispositivo(alerta(id = 100L, prioridade = 3))
+
+        val resultado = service.processarMensagem(topico, payload(temperatura = "31.00"))
+
+        assertEquals(1, resultado.ocorrencias.size, "a temperatura acima do máximo gera ocorrência")
+        verify(notificacaoAlerta, times(1)).notificar(dispositivoDaEstufa, resultado)
+    }
+
+    // RN04: Situações fora dos limites estabelecidos devem ficar identificadas para possível
+    // geração de alertas.
+    // CT47 - Fluxo alternativo: leitura dentro da faixa não notifica o admin
+    @Test
+    fun `nao deve notificar o admin quando a leitura esta dentro da faixa`() {
+        dispositivoValidoComRegras(alerta(id = 100L, prioridade = 3))
+
+        val resultado = service.processarMensagem(topico, payload())
+
+        assertTrue(resultado.ocorrencias.isEmpty(), "tudo dentro da faixa: nenhuma ocorrência")
+        verifyNoInteractions(notificacaoAlerta)
     }
 }

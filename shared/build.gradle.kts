@@ -142,6 +142,8 @@ kotlin {
             implementation("org.springframework.boot:spring-boot-starter-web:3.5.6")
             implementation("org.springframework.boot:spring-boot-starter-security:3.5.6")
             implementation("org.junit.vintage:junit-vintage-engine:5.12.2")
+            implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+            implementation("org.springframework.boot:spring-boot-starter-mail:3.5.6")
         }
 
         jsMain.dependencies {
@@ -160,4 +162,20 @@ tasks.withType<Test>().configureEach {
     extensions.configure<JacocoTaskExtension> {
         isEnabled = isBackendTest
     }
+}
+
+val pacoteTestesFila = "org.greenhouse.integration.fila.*"
+
+tasks.named<Test>("jvmTest") {
+    filter { excludeTestsMatching(pacoteTestesFila) }
+}
+
+tasks.register<Test>("testFila") {
+    group = "verification"
+    description = "Roda os testes da fila IoT contra o broker MQTT e o SMTP configurados no .env.test.local"
+    val jvmTest = tasks.named<Test>("jvmTest").get()
+    testClassesDirs = jvmTest.testClassesDirs
+    classpath = jvmTest.classpath
+    filter { includeTestsMatching(pacoteTestesFila) }
+    outputs.upToDateWhen { false }
 }

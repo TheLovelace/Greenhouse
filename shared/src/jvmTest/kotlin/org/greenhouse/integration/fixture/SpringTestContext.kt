@@ -16,7 +16,7 @@ object SpringTestContext {
                 "server.port=0",
                 "spring.flyway.enabled=false",
             )
-            .run()
+            .run("--mqtt.broker-url=", "--alerta.email.destino=")
     }
 
     fun <T : Any> bean(type: Class<T>): T = applicationContext.getBean(type)
