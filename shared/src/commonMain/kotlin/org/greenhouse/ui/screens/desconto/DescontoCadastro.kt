@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,11 +47,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
-import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroForm
 import org.greenhouse.ui.screens.desconto.model.TipoDescontoCadastro
+import org.greenhouse.app.viewmodel.DescontoViewModel
 import org.greenhouse.ui.screens.desconto.validation.formatarDataBrasileira
 import org.greenhouse.ui.screens.desconto.validation.formatarValorDesconto
 import org.greenhouse.ui.screens.desconto.validation.toOffsetDateTimeOrNull
@@ -68,52 +68,53 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun DescontoCadastro(
+    viewModel: DescontoViewModel,
     onBack: () -> Unit,
-    onSave: (DescontoCadastroData) -> Unit,
+    onSuccess: (String) -> Unit,
+    title: String = "Cadastrar Desconto",
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(DescontoCadastroForm()) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
+    val form = viewModel.formulario()
+    val errors = viewModel.erros.value
 
     fun updateForm(updatedForm: DescontoCadastroForm) {
-        form = updatedForm
-        showSuccessMessage = false
-        if (errors.isNotEmpty()) {
-            errors = validarDescontoCadastro(updatedForm)
-        }
+        viewModel.atualizarFormulario(updatedForm)
     }
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .background(Background)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Descontos",
-                color = TextPrimary,
-                style = typography.titleMedium,
-            )
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        if (!embedded) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_voltar),
-                    contentDescription = "Voltar",
-                    modifier = Modifier.size(32.dp),
+                Text(
+                    text = "Descontos",
+                    color = TextPrimary,
+                    style = typography.titleMedium,
                 )
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_voltar),
+                        contentDescription = "Voltar",
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
             }
+            Spacer(Modifier.height(24.dp))
         }
-
-        Spacer(Modifier.height(24.dp))
 
         Column(
             modifier =
@@ -124,7 +125,7 @@ fun DescontoCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Desconto",
+                text = title,
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -254,23 +255,12 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                saveForm(
-                                    form = form,
-                                    onSave = onSave,
-                                    onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
-                                )
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = DescontoCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 } else {
@@ -278,53 +268,17 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                saveForm(
-                                    form = form,
-                                    onSave = onSave,
-                                    onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
-                                )
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = DescontoCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 }
             }
-
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Desconto cadastrado com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun CadastroSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -504,31 +458,6 @@ private fun ClearButton(
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
         Text("Limpar campos", style = typography.bodyMedium)
-    }
-}
-
-private fun saveForm(
-    form: DescontoCadastroForm,
-    onSave: (DescontoCadastroData) -> Unit,
-    onValidationErrors: (Map<String, String>) -> Unit,
-    onSaved: () -> Unit,
-) {
-    val validationErrors = validarDescontoCadastro(form)
-    onValidationErrors(validationErrors)
-    if (validationErrors.isEmpty()) {
-        onSave(
-            DescontoCadastroData(
-                titulo = form.titulo.trim(),
-                descricao = form.descricao.trim().ifEmpty { null },
-                tipo = form.tipo,
-                valor = form.valor.trim().replace(',', '.'),
-                dataInicio = form.dataInicio.toOffsetDateTimeOrNull(),
-                dataFim = form.dataFim.toOffsetDateTimeOrNull(),
-                ativo = form.ativo,
-                quantidadeMinimaItens = form.quantidadeMinimaItens.trim(),
-            ),
-        )
-        onSaved()
     }
 }
 

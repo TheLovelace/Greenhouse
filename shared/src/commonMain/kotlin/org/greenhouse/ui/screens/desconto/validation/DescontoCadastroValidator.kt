@@ -1,5 +1,6 @@
 package org.greenhouse.ui.screens.desconto.validation
 
+import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroForm
 import org.greenhouse.ui.screens.desconto.model.TipoDescontoCadastro
 
@@ -91,6 +92,21 @@ fun validarDescontoCadastro(form: DescontoCadastroForm): Map<String, String> {
     }
 
     return erros
+}
+
+fun DescontoCadastroForm.toDescontoCadastroDataOrNull(): DescontoCadastroData? {
+    if (validarDescontoCadastro(this).isNotEmpty()) return null
+
+    return DescontoCadastroData(
+        titulo = titulo.trim(),
+        descricao = descricao.trim().ifEmpty { null },
+        tipo = tipo,
+        valor = valor.trim().replace(',', '.'),
+        dataInicio = dataInicio.toOffsetDateTimeOrNull(),
+        dataFim = dataFim.toOffsetDateTimeOrNull(),
+        ativo = ativo,
+        quantidadeMinimaItens = quantidadeMinimaItens.trim(),
+    )
 }
 
 fun String.toOffsetDateTimeOrNull(): String? {

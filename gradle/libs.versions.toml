@@ -17,11 +17,11 @@ kotlin = "2.4.10"
 kotlin-wrappers = "2026.8.4"
 kotlinx-coroutines = "1.11.0"
 material3 = "1.11.0-alpha07"
+navigation3 = "1.1.1"
+navigation3-browser = "1.1.0"
 springBoot = "3.5.6"
 springdoc = "2.9.1"
 constraintlayoutCore = "1.1.2"
-navigation3 = "1.1.1"
-navigation3-browser = "1.1.0"
 kotlinx-serialization = "1.9.0"
 ktor = "3.4.0"
 
@@ -37,6 +37,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 compose-uiTooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "composeMultiplatform" }
+compose-animation = { module = "org.jetbrains.compose.animation:animation", version.ref = "composeMultiplatform" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
@@ -50,7 +51,7 @@ spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-star
 springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 postgresql = { module = "org.postgresql:postgresql", version = "42.7.7" }
 androidx-constraintlayout-core = { group = "androidx.constraintlayout", name = "constraintlayout-core", version.ref = "constraintlayoutCore" }
-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
+jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3" }
 navigation3-browser = { module = "com.github.terrakok:navigation3-browser", version.ref = "navigation3-browser" }
 navigation3-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
@@ -64,7 +65,6 @@ ktor-client-js = { group = "io.ktor", name = "ktor-client-js", version.ref = "kt
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 
 [bundles]
-navigation3 = ["navigation3-ui", "navigation3-viewmodel"]
 ktor-core = ["ktor-client-core", "ktor-client-content", "ktor-client-logging", "ktor-serialization-json"]
 
 [plugins]

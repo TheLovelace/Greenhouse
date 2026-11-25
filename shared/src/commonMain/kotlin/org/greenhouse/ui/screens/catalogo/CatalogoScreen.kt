@@ -23,6 +23,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -32,20 +35,31 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_categoria
+import greenhouse.shared.generated.resources.icon_desconto
+import greenhouse.shared.generated.resources.icon_estoque
 import greenhouse.shared.generated.resources.icon_home
 import greenhouse.shared.generated.resources.icon_produto
 import greenhouse.shared.generated.resources.icon_voltar
 import kotlinx.coroutines.launch
 import org.greenhouse.app.viewmodel.CategoriaViewModel
+import org.greenhouse.app.viewmodel.DescontoViewModel
+import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.ui.components.FormularioListagemBottomBar
 import org.greenhouse.ui.components.MostrarMensagem
+import org.greenhouse.ui.components.ToastNotificationType
 import org.greenhouse.ui.navigation.CategoriaRotas
+import org.greenhouse.ui.navigation.DescontoRotas
+import org.greenhouse.ui.navigation.EstoqueRotas
 import org.greenhouse.ui.navigation.ModulosRotas
 import org.greenhouse.ui.navigation.ProdutoRotas
 import org.greenhouse.ui.screens.categoria.CategoriaFormulario
 import org.greenhouse.ui.screens.categoria.CategoriaListagem
+import org.greenhouse.ui.screens.desconto.DescontoEdicao
+import org.greenhouse.ui.screens.desconto.DescontoLista
+import org.greenhouse.ui.screens.estoque.EstoqueEdicao
+import org.greenhouse.ui.screens.estoque.EstoqueLista
 import org.greenhouse.ui.screens.produto.ProdutoFormulario
 import org.greenhouse.ui.screens.produto.ProdutoListagem
 import org.greenhouse.ui.theme.AppTypography
@@ -63,6 +77,9 @@ fun CatalogoScreen(
     principalViewModel: PrincipalViewModel,
     categoriaViewModel: CategoriaViewModel,
     produtoViewModel: ProdutoViewModel,
+    descontoViewModel: DescontoViewModel,
+    estoqueViewModel: EstoqueViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
     onVoltarHome: () -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -70,15 +87,45 @@ fun CatalogoScreen(
     val snackbar = remember { SnackbarHostState() }
     MostrarMensagem(snackbar, categoriaViewModel.mensagem)
     MostrarMensagem(snackbar, produtoViewModel.mensagem)
+    MostrarMensagem(snackbar, descontoViewModel.mensagem)
+    MostrarMensagem(snackbar, estoqueViewModel.mensagem)
 
     val moduloAtual = principalViewModel.backStackModulos.last()
     val emCategorias = moduloAtual == ModulosRotas.categorias
+    val emProdutos = moduloAtual == ModulosRotas.produtos
+    val emDescontos = moduloAtual == ModulosRotas.descontos
     val emListagem =
-        if (emCategorias) {
-            categoriaViewModel.backStack.last() == CategoriaRotas.listagem
-        } else {
-            produtoViewModel.backStack.last() == ProdutoRotas.listagem
+        when (moduloAtual) {
+            ModulosRotas.categorias -> categoriaViewModel.backStack.last() == CategoriaRotas.listagem
+            ModulosRotas.produtos -> produtoViewModel.backStack.last() == ProdutoRotas.listagem
+            ModulosRotas.descontos -> descontoViewModel.backStack.last() == DescontoRotas.listagem
+            ModulosRotas.estoque -> estoqueViewModel.backStack.last() == EstoqueRotas.listagem
         }
+    val tituloModulo =
+        when (moduloAtual) {
+            ModulosRotas.categorias -> "Gestão de Categorias"
+            ModulosRotas.produtos -> "Gestão de Produtos"
+            ModulosRotas.descontos -> "Gestão de Descontos"
+            ModulosRotas.estoque -> "Gestão de Estoque"
+        }
+
+    fun abrirListagemAtual() {
+        when (moduloAtual) {
+            ModulosRotas.categorias -> categoriaViewModel.irParaListagem()
+            ModulosRotas.produtos -> produtoViewModel.irParaListagem()
+            ModulosRotas.descontos -> descontoViewModel.irParaListagem()
+            ModulosRotas.estoque -> estoqueViewModel.irParaListagem()
+        }
+    }
+
+    fun abrirFormularioAtual() {
+        when (moduloAtual) {
+            ModulosRotas.categorias -> categoriaViewModel.irParaFormulario()
+            ModulosRotas.produtos -> produtoViewModel.irParaFormulario()
+            ModulosRotas.descontos -> descontoViewModel.novo()
+            ModulosRotas.estoque -> estoqueViewModel.novo()
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -94,8 +141,16 @@ fun CatalogoScreen(
                     principalViewModel.abrirModulo(ModulosRotas.categorias)
                     scope.launch { drawerState.close() }
                 }
-                ItemGaveta("Produtos", Res.drawable.icon_produto, !emCategorias) {
+                ItemGaveta("Produtos", Res.drawable.icon_produto, emProdutos) {
                     principalViewModel.abrirModulo(ModulosRotas.produtos)
+                    scope.launch { drawerState.close() }
+                }
+                ItemGaveta("Descontos", Res.drawable.icon_desconto, emDescontos) {
+                    principalViewModel.abrirModulo(ModulosRotas.descontos)
+                    scope.launch { drawerState.close() }
+                }
+                ItemGaveta("Estoque", Res.drawable.icon_estoque, moduloAtual == ModulosRotas.estoque) {
+                    principalViewModel.abrirModulo(ModulosRotas.estoque)
                     scope.launch { drawerState.close() }
                 }
             }
@@ -111,14 +166,16 @@ fun CatalogoScreen(
                             Text("☰", color = GreenPrimary, style = AppTypography().titleLarge)
                         }
                     },
-                    title = { Text(if (emCategorias) "Gestão de Categorias" else "Gestão de Produtos") },
+                    title = { Text(tituloModulo) },
                     actions = {
                         IconButton(
                             onClick = {
                                 when {
                                     emListagem -> onVoltarHome()
                                     emCategorias -> categoriaViewModel.irParaListagem()
-                                    else -> produtoViewModel.irParaListagem()
+                                    emProdutos -> produtoViewModel.irParaListagem()
+                                    emDescontos -> descontoViewModel.irParaListagem()
+                                    else -> estoqueViewModel.irParaListagem()
                                 }
                             },
                         ) {
@@ -131,19 +188,11 @@ fun CatalogoScreen(
                 )
             },
             bottomBar = {
-                if (emCategorias) {
-                    FormularioListagemBottomBar(
-                        formularioSelecionado = !emListagem,
-                        onFormulario = { categoriaViewModel.irParaFormulario() },
-                        onListagem = { categoriaViewModel.irParaListagem() },
-                    )
-                } else {
-                    FormularioListagemBottomBar(
-                        formularioSelecionado = !emListagem,
-                        onFormulario = { produtoViewModel.irParaFormulario() },
-                        onListagem = { produtoViewModel.irParaListagem() },
-                    )
-                }
+                FormularioListagemBottomBar(
+                    formularioSelecionado = !emListagem,
+                    onFormulario = ::abrirFormularioAtual,
+                    onListagem = ::abrirListagemAtual,
+                )
             },
             snackbarHost = { SnackbarHost(snackbar) },
         ) { paddingIt ->
@@ -153,6 +202,20 @@ fun CatalogoScreen(
                     entryProvider<NavKey> {
                         entry<ModulosRotas.categorias> { CategoriasScreen(paddingIt, categoriaViewModel) }
                         entry<ModulosRotas.produtos> { ProdutosScreen(paddingIt, produtoViewModel) }
+                        entry<ModulosRotas.descontos> {
+                            DescontosScreen(
+                                padding = paddingIt,
+                                viewModel = descontoViewModel,
+                                onShowToast = onShowToast,
+                            )
+                        }
+                        entry<ModulosRotas.estoque> {
+                            EstoquesScreen(
+                                padding = paddingIt,
+                                viewModel = estoqueViewModel,
+                                onShowToast = onShowToast,
+                            )
+                        }
                     },
             )
         }
@@ -185,6 +248,88 @@ fun ProdutosScreen(
             entryProvider<NavKey> {
                 entry<ProdutoRotas.listagem> { ProdutoListagem(paddingIt, produtoViewModel) }
                 entry<ProdutoRotas.formulario> { ProdutoFormulario(paddingIt, produtoViewModel) }
+            },
+    )
+}
+
+@Composable
+private fun DescontosScreen(
+    padding: PaddingValues,
+    viewModel: DescontoViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
+) {
+    val descontos by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
+
+    NavDisplay(
+        backStack = viewModel.backStack,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<DescontoRotas.listagem> {
+                    DescontoLista(
+                        descontos = descontos,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onDelete = { desconto ->
+                            viewModel.excluir(desconto) { mensagem ->
+                                onShowToast(mensagem, ToastNotificationType.DESTRUCTIVE)
+                            }
+                        },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+                entry<DescontoRotas.formulario> {
+                    DescontoEdicao(
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+            },
+    )
+}
+
+@Composable
+private fun EstoquesScreen(
+    padding: PaddingValues,
+    viewModel: EstoqueViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
+) {
+    val estoques by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
+
+    NavDisplay(
+        backStack = viewModel.backStack,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<EstoqueRotas.listagem> {
+                    EstoqueLista(
+                        estoques = estoques,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onDelete = { estoque ->
+                            viewModel.excluir(estoque) { mensagem ->
+                                onShowToast(mensagem, ToastNotificationType.DESTRUCTIVE)
+                            }
+                        },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+                entry<EstoqueRotas.formulario> {
+                    EstoqueEdicao(
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
             },
     )
 }

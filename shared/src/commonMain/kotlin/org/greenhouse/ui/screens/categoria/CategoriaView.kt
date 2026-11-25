@@ -20,11 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.greenhouse.app.viewmodel.CategoriaViewModel
 import org.greenhouse.app.viewmodel.isoParaDataBrasileira
+import org.greenhouse.ui.components.BarraPesquisaFiltro
 import org.greenhouse.ui.components.BotaoPrincipal
 import org.greenhouse.ui.components.BotaoSecundario
 import org.greenhouse.ui.components.CampoAtivo
@@ -33,6 +37,14 @@ import org.greenhouse.ui.components.MeuTextField
 import org.greenhouse.ui.screens.desconto.validation.formatarDataBrasileira
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.TextPrimary
+
+private enum class FiltroCategoria(
+    val label: String,
+) {
+    TODAS("Todas"),
+    ATIVAS("Ativas"),
+    INATIVAS("Inativas"),
+}
 
 @Composable
 fun CategoriaFormulario(
@@ -101,25 +113,58 @@ fun CategoriaListagem(
 ) {
     val lista by categoriaViewModel.lista.collectAsState()
     LaunchedEffect(Unit) { categoriaViewModel.carregar() }
-
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-        if (lista.isEmpty()) {
-            item {
-                Text("Nenhuma categoria cadastrada", color = TextPrimary, modifier = Modifier.padding(16.dp))
-            }
+    var busca by remember { mutableStateOf("") }
+    var filtro by remember { mutableStateOf(FiltroCategoria.TODAS) }
+    val termo = busca.trim()
+    val categoriasFiltradas =
+        lista.filter { categoria ->
+            val correspondeBusca =
+                categoria.id.toString().contains(termo, ignoreCase = true) ||
+                    categoria.nome.contains(termo, ignoreCase = true) ||
+                    categoria.descricao.contains(termo, ignoreCase = true)
+            val correspondeFiltro =
+                when (filtro) {
+                    FiltroCategoria.TODAS -> true
+                    FiltroCategoria.ATIVAS -> categoria.ativo
+                    FiltroCategoria.INATIVAS -> !categoria.ativo
+                }
+            correspondeBusca && correspondeFiltro
         }
-        items(lista, key = { it.id }) { categoria ->
-            CardItem(
-                titulo = "${categoria.id} - ${categoria.nome}",
-                linhas =
-                    listOf(
-                        "Descrição: ${categoria.descricao}",
-                        "Cadastro: ${isoParaDataBrasileira(categoria.dataCadastro)}",
-                        if (categoria.ativo) "Ativa" else "Inativa",
-                    ),
-                onEditar = { categoriaViewModel.editar(categoria) },
-                onApagar = { categoriaViewModel.apagar(categoria.id) },
-            )
+
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        BarraPesquisaFiltro(
+            busca = busca,
+            onBuscaChange = { busca = it },
+            placeholder = "Buscar por ID, nome ou descrição",
+            filtros = FiltroCategoria.entries,
+            rotuloFiltro = { it.label },
+            onFiltroSelecionado = { filtro = it },
+            descricaoFiltro = "Filtrar categorias",
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            if (categoriasFiltradas.isEmpty()) {
+                item {
+                    Text(
+                        if (lista.isEmpty()) "Nenhuma categoria cadastrada" else "Nenhuma categoria encontrada",
+                        color = TextPrimary,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+            items(categoriasFiltradas, key = { it.id }) { categoria ->
+                CardItem(
+                    titulo = "${categoria.id} - ${categoria.nome}",
+                    linhas =
+                        listOf(
+                            "Descrição: ${categoria.descricao}",
+                            "Cadastro: ${isoParaDataBrasileira(categoria.dataCadastro)}",
+                            if (categoria.ativo) "Ativa" else "Inativa",
+                        ),
+                    onEditar = { categoriaViewModel.editar(categoria) },
+                    onApagar = { categoriaViewModel.apagar(categoria.id) },
+                )
+            }
         }
     }
 }

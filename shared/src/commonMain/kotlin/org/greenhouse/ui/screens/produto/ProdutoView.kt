@@ -20,11 +20,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.app.viewmodel.formatarPreco
+import org.greenhouse.ui.components.BarraPesquisaFiltro
 import org.greenhouse.ui.components.BotaoPrincipal
 import org.greenhouse.ui.components.BotaoSecundario
 import org.greenhouse.ui.components.CampoAtivo
@@ -34,6 +38,14 @@ import org.greenhouse.ui.screens.produto.validation.formatarPrazoPreparoProduto
 import org.greenhouse.ui.screens.produto.validation.formatarPrecoProduto
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.TextPrimary
+
+private enum class FiltroProduto(
+    val label: String,
+) {
+    TODOS("Todos"),
+    ATIVOS("Ativos"),
+    INATIVOS("Inativos"),
+}
 
 @Composable
 fun ProdutoFormulario(
@@ -109,26 +121,60 @@ fun ProdutoListagem(
 ) {
     val lista by produtoViewModel.lista.collectAsState()
     LaunchedEffect(Unit) { produtoViewModel.carregar() }
-
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-        if (lista.isEmpty()) {
-            item {
-                Text("Nenhum produto cadastrado", color = TextPrimary, modifier = Modifier.padding(16.dp))
-            }
+    var busca by remember { mutableStateOf("") }
+    var filtro by remember { mutableStateOf(FiltroProduto.TODOS) }
+    val termo = busca.trim()
+    val produtosFiltrados =
+        lista.filter { produto ->
+            val correspondeBusca =
+                produto.id.toString().contains(termo, ignoreCase = true) ||
+                    produto.codigo.orEmpty().contains(termo, ignoreCase = true) ||
+                    produto.nome.contains(termo, ignoreCase = true) ||
+                    produto.descricao.orEmpty().contains(termo, ignoreCase = true)
+            val correspondeFiltro =
+                when (filtro) {
+                    FiltroProduto.TODOS -> true
+                    FiltroProduto.ATIVOS -> produto.ativo
+                    FiltroProduto.INATIVOS -> !produto.ativo
+                }
+            correspondeBusca && correspondeFiltro
         }
-        items(lista, key = { it.id }) { produto ->
-            CardItem(
-                titulo = "${produto.id} - ${produto.nome}",
-                linhas =
-                    listOf(
-                        "Código: ${produto.codigo ?: "-"}",
-                        "Preço: R$ ${formatarPreco(produto.preco)}",
-                        "Preparo: ${produto.prazoPreparoMinutos?.let { "$it min" } ?: "-"}",
-                        if (produto.ativo) "Ativo" else "Inativo",
-                    ),
-                onEditar = { produtoViewModel.editar(produto) },
-                onApagar = { produtoViewModel.apagar(produto.id) },
-            )
+
+    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        BarraPesquisaFiltro(
+            busca = busca,
+            onBuscaChange = { busca = it },
+            placeholder = "Buscar por ID, nome ou código",
+            filtros = FiltroProduto.entries,
+            rotuloFiltro = { it.label },
+            onFiltroSelecionado = { filtro = it },
+            descricaoFiltro = "Filtrar produtos",
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+        LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            if (produtosFiltrados.isEmpty()) {
+                item {
+                    Text(
+                        if (lista.isEmpty()) "Nenhum produto cadastrado" else "Nenhum produto encontrado",
+                        color = TextPrimary,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+            items(produtosFiltrados, key = { it.id }) { produto ->
+                CardItem(
+                    titulo = "${produto.id} - ${produto.nome}",
+                    linhas =
+                        listOf(
+                            "Código: ${produto.codigo ?: "-"}",
+                            "Preço: R$ ${formatarPreco(produto.preco)}",
+                            "Preparo: ${produto.prazoPreparoMinutos?.let { "$it min" } ?: "-"}",
+                            if (produto.ativo) "Ativo" else "Inativo",
+                        ),
+                    onEditar = { produtoViewModel.editar(produto) },
+                    onApagar = { produtoViewModel.apagar(produto.id) },
+                )
+            }
         }
     }
 }

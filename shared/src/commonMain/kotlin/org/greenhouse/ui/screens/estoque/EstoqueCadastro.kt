@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,23 +32,16 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
-import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
+import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroForm
 import org.greenhouse.ui.screens.estoque.validation.formatarQuantidadeEstoque
-import org.greenhouse.ui.screens.estoque.validation.toEstoqueCadastroDataOrNull
-import org.greenhouse.ui.screens.estoque.validation.validarEstoqueCadastro
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.Gray
@@ -61,52 +55,55 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun EstoqueCadastro(
+    viewModel: EstoqueViewModel,
     onBack: () -> Unit,
-    onSave: (EstoqueCadastroData) -> Unit,
+    onSuccess: (String) -> Unit,
+    title: String = "Cadastrar Estoque",
+    padding: PaddingValues = PaddingValues(),
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(EstoqueCadastroForm()) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
+    val form = viewModel.formulario()
+    val errors = viewModel.erros.value
+    val produtoIdReadOnly = viewModel.editando.value
+    val quantidadeReservadaAtual = viewModel.quantidadeReservadaAtual.value
 
     fun updateForm(updatedForm: EstoqueCadastroForm) {
-        form = updatedForm
-        showSuccessMessage = false
-        if (errors.isNotEmpty()) {
-            errors = validarEstoqueCadastro(updatedForm)
-        }
+        viewModel.atualizarFormulario(updatedForm)
     }
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .background(Background)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Estoque",
-                color = TextPrimary,
-                style = typography.titleMedium,
-            )
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        if (!embedded) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_voltar),
-                    contentDescription = "Voltar",
-                    modifier = Modifier.size(32.dp),
+                Text(
+                    text = "Estoque",
+                    color = TextPrimary,
+                    style = typography.titleMedium,
                 )
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_voltar),
+                        contentDescription = "Voltar",
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
             }
+            Spacer(Modifier.height(24.dp))
         }
-
-        Spacer(Modifier.height(24.dp))
 
         Column(
             modifier =
@@ -117,7 +114,7 @@ fun EstoqueCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Estoque",
+                text = title,
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -126,7 +123,7 @@ fun EstoqueCadastro(
 
             EstoqueTextField(
                 label = "ID do produto",
-                required = true,
+                required = !produtoIdReadOnly,
                 value = form.produtoId,
                 onValueChange = { value ->
                     updateForm(form.copy(produtoId = formatarQuantidadeEstoque(value)))
@@ -134,7 +131,17 @@ fun EstoqueCadastro(
                 placeholder = "Informe o ID do produto",
                 error = errors["produtoId"],
                 keyboardType = KeyboardType.Number,
+                readOnly = produtoIdReadOnly,
             )
+
+            quantidadeReservadaAtual?.let { quantidade ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Quantidade reservada: $quantidade (gerenciada pelo sistema)",
+                    color = TextPrimary,
+                    style = typography.bodySmall,
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -149,16 +156,6 @@ fun EstoqueCadastro(
                             },
                             placeholder = "Ex.: 20",
                             error = errors["quantidadeFisica"],
-                            keyboardType = KeyboardType.Number,
-                        )
-                        EstoqueTextField(
-                            label = "Quantidade reservada",
-                            value = form.quantidadeReservada,
-                            onValueChange = { value ->
-                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
-                            },
-                            placeholder = "",
-                            error = errors["quantidadeReservada"],
                             keyboardType = KeyboardType.Number,
                         )
                         EstoqueTextField(
@@ -182,17 +179,6 @@ fun EstoqueCadastro(
                             },
                             placeholder = "Ex.: 20",
                             error = errors["quantidadeFisica"],
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f),
-                        )
-                        EstoqueTextField(
-                            label = "Quantidade reservada",
-                            value = form.quantidadeReservada,
-                            onValueChange = { value ->
-                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
-                            },
-                            placeholder = "",
-                            error = errors["quantidadeReservada"],
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f),
                         )
@@ -228,7 +214,11 @@ fun EstoqueCadastro(
                     onCheckedChange = { updateForm(form.copy(bloqueado = it)) },
                     colors = CheckboxDefaults.colors(checkedColor = GreenPrimary, uncheckedColor = GreenPrimary),
                 )
-                Text("Bloquear este estoque? Um estoque bloqueado não permite reserva de itens.", color = TextPrimary, style = typography.bodyMedium)
+                Text(
+                    "Bloquear este estoque? Um estoque bloqueado não permite reserva de itens.",
+                    color = TextPrimary,
+                    style = typography.bodyMedium,
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -239,25 +229,12 @@ fun EstoqueCadastro(
                         EstoqueSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                val validationErrors = validarEstoqueCadastro(form)
-                                errors = validationErrors
-                                if (validationErrors.isEmpty()) {
-                                    form.toEstoqueCadastroDataOrNull()?.let { data ->
-                                        onSave(data)
-                                        showSuccessMessage = true
-                                    }
-                                }
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         EstoqueClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                form = EstoqueCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 } else {
@@ -265,55 +242,17 @@ fun EstoqueCadastro(
                         EstoqueSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                val validationErrors = validarEstoqueCadastro(form)
-                                errors = validationErrors
-                                if (validationErrors.isEmpty()) {
-                                    form.toEstoqueCadastroDataOrNull()?.let { data ->
-                                        onSave(data)
-                                        showSuccessMessage = true
-                                    }
-                                }
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         EstoqueClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = EstoqueCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 }
             }
-
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Estoque cadastrado com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun CadastroSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -327,6 +266,7 @@ private fun EstoqueTextField(
     keyboardType: KeyboardType,
     modifier: Modifier = Modifier,
     required: Boolean = false,
+    readOnly: Boolean = false,
 ) {
     val typography = AppTypography()
     Column(modifier = modifier) {
@@ -344,6 +284,7 @@ private fun EstoqueTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            readOnly = readOnly,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = placeholder, color = Gray, style = typography.bodyMedium) },
             isError = error != null,

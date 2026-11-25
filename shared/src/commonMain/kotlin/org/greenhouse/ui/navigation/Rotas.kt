@@ -11,6 +11,12 @@ sealed interface ModulosRotas : NavKey {
 
     @Serializable
     object produtos : ModulosRotas
+
+    @Serializable
+    object descontos : ModulosRotas
+
+    @Serializable
+    object estoque : ModulosRotas
 }
 
 sealed interface CategoriaRotas : NavKey {
@@ -27,4 +33,24 @@ sealed interface ProdutoRotas : NavKey {
 
     @Serializable
     object listagem : ProdutoRotas
+}
+
+sealed interface DescontoRotas : NavKey {
+    @Serializable
+    data class formulario(
+        val descontoId: Long?,
+    ) : DescontoRotas
+
+    @Serializable
+    object listagem : DescontoRotas
+}
+
+sealed interface EstoqueRotas : NavKey {
+    @Serializable
+    data class formulario(
+        val produtoId: Long?,
+    ) : EstoqueRotas
+
+    @Serializable
+    object listagem : EstoqueRotas
 }
