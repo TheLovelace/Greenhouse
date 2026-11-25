@@ -32,10 +32,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -43,11 +39,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_voltar
-import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
+import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroForm
 import org.greenhouse.ui.screens.estoque.validation.formatarQuantidadeEstoque
-import org.greenhouse.ui.screens.estoque.validation.toEstoqueCadastroDataOrNull
-import org.greenhouse.ui.screens.estoque.validation.validarEstoqueCadastro
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.Gray
@@ -61,34 +55,21 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun EstoqueCadastro(
+    viewModel: EstoqueViewModel,
     onBack: () -> Unit,
-    onSave: (EstoqueCadastroData) -> Unit,
-    initialForm: EstoqueCadastroForm = EstoqueCadastroForm(),
+    onSuccess: (String) -> Unit,
     title: String = "Cadastrar Estoque",
-    produtoIdReadOnly: Boolean = false,
-    quantidadeReservadaAtual: Int? = null,
-    existingProdutoIds: Set<Long> = emptySet(),
     padding: PaddingValues = PaddingValues(),
     embedded: Boolean = false,
 ) {
     val typography = AppTypography()
-    var form by remember(initialForm) { mutableStateOf(initialForm) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-
-    fun validateForm(formToValidate: EstoqueCadastroForm): Map<String, String> {
-        val validationErrors = validarEstoqueCadastro(formToValidate, quantidadeReservadaAtual).toMutableMap()
-        val produtoId = formToValidate.produtoId.trim().toLongOrNull()
-        if (!produtoIdReadOnly && produtoId != null && produtoId in existingProdutoIds) {
-            validationErrors["produtoId"] = "Já existe um registro de estoque para este produto"
-        }
-        return validationErrors
-    }
+    val form = viewModel.formulario()
+    val errors = viewModel.erros.value
+    val produtoIdReadOnly = viewModel.editando.value
+    val quantidadeReservadaAtual = viewModel.quantidadeReservadaAtual.value
 
     fun updateForm(updatedForm: EstoqueCadastroForm) {
-        form = updatedForm
-        if (errors.isNotEmpty()) {
-            errors = validateForm(updatedForm)
-        }
+        viewModel.atualizarFormulario(updatedForm)
     }
 
     Column(
@@ -248,23 +229,12 @@ fun EstoqueCadastro(
                         EstoqueSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                val validationErrors = validateForm(form)
-                                errors = validationErrors
-                                if (validationErrors.isEmpty()) {
-                                    form.toEstoqueCadastroDataOrNull()?.let { data ->
-                                        onSave(data)
-                                    }
-                                }
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         EstoqueClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                form = initialForm
-                                errors = emptyMap()
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 } else {
@@ -272,23 +242,12 @@ fun EstoqueCadastro(
                         EstoqueSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                val validationErrors = validateForm(form)
-                                errors = validationErrors
-                                if (validationErrors.isEmpty()) {
-                                    form.toEstoqueCadastroDataOrNull()?.let { data ->
-                                        onSave(data)
-                                    }
-                                }
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         EstoqueClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = initialForm
-                                errors = emptyMap()
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 }

@@ -23,11 +23,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -40,10 +42,13 @@ import greenhouse.shared.generated.resources.icon_produto
 import greenhouse.shared.generated.resources.icon_voltar
 import kotlinx.coroutines.launch
 import org.greenhouse.app.viewmodel.CategoriaViewModel
+import org.greenhouse.app.viewmodel.DescontoViewModel
+import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.ui.components.FormularioListagemBottomBar
 import org.greenhouse.ui.components.MostrarMensagem
+import org.greenhouse.ui.components.ToastNotificationType
 import org.greenhouse.ui.navigation.CategoriaRotas
 import org.greenhouse.ui.navigation.DescontoRotas
 import org.greenhouse.ui.navigation.EstoqueRotas
@@ -53,12 +58,8 @@ import org.greenhouse.ui.screens.categoria.CategoriaFormulario
 import org.greenhouse.ui.screens.categoria.CategoriaListagem
 import org.greenhouse.ui.screens.desconto.DescontoEdicao
 import org.greenhouse.ui.screens.desconto.DescontoLista
-import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
-import org.greenhouse.ui.screens.desconto.model.DescontoItem
 import org.greenhouse.ui.screens.estoque.EstoqueEdicao
 import org.greenhouse.ui.screens.estoque.EstoqueLista
-import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
-import org.greenhouse.ui.screens.estoque.model.EstoqueItem
 import org.greenhouse.ui.screens.produto.ProdutoFormulario
 import org.greenhouse.ui.screens.produto.ProdutoListagem
 import org.greenhouse.ui.theme.AppTypography
@@ -76,21 +77,18 @@ fun CatalogoScreen(
     principalViewModel: PrincipalViewModel,
     categoriaViewModel: CategoriaViewModel,
     produtoViewModel: ProdutoViewModel,
-    descontos: List<DescontoItem>,
-    estoques: List<EstoqueItem>,
-    onSaveDesconto: (Long?, DescontoCadastroData) -> Unit,
-    onDeleteDesconto: (DescontoItem) -> Unit,
-    onSaveEstoque: (Long?, EstoqueCadastroData) -> Unit,
-    onDeleteEstoque: (EstoqueItem) -> Unit,
+    descontoViewModel: DescontoViewModel,
+    estoqueViewModel: EstoqueViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
     onVoltarHome: () -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    val descontosBackStack = remember { NavBackStack<DescontoRotas>(DescontoRotas.listagem) }
-    val estoqueBackStack = remember { NavBackStack<EstoqueRotas>(EstoqueRotas.listagem) }
     MostrarMensagem(snackbar, categoriaViewModel.mensagem)
     MostrarMensagem(snackbar, produtoViewModel.mensagem)
+    MostrarMensagem(snackbar, descontoViewModel.mensagem)
+    MostrarMensagem(snackbar, estoqueViewModel.mensagem)
 
     val moduloAtual = principalViewModel.backStackModulos.last()
     val emCategorias = moduloAtual == ModulosRotas.categorias
@@ -100,8 +98,8 @@ fun CatalogoScreen(
         when (moduloAtual) {
             ModulosRotas.categorias -> categoriaViewModel.backStack.last() == CategoriaRotas.listagem
             ModulosRotas.produtos -> produtoViewModel.backStack.last() == ProdutoRotas.listagem
-            ModulosRotas.descontos -> descontosBackStack.last() == DescontoRotas.listagem
-            ModulosRotas.estoque -> estoqueBackStack.last() == EstoqueRotas.listagem
+            ModulosRotas.descontos -> descontoViewModel.backStack.last() == DescontoRotas.listagem
+            ModulosRotas.estoque -> estoqueViewModel.backStack.last() == EstoqueRotas.listagem
         }
     val tituloModulo =
         when (moduloAtual) {
@@ -111,32 +109,12 @@ fun CatalogoScreen(
             ModulosRotas.estoque -> "Gestão de Estoque"
         }
 
-    fun abrirDescontoFormulario(descontoId: Long? = null) {
-        descontosBackStack.clear()
-        descontosBackStack.add(DescontoRotas.formulario(descontoId))
-    }
-
-    fun abrirEstoqueFormulario(produtoId: Long? = null) {
-        estoqueBackStack.clear()
-        estoqueBackStack.add(EstoqueRotas.formulario(produtoId))
-    }
-
-    fun voltarParaDescontoListagem() {
-        descontosBackStack.clear()
-        descontosBackStack.add(DescontoRotas.listagem)
-    }
-
-    fun voltarParaEstoqueListagem() {
-        estoqueBackStack.clear()
-        estoqueBackStack.add(EstoqueRotas.listagem)
-    }
-
     fun abrirListagemAtual() {
         when (moduloAtual) {
             ModulosRotas.categorias -> categoriaViewModel.irParaListagem()
             ModulosRotas.produtos -> produtoViewModel.irParaListagem()
-            ModulosRotas.descontos -> voltarParaDescontoListagem()
-            ModulosRotas.estoque -> voltarParaEstoqueListagem()
+            ModulosRotas.descontos -> descontoViewModel.irParaListagem()
+            ModulosRotas.estoque -> estoqueViewModel.irParaListagem()
         }
     }
 
@@ -144,8 +122,8 @@ fun CatalogoScreen(
         when (moduloAtual) {
             ModulosRotas.categorias -> categoriaViewModel.irParaFormulario()
             ModulosRotas.produtos -> produtoViewModel.irParaFormulario()
-            ModulosRotas.descontos -> abrirDescontoFormulario()
-            ModulosRotas.estoque -> abrirEstoqueFormulario()
+            ModulosRotas.descontos -> descontoViewModel.novo()
+            ModulosRotas.estoque -> estoqueViewModel.novo()
         }
     }
 
@@ -196,8 +174,8 @@ fun CatalogoScreen(
                                     emListagem -> onVoltarHome()
                                     emCategorias -> categoriaViewModel.irParaListagem()
                                     emProdutos -> produtoViewModel.irParaListagem()
-                                    emDescontos -> voltarParaDescontoListagem()
-                                    else -> voltarParaEstoqueListagem()
+                                    emDescontos -> descontoViewModel.irParaListagem()
+                                    else -> estoqueViewModel.irParaListagem()
                                 }
                             },
                         ) {
@@ -227,19 +205,15 @@ fun CatalogoScreen(
                         entry<ModulosRotas.descontos> {
                             DescontosScreen(
                                 padding = paddingIt,
-                                backStack = descontosBackStack,
-                                descontos = descontos,
-                                onSave = onSaveDesconto,
-                                onDelete = onDeleteDesconto,
+                                viewModel = descontoViewModel,
+                                onShowToast = onShowToast,
                             )
                         }
                         entry<ModulosRotas.estoque> {
                             EstoquesScreen(
                                 padding = paddingIt,
-                                backStack = estoqueBackStack,
-                                estoques = estoques,
-                                onSave = onSaveEstoque,
-                                onDelete = onDeleteEstoque,
+                                viewModel = estoqueViewModel,
+                                onShowToast = onShowToast,
                             )
                         }
                     },
@@ -281,44 +255,36 @@ fun ProdutosScreen(
 @Composable
 private fun DescontosScreen(
     padding: PaddingValues,
-    backStack: NavBackStack<DescontoRotas>,
-    descontos: List<DescontoItem>,
-    onSave: (Long?, DescontoCadastroData) -> Unit,
-    onDelete: (DescontoItem) -> Unit,
+    viewModel: DescontoViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
 ) {
-    fun abrirFormulario(descontoId: Long? = null) {
-        backStack.clear()
-        backStack.add(DescontoRotas.formulario(descontoId))
-    }
-
-    fun abrirListagem() {
-        backStack.clear()
-        backStack.add(DescontoRotas.listagem)
-    }
+    val descontos by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
 
     NavDisplay(
-        backStack = backStack,
+        backStack = viewModel.backStack,
         entryProvider =
             entryProvider<NavKey> {
                 entry<DescontoRotas.listagem> {
                     DescontoLista(
                         descontos = descontos,
-                        onBack = ::abrirListagem,
-                        onCreate = { abrirFormulario() },
-                        onEdit = { abrirFormulario(it.id) },
-                        onDelete = onDelete,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onDelete = { desconto ->
+                            viewModel.excluir(desconto) { mensagem ->
+                                onShowToast(mensagem, ToastNotificationType.DESTRUCTIVE)
+                            }
+                        },
                         padding = padding,
                         embedded = true,
                     )
                 }
-                entry<DescontoRotas.formulario> { route ->
+                entry<DescontoRotas.formulario> {
                     DescontoEdicao(
-                        desconto = descontos.firstOrNull { it.id == route.descontoId },
-                        onBack = ::abrirListagem,
-                        onSave = { data ->
-                            onSave(route.descontoId, data)
-                            abrirListagem()
-                        },
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
                         padding = padding,
                         embedded = true,
                     )
@@ -330,46 +296,36 @@ private fun DescontosScreen(
 @Composable
 private fun EstoquesScreen(
     padding: PaddingValues,
-    backStack: NavBackStack<EstoqueRotas>,
-    estoques: List<EstoqueItem>,
-    onSave: (Long?, EstoqueCadastroData) -> Unit,
-    onDelete: (EstoqueItem) -> Unit,
+    viewModel: EstoqueViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
 ) {
-    fun abrirFormulario(produtoId: Long? = null) {
-        backStack.clear()
-        backStack.add(EstoqueRotas.formulario(produtoId))
-    }
-
-    fun abrirListagem() {
-        backStack.clear()
-        backStack.add(EstoqueRotas.listagem)
-    }
+    val estoques by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
 
     NavDisplay(
-        backStack = backStack,
+        backStack = viewModel.backStack,
         entryProvider =
             entryProvider<NavKey> {
                 entry<EstoqueRotas.listagem> {
                     EstoqueLista(
                         estoques = estoques,
-                        onBack = ::abrirListagem,
-                        onCreate = { abrirFormulario() },
-                        onEdit = { abrirFormulario(it.produtoId) },
-                        onDelete = onDelete,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onDelete = { estoque ->
+                            viewModel.excluir(estoque) { mensagem ->
+                                onShowToast(mensagem, ToastNotificationType.DESTRUCTIVE)
+                            }
+                        },
                         padding = padding,
                         embedded = true,
                     )
                 }
-                entry<EstoqueRotas.formulario> { route ->
-                    val estoque = estoques.firstOrNull { it.produtoId == route.produtoId }
+                entry<EstoqueRotas.formulario> {
                     EstoqueEdicao(
-                        estoque = estoque,
-                        onBack = ::abrirListagem,
-                        onSave = { data ->
-                            onSave(route.produtoId, data)
-                            abrirListagem()
-                        },
-                        existingProdutoIds = estoques.map { it.produtoId }.toSet(),
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
                         padding = padding,
                         embedded = true,
                     )

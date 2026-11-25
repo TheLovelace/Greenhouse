@@ -29,6 +29,26 @@ class DescontoCadastroValidatorTest {
     }
 
     @Test
+    fun validFormConvertsToBackendValues() {
+        val data =
+            DescontoCadastroForm(
+                titulo = " Desconto ",
+                descricao = "  ",
+                valor = "12,50",
+                dataInicio = "01/01/2026",
+                dataFim = "31/12/2026",
+                quantidadeMinimaItens = "2",
+            ).toDescontoCadastroDataOrNull()
+
+        assertEquals("Desconto", data?.titulo)
+        assertEquals(null, data?.descricao)
+        assertEquals("12.50", data?.valor)
+        assertEquals("2026-01-01T00:00:00Z", data?.dataInicio)
+        assertEquals("2026-12-31T00:00:00Z", data?.dataFim)
+        assertEquals("2", data?.quantidadeMinimaItens)
+    }
+
+    @Test
     fun invalidCalendarDatesAreRejected() {
         assertEquals(null, "29/02/2025".toOffsetDateTimeOrNull())
         assertEquals(null, "31/04/2026".toOffsetDateTimeOrNull())

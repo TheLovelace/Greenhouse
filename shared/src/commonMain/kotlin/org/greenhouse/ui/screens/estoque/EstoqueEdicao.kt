@@ -4,41 +4,22 @@ package org.greenhouse.ui.screens.estoque
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
-import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroForm
-import org.greenhouse.ui.screens.estoque.model.EstoqueItem
+import org.greenhouse.app.viewmodel.EstoqueViewModel
 
 @Composable
 fun EstoqueEdicao(
-    estoque: EstoqueItem?,
+    viewModel: EstoqueViewModel,
     onBack: () -> Unit,
-    onSave: (EstoqueCadastroData) -> Unit,
-    existingProdutoIds: Set<Long> = emptySet(),
+    onSuccess: (String) -> Unit,
     padding: PaddingValues = PaddingValues(),
     embedded: Boolean = false,
 ) {
-    val initialForm =
-        remember(estoque) {
-            estoque?.let {
-                EstoqueCadastroForm(
-                    produtoId = it.produtoId.toString(),
-                    quantidadeFisica = it.quantidadeFisica.toString(),
-                    quantidadeMinima = it.quantidadeMinima.toString(),
-                    localizacao = it.localizacao.orEmpty(),
-                    bloqueado = it.bloqueado,
-                )
-            } ?: EstoqueCadastroForm()
-        }
-
+    val produtoId = viewModel.produtoId.value
     EstoqueCadastro(
+        viewModel = viewModel,
         onBack = onBack,
-        onSave = onSave,
-        initialForm = initialForm,
-        title = if (estoque == null) "Cadastrar Estoque" else "Editar Estoque #${estoque.produtoId}",
-        produtoIdReadOnly = estoque != null,
-        quantidadeReservadaAtual = estoque?.quantidadeReservada,
-        existingProdutoIds = existingProdutoIds,
+        onSuccess = onSuccess,
+        title = if (viewModel.editando.value) "Editar Estoque #$produtoId" else "Cadastrar Estoque",
         padding = padding,
         embedded = embedded,
     )

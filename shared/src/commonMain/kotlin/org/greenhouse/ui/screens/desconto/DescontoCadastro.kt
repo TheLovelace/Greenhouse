@@ -48,9 +48,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_voltar
-import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroForm
 import org.greenhouse.ui.screens.desconto.model.TipoDescontoCadastro
+import org.greenhouse.app.viewmodel.DescontoViewModel
 import org.greenhouse.ui.screens.desconto.validation.formatarDataBrasileira
 import org.greenhouse.ui.screens.desconto.validation.formatarValorDesconto
 import org.greenhouse.ui.screens.desconto.validation.toOffsetDateTimeOrNull
@@ -68,22 +68,19 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun DescontoCadastro(
+    viewModel: DescontoViewModel,
     onBack: () -> Unit,
-    onSave: (DescontoCadastroData) -> Unit,
-    initialForm: DescontoCadastroForm = DescontoCadastroForm(),
+    onSuccess: (String) -> Unit,
     title: String = "Cadastrar Desconto",
     padding: PaddingValues = PaddingValues(),
     embedded: Boolean = false,
 ) {
     val typography = AppTypography()
-    var form by remember(initialForm) { mutableStateOf(initialForm) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
+    val form = viewModel.formulario()
+    val errors = viewModel.erros.value
 
     fun updateForm(updatedForm: DescontoCadastroForm) {
-        form = updatedForm
-        if (errors.isNotEmpty()) {
-            errors = validarDescontoCadastro(updatedForm)
-        }
+        viewModel.atualizarFormulario(updatedForm)
     }
 
     Column(
@@ -258,21 +255,12 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                saveForm(
-                                    form = form,
-                                    onSave = onSave,
-                                    onValidationErrors = { errors = it },
-                                )
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = DescontoCadastroForm()
-                                errors = emptyMap()
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 } else {
@@ -280,21 +268,12 @@ fun DescontoCadastro(
                         SaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                saveForm(
-                                    form = form,
-                                    onSave = onSave,
-                                    onValidationErrors = { errors = it },
-                                )
-                            },
+                            onClick = { viewModel.gravar(onSuccess) },
                         )
                         ClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = DescontoCadastroForm()
-                                errors = emptyMap()
-                            },
+                            onClick = viewModel::limparCampos,
                         )
                     }
                 }
@@ -479,29 +458,6 @@ private fun ClearButton(
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
         Text("Limpar campos", style = typography.bodyMedium)
-    }
-}
-
-private fun saveForm(
-    form: DescontoCadastroForm,
-    onSave: (DescontoCadastroData) -> Unit,
-    onValidationErrors: (Map<String, String>) -> Unit,
-) {
-    val validationErrors = validarDescontoCadastro(form)
-    onValidationErrors(validationErrors)
-    if (validationErrors.isEmpty()) {
-        onSave(
-            DescontoCadastroData(
-                titulo = form.titulo.trim(),
-                descricao = form.descricao.trim().ifEmpty { null },
-                tipo = form.tipo,
-                valor = form.valor.trim().replace(',', '.'),
-                dataInicio = form.dataInicio.toOffsetDateTimeOrNull(),
-                dataFim = form.dataFim.toOffsetDateTimeOrNull(),
-                ativo = form.ativo,
-                quantidadeMinimaItens = form.quantidadeMinimaItens.trim(),
-            ),
-        )
     }
 }
 
