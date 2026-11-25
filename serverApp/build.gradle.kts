@@ -38,6 +38,9 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation(libs.androidx.constraintlayout.core)
 
+    // Cliente MQTT para assinar os tópicos dos dispositivos IoT no broker
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly("com.h2database:h2")
 
