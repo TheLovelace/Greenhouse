@@ -7,6 +7,11 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    jacoco
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
 }
 
 val gerarApiConfig by tasks.registering {
@@ -151,4 +156,8 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    val isBackendTest = name == "jvmTest"
+    extensions.configure<JacocoTaskExtension> {
+        isEnabled = isBackendTest
+    }
 }

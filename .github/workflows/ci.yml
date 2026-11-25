@@ -26,7 +26,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Checar mensagem de commit
-        run: ./gradlew checkCommitMessage
+        env:
+          COMMIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: ./gradlew checkCommitMessageTest checkCommitMessage -PcommitRef="$COMMIT_REF"
 
   lint:
     name: Lint (Android Lint + ktlint)
@@ -52,6 +54,20 @@ jobs:
     if: github.head_ref != 'develop' || github.base_ref != 'main'
     runs-on: ubuntu-latest
     environment: test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: greenhouse
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          POSTGRES_DB: greenhouse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U greenhouse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -67,11 +83,20 @@ jobs:
       - name: Rodar testes
         env:
           API_URL: ${{ secrets.API_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_CONN }}
+          DATABASE_URL: jdbc:postgresql://localhost:5432/greenhouse?user=greenhouse&password=${{ secrets.TEST_DB_PASSWORD }}
+          SPRING_FLYWAY_ENABLED: "true"
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MQTT_URL: ${{ secrets.MQTT_TEST }}
           MQTT_PASSWORD: ${{ secrets.MQTT_TEST_PASSWORD }}
-        run: ./gradlew testDesktop
+        run: ./gradlew coverage
+
+      - name: Publicar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-cobertura
+          path: build/reports/jacoco/coverage/html
+          if-no-files-found: warn
 
   test-mobile:
     name: Testes Mobile (Android)
@@ -149,6 +174,12 @@ jobs:
           echo "REGISTRY_OWNER=${OWNER}" >> "$GITHUB_ENV"
           echo "IMAGE_TAG=${GITHUB_SHA}" >> "$GITHUB_ENV"
           echo "IMAGE_URL=ghcr.io/${OWNER}/app:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Baixar relatório de cobertura (servido em /jacoco/)
+        uses: actions/download-artifact@v4
+        with:
+          name: relatorio-cobertura
+          path: build/reports/jacoco/coverage/html
 
       - name: Build e push da imagem no GHCR (Jib)
         env:

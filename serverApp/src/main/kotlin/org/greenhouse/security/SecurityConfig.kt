@@ -50,6 +50,7 @@ class SecurityConfig(
 
                 auth.requestMatchers("/api/auth/signin", "/api/auth/signup").permitAll()
                 auth.requestMatchers("/api/status").permitAll()
+                auth.requestMatchers("/jacoco", "/jacoco/**").permitAll()
 
                 auth.requestMatchers(
                     "/swagger-ui/**",

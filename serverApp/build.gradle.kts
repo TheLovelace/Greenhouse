@@ -5,6 +5,11 @@ plugins {
     alias(libs.plugins.kotlinJpa)
     application
     alias(libs.plugins.jib)
+    jacoco
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
 }
 
 allOpen {
@@ -46,6 +51,22 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        html.required = true
+        xml.required = true
+    }
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it) { exclude("org/greenhouse/MainKt*.class") }
+            },
+        ),
+    )
 }
 
 val registryOwner: String? = System.getenv("REGISTRY_OWNER")?.lowercase()
@@ -71,8 +92,26 @@ jib {
         tags = setOf(imageTag)
     }
 
+    val relatorioCobertura = rootProject.layout.buildDirectory.dir("reports/jacoco/coverage/html").get().asFile
+    if (relatorioCobertura.isDirectory) {
+        extraDirectories {
+            paths {
+                path {
+                    setFrom(relatorioCobertura.toPath())
+                    into = "/app/jacoco"
+                }
+            }
+        }
+    }
+
     container {
         ports = listOf("8080")
+
+        environment =
+            mapOf(
+                "SPRING_PROFILES_ACTIVE" to "prod",
+                "JACOCO_REPORT_DIR" to "file:/app/jacoco/",
+            )
 
         jvmFlags = listOf(
             "-XX:MaxRAMPercentage=75",

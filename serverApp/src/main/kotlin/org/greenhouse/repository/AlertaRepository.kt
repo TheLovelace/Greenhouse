@@ -21,4 +21,13 @@ interface AlertaRepository : JpaRepository<Alerta, Long> {
 
     @Query("SELECT a FROM Alerta a JOIN FETCH a.dispositivo JOIN FETCH a.especie WHERE a.id = :id")
     fun buscarComRelacionamentos(@Param("id") id: Long): Alerta?
+
+    @Query(
+        """
+        SELECT a FROM Alerta a JOIN FETCH a.dispositivo JOIN FETCH a.especie
+        WHERE a.dispositivo.id = :dispositivoId AND a.ativo = TRUE
+        ORDER BY a.prioridade DESC, a.id
+        """,
+    )
+    fun listarAtivosPorDispositivo(@Param("dispositivoId") dispositivoId: Long): List<Alerta>
 }

@@ -76,7 +76,6 @@ fun App(
     var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
     var isFornecedorCadastroVisible by remember { mutableStateOf(false) }
     var isPedidoCadastroVisible by remember { mutableStateOf(false) }
-
     fun closeScreens() {
         isCatalogoVisible = false
         isAlertaCadastroVisible = false
