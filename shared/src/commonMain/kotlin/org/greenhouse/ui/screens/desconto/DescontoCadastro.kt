@@ -70,9 +70,12 @@ import org.jetbrains.compose.resources.painterResource
 fun DescontoCadastro(
     onBack: () -> Unit,
     onSave: (DescontoCadastroData) -> Unit,
+    initialForm: DescontoCadastroForm = DescontoCadastroForm(),
+    title: String = "Cadastrar Desconto",
+    successMessage: String = "Desconto cadastrado com sucesso!",
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(DescontoCadastroForm()) }
+    var form by remember(initialForm) { mutableStateOf(initialForm) }
     var errors by remember { mutableStateOf(emptyMap<String, String>()) }
     var showSuccessMessage by remember { mutableStateOf(false) }
 
@@ -124,7 +127,7 @@ fun DescontoCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Desconto",
+                text = title,
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -302,7 +305,7 @@ fun DescontoCadastro(
 
             if (showSuccessMessage) {
                 Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Desconto cadastrado com sucesso!")
+                CadastroSuccessMessage(successMessage)
             }
         }
     }

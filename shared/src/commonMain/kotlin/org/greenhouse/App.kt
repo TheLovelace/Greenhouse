@@ -12,8 +12,10 @@ import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
 import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
-import org.greenhouse.ui.screens.desconto.DescontoCadastro
+import org.greenhouse.ui.screens.desconto.DescontoEdicao
+import org.greenhouse.ui.screens.desconto.DescontoLista
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
+import org.greenhouse.ui.screens.desconto.model.DescontoItem
 import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
 import org.greenhouse.ui.screens.estoque.EstoqueCadastro
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
@@ -50,7 +52,10 @@ fun App(
     var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
     var isCompraFornecedorCadastroVisible by remember { mutableStateOf(false) }
-    var isDescontoCadastroVisible by remember { mutableStateOf(false) }
+    var isDescontoListaVisible by remember { mutableStateOf(false) }
+    var isDescontoEdicaoVisible by remember { mutableStateOf(false) }
+    var descontoSelecionado by remember { mutableStateOf<DescontoItem?>(null) }
+    var descontos by remember { mutableStateOf(emptyList<DescontoItem>()) }
     var isEstoqueCadastroVisible by remember { mutableStateOf(false) }
     var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
     var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
@@ -74,10 +79,54 @@ fun App(
                 onBack = { isCompraFornecedorCadastroVisible = false },
                 onSave = onSaveCompraFornecedor,
             )
-        } else if (isDescontoCadastroVisible) {
-            DescontoCadastro(
-                onBack = { isDescontoCadastroVisible = false },
-                onSave = onSaveDesconto,
+        } else if (isDescontoEdicaoVisible) {
+            DescontoEdicao(
+                desconto = descontoSelecionado,
+                onBack = {
+                    isDescontoEdicaoVisible = false
+                    descontoSelecionado = null
+                },
+                onSave = { data ->
+                    onSaveDesconto(data)
+                    val id = descontoSelecionado?.id ?: ((descontos.maxOfOrNull { it.id } ?: 0L) + 1L)
+                    val item =
+                        DescontoItem(
+                            id = id,
+                            titulo = data.titulo,
+                            descricao = data.descricao,
+                            tipo = data.tipo,
+                            valor = data.valor,
+                            dataInicio = data.dataInicio,
+                            dataFim = data.dataFim,
+                            ativo = data.ativo,
+                            quantidadeMinimaItens = data.quantidadeMinimaItens.toInt(),
+                        )
+                    descontos =
+                        if (descontoSelecionado == null) {
+                            descontos + item
+                        } else {
+                            descontos.map { if (it.id == id) item else it }
+                        }
+                    isDescontoEdicaoVisible = false
+                    descontoSelecionado = null
+                    isDescontoListaVisible = true
+                },
+            )
+        } else if (isDescontoListaVisible) {
+            DescontoLista(
+                descontos = descontos,
+                onBack = { isDescontoListaVisible = false },
+                onCreate = {
+                    descontoSelecionado = null
+                    isDescontoEdicaoVisible = true
+                },
+                onEdit = { desconto ->
+                    descontoSelecionado = desconto
+                    isDescontoEdicaoVisible = true
+                },
+                onDelete = { desconto ->
+                    descontos = descontos.map { if (it.id == desconto.id) it.copy(ativo = false) else it }
+                },
             )
         } else if (isEstoqueCadastroVisible) {
             EstoqueCadastro(
@@ -126,7 +175,7 @@ fun App(
                         HomeDestination.CATEGORIAS -> isCategoriaCadastroVisible = true
                         HomeDestination.CLIENTES -> isClienteCadastroVisible = true
                         HomeDestination.COMPRAS -> isCompraFornecedorCadastroVisible = true
-                        HomeDestination.DESCONTOS -> isDescontoCadastroVisible = true
+                        HomeDestination.DESCONTOS -> isDescontoListaVisible = true
                         HomeDestination.ESTOQUE -> isEstoqueCadastroVisible = true
                         HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
                         HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
