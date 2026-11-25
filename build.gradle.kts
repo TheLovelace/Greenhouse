@@ -139,6 +139,12 @@ tasks.register("testWeb") {
     )
 }
 
+tasks.register("testFila") {
+    group = "verification"
+    description = "Roda os testes da fila IoT contra o broker MQTT real"
+    dependsOn(":shared:testFila")
+}
+
 tasks.register("testDesktop") {
     group = "verification"
     description = "Roda os testes JVM (desktop)"

@@ -18,8 +18,10 @@ import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.repository.CompraFornecedorRepository
 import org.greenhouse.repository.CompraItemRepository
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
+@TestPropertySource(properties = ["mqtt.broker-url=", "alerta.email.destino="])
 abstract class SpringBootWebTest {
     @MockitoBean
     private lateinit var alertaRepository: AlertaRepository
