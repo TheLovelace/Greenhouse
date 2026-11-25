@@ -16,6 +16,7 @@ plugins {
     alias(libs.plugins.springBoot) apply false
     alias(libs.plugins.kotlinSpring) apply false
     alias(libs.plugins.jib) apply false
+    alias(libs.plugins.kotlinSerialization) apply false
 
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1" apply false
     jacoco
