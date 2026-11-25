@@ -60,9 +60,15 @@ class GlobalExceptionHandler {
     fun handlePersistenceException(e: PersistenceException): ResponseEntity<Map<String, String?>> =
         handleAppException(DatabaseConnectionException(cause = e))
 
-    private fun logAppException(e: AppException) {
-        val name = e::class.java.simpleName
+    fun registrar(e: AppException, contexto: String) = logAppException(e, contexto)
+
+    private fun logAppException(e: AppException, contexto: String? = null) {
+        val name = if (contexto == null) e::class.java.simpleName else "[$contexto] ${e::class.java.simpleName}"
         when {
+            e is BrokerConnectionException -> {
+                log.error("{}: {} | causa raiz: {}", name, e.message, rootCause(e).toString())
+                log.debug("Detalhes da falha no broker MQTT", e)
+            }
             e is DatabaseConnectionException -> {
                 val rootCause = rootCause(e)
                 val sqlState =
