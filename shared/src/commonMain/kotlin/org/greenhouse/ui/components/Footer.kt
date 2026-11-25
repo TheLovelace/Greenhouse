@@ -1,6 +1,6 @@
 @file:Suppress("ktlint:standard:function-naming")
 
-package org.greenhouse.ui.screens.home
+package org.greenhouse.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +24,7 @@ import org.greenhouse.ui.theme.TextPrimary
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun GreenhouseFooter(modifier: Modifier = Modifier) {
+fun Footer(modifier: Modifier = Modifier) {
     val typography = AppTypography()
     val footerInlineContent =
         mapOf(

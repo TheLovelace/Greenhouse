@@ -61,6 +61,7 @@ kotlin {
         }
 
         commonMain.dependencies {
+            implementation(libs.compose.animation)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -69,6 +70,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.jetbrains.navigation3.ui)
         }
 
         commonTest.dependencies {

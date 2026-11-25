@@ -33,7 +33,6 @@ fun EstoqueEdicao(
         onSave = onSave,
         initialForm = initialForm,
         title = if (estoque == null) "Cadastrar Estoque" else "Editar Estoque #${estoque.produtoId}",
-        successMessage = if (estoque == null) "Estoque cadastrado com sucesso!" else "Estoque atualizado com sucesso!",
         produtoIdReadOnly = estoque != null,
         quantidadeReservadaAtual = estoque?.quantidadeReservada,
         existingProdutoIds = existingProdutoIds,

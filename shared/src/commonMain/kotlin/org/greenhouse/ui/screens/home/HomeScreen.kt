@@ -43,10 +43,11 @@ import greenhouse.shared.generated.resources.icon_desconto
 import greenhouse.shared.generated.resources.icon_especie
 import greenhouse.shared.generated.resources.icon_estoque
 import greenhouse.shared.generated.resources.icon_forma_pagamento
-import greenhouse.shared.generated.resources.icon_funcionario
 import greenhouse.shared.generated.resources.icon_fornecedor
+import greenhouse.shared.generated.resources.icon_funcionario
 import greenhouse.shared.generated.resources.icon_pedido
 import greenhouse.shared.generated.resources.icon_produto
+import org.greenhouse.ui.components.Footer
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.GreenPrimary
@@ -189,6 +190,6 @@ fun HomeScreen(onNavigate: (HomeDestination) -> Unit) {
 
         Spacer(Modifier.height(12.dp))
 
-        GreenhouseFooter()
+        Footer()
     }
 }

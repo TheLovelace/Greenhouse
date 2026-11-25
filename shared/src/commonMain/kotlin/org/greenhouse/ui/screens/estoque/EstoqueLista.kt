@@ -40,8 +40,8 @@ import greenhouse.shared.generated.resources.icon_adicionar_light
 import greenhouse.shared.generated.resources.icon_filtro
 import greenhouse.shared.generated.resources.icon_pesquisa
 import greenhouse.shared.generated.resources.icon_voltar
+import org.greenhouse.ui.components.Footer
 import org.greenhouse.ui.screens.estoque.model.EstoqueItem
-import org.greenhouse.ui.screens.home.GreenhouseFooter
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.GreenPrimary
@@ -194,7 +194,7 @@ fun EstoqueLista(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            GreenhouseFooter()
+            Footer()
         }
 
         FloatingActionButton(

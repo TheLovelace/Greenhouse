@@ -20,7 +20,6 @@ fun DescontoEdicao(
         onSave = onSave,
         initialForm = initialForm,
         title = if (desconto == null) "Cadastrar Desconto" else "Editar Desconto #${desconto.id}",
-        successMessage = if (desconto == null) "Desconto cadastrado com sucesso!" else "Desconto atualizado com sucesso!",
     )
 }
 
