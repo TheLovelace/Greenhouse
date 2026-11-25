@@ -22,6 +22,8 @@ import org.greenhouse.repository.AlertaRepository
 import org.greenhouse.repository.DispositivoIotRepository
 import org.greenhouse.repository.LeituraIotRepository
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -41,6 +43,7 @@ class LeituraIotService(
     private val log = LoggerFactory.getLogger(javaClass)
     private val cem = BigDecimal(100)
 
+    @EventListener(ApplicationReadyEvent::class)
     fun iniciarMonitoramento(): Int {
         if (fila == null) {
             log.warn("Fila IoT não configurada, leituras não serão recebidas")
