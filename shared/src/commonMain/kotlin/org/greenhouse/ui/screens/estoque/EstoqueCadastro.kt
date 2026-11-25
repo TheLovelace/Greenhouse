@@ -63,17 +63,32 @@ import org.jetbrains.compose.resources.painterResource
 fun EstoqueCadastro(
     onBack: () -> Unit,
     onSave: (EstoqueCadastroData) -> Unit,
+    initialForm: EstoqueCadastroForm = EstoqueCadastroForm(),
+    title: String = "Cadastrar Estoque",
+    successMessage: String = "Estoque cadastrado com sucesso!",
+    produtoIdReadOnly: Boolean = false,
+    quantidadeReservadaAtual: Int? = null,
+    existingProdutoIds: Set<Long> = emptySet(),
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(EstoqueCadastroForm()) }
+    var form by remember(initialForm) { mutableStateOf(initialForm) }
     var errors by remember { mutableStateOf(emptyMap<String, String>()) }
     var showSuccessMessage by remember { mutableStateOf(false) }
+
+    fun validateForm(formToValidate: EstoqueCadastroForm): Map<String, String> {
+        val validationErrors = validarEstoqueCadastro(formToValidate, quantidadeReservadaAtual).toMutableMap()
+        val produtoId = formToValidate.produtoId.trim().toLongOrNull()
+        if (!produtoIdReadOnly && produtoId != null && produtoId in existingProdutoIds) {
+            validationErrors["produtoId"] = "Já existe um registro de estoque para este produto"
+        }
+        return validationErrors
+    }
 
     fun updateForm(updatedForm: EstoqueCadastroForm) {
         form = updatedForm
         showSuccessMessage = false
         if (errors.isNotEmpty()) {
-            errors = validarEstoqueCadastro(updatedForm)
+            errors = validateForm(updatedForm)
         }
     }
 
@@ -117,7 +132,7 @@ fun EstoqueCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Estoque",
+                text = title,
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -126,7 +141,7 @@ fun EstoqueCadastro(
 
             EstoqueTextField(
                 label = "ID do produto",
-                required = true,
+                required = !produtoIdReadOnly,
                 value = form.produtoId,
                 onValueChange = { value ->
                     updateForm(form.copy(produtoId = formatarQuantidadeEstoque(value)))
@@ -134,7 +149,17 @@ fun EstoqueCadastro(
                 placeholder = "Informe o ID do produto",
                 error = errors["produtoId"],
                 keyboardType = KeyboardType.Number,
+                readOnly = produtoIdReadOnly,
             )
+
+            quantidadeReservadaAtual?.let { quantidade ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Quantidade reservada: $quantidade (gerenciada pelo sistema)",
+                    color = TextPrimary,
+                    style = typography.bodySmall,
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -149,16 +174,6 @@ fun EstoqueCadastro(
                             },
                             placeholder = "Ex.: 20",
                             error = errors["quantidadeFisica"],
-                            keyboardType = KeyboardType.Number,
-                        )
-                        EstoqueTextField(
-                            label = "Quantidade reservada",
-                            value = form.quantidadeReservada,
-                            onValueChange = { value ->
-                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
-                            },
-                            placeholder = "",
-                            error = errors["quantidadeReservada"],
                             keyboardType = KeyboardType.Number,
                         )
                         EstoqueTextField(
@@ -182,17 +197,6 @@ fun EstoqueCadastro(
                             },
                             placeholder = "Ex.: 20",
                             error = errors["quantidadeFisica"],
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f),
-                        )
-                        EstoqueTextField(
-                            label = "Quantidade reservada",
-                            value = form.quantidadeReservada,
-                            onValueChange = { value ->
-                                updateForm(form.copy(quantidadeReservada = formatarQuantidadeEstoque(value)))
-                            },
-                            placeholder = "",
-                            error = errors["quantidadeReservada"],
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f),
                         )
@@ -228,7 +232,11 @@ fun EstoqueCadastro(
                     onCheckedChange = { updateForm(form.copy(bloqueado = it)) },
                     colors = CheckboxDefaults.colors(checkedColor = GreenPrimary, uncheckedColor = GreenPrimary),
                 )
-                Text("Bloquear este estoque? Um estoque bloqueado não permite reserva de itens.", color = TextPrimary, style = typography.bodyMedium)
+                Text(
+                    "Bloquear este estoque? Um estoque bloqueado não permite reserva de itens.",
+                    color = TextPrimary,
+                    style = typography.bodyMedium,
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -240,7 +248,7 @@ fun EstoqueCadastro(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
                             onClick = {
-                                val validationErrors = validarEstoqueCadastro(form)
+                                val validationErrors = validateForm(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toEstoqueCadastroDataOrNull()?.let { data ->
@@ -254,7 +262,7 @@ fun EstoqueCadastro(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
                             onClick = {
-                                form = EstoqueCadastroForm()
+                                form = initialForm
                                 errors = emptyMap()
                                 showSuccessMessage = false
                             },
@@ -266,7 +274,7 @@ fun EstoqueCadastro(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
                             onClick = {
-                                val validationErrors = validarEstoqueCadastro(form)
+                                val validationErrors = validateForm(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toEstoqueCadastroDataOrNull()?.let { data ->
@@ -280,7 +288,7 @@ fun EstoqueCadastro(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
                             onClick = {
-                                form = EstoqueCadastroForm()
+                                form = initialForm
                                 errors = emptyMap()
                                 showSuccessMessage = false
                             },
@@ -291,7 +299,7 @@ fun EstoqueCadastro(
 
             if (showSuccessMessage) {
                 Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Estoque cadastrado com sucesso!")
+                CadastroSuccessMessage(successMessage)
             }
         }
     }
@@ -327,6 +335,7 @@ private fun EstoqueTextField(
     keyboardType: KeyboardType,
     modifier: Modifier = Modifier,
     required: Boolean = false,
+    readOnly: Boolean = false,
 ) {
     val typography = AppTypography()
     Column(modifier = modifier) {
@@ -344,6 +353,7 @@ private fun EstoqueTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            readOnly = readOnly,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = placeholder, color = Gray, style = typography.bodyMedium) },
             isError = error != null,

@@ -17,8 +17,10 @@ import org.greenhouse.ui.screens.desconto.DescontoLista
 import org.greenhouse.ui.screens.desconto.model.DescontoCadastroData
 import org.greenhouse.ui.screens.desconto.model.DescontoItem
 import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
-import org.greenhouse.ui.screens.estoque.EstoqueCadastro
+import org.greenhouse.ui.screens.estoque.EstoqueEdicao
+import org.greenhouse.ui.screens.estoque.EstoqueLista
 import org.greenhouse.ui.screens.estoque.model.EstoqueCadastroData
+import org.greenhouse.ui.screens.estoque.model.EstoqueItem
 import org.greenhouse.ui.screens.funcionario.FuncionarioCadastro
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
 import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoCadastro
@@ -56,7 +58,10 @@ fun App(
     var isDescontoEdicaoVisible by remember { mutableStateOf(false) }
     var descontoSelecionado by remember { mutableStateOf<DescontoItem?>(null) }
     var descontos by remember { mutableStateOf(emptyList<DescontoItem>()) }
-    var isEstoqueCadastroVisible by remember { mutableStateOf(false) }
+    var isEstoqueListaVisible by remember { mutableStateOf(false) }
+    var isEstoqueEdicaoVisible by remember { mutableStateOf(false) }
+    var estoqueSelecionado by remember { mutableStateOf<EstoqueItem?>(null) }
+    var estoques by remember { mutableStateOf(emptyList<EstoqueItem>()) }
     var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
     var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
     var isFornecedorCadastroVisible by remember { mutableStateOf(false) }
@@ -128,10 +133,54 @@ fun App(
                     descontos = descontos.map { if (it.id == desconto.id) it.copy(ativo = false) else it }
                 },
             )
-        } else if (isEstoqueCadastroVisible) {
-            EstoqueCadastro(
-                onBack = { isEstoqueCadastroVisible = false },
-                onSave = onSaveEstoque,
+        } else if (isEstoqueEdicaoVisible) {
+            EstoqueEdicao(
+                estoque = estoqueSelecionado,
+                existingProdutoIds = estoques.map { it.produtoId }.toSet(),
+                onBack = {
+                    isEstoqueEdicaoVisible = false
+                    estoqueSelecionado = null
+                },
+                onSave = { data ->
+                    onSaveEstoque(data)
+                    val produtoId = data.produtoId
+                    val quantidadeReservada = estoqueSelecionado?.quantidadeReservada ?: 0
+                    val item =
+                        EstoqueItem(
+                            produtoId = produtoId,
+                            quantidadeFisica = data.quantidadeFisica,
+                            quantidadeReservada = quantidadeReservada,
+                            quantidadeDisponivel = data.quantidadeFisica - quantidadeReservada,
+                            quantidadeMinima = data.quantidadeMinima,
+                            localizacao = data.localizacao,
+                            bloqueado = data.bloqueado,
+                        )
+                    estoques =
+                        if (estoqueSelecionado == null) {
+                            estoques + item
+                        } else {
+                            estoques.map { if (it.produtoId == produtoId) item else it }
+                        }
+                    isEstoqueEdicaoVisible = false
+                    estoqueSelecionado = null
+                    isEstoqueListaVisible = true
+                },
+            )
+        } else if (isEstoqueListaVisible) {
+            EstoqueLista(
+                estoques = estoques,
+                onBack = { isEstoqueListaVisible = false },
+                onCreate = {
+                    estoqueSelecionado = null
+                    isEstoqueEdicaoVisible = true
+                },
+                onEdit = { estoque ->
+                    estoqueSelecionado = estoque
+                    isEstoqueEdicaoVisible = true
+                },
+                onDelete = { estoque ->
+                    estoques = estoques.filterNot { it.produtoId == estoque.produtoId }
+                },
             )
         } else if (isFuncionarioCadastroVisible) {
             FuncionarioCadastro(
@@ -176,7 +225,7 @@ fun App(
                         HomeDestination.CLIENTES -> isClienteCadastroVisible = true
                         HomeDestination.COMPRAS -> isCompraFornecedorCadastroVisible = true
                         HomeDestination.DESCONTOS -> isDescontoListaVisible = true
-                        HomeDestination.ESTOQUE -> isEstoqueCadastroVisible = true
+                        HomeDestination.ESTOQUE -> isEstoqueListaVisible = true
                         HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
                         HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
                         HomeDestination.FORNECEDORES -> isFornecedorCadastroVisible = true
