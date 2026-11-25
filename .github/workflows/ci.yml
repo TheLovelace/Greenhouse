@@ -86,8 +86,6 @@ jobs:
           DATABASE_URL: jdbc:postgresql://localhost:5432/greenhouse?user=greenhouse&password=${{ secrets.TEST_DB_PASSWORD }}
           SPRING_FLYWAY_ENABLED: "true"
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          MQTT_URL: ${{ secrets.MQTT_TEST }}
-          MQTT_PASSWORD: ${{ secrets.MQTT_TEST_PASSWORD }}
         run: ./gradlew coverage
 
       - name: Publicar relatório de cobertura
