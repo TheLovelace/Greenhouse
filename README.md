@@ -229,17 +229,36 @@ Assim, as **camadas do frontend** estão distribuídas da seguinte forma:
 ### Fluxo geral do Frontend
 
 ```mermaid
-flowchart LR
-    A[Módulo da plataforma] --> B[Entrada da aplicação]
-    B --> C[App]
-    C --> D[Theme]
-    D --> E[Telas Compose]
+flowchart TD
+    Plataforma[Módulo de entrada da plataforma] --> App[App compartilhado]
+    App --> Tema[GreenhouseTheme envolve a interface]
+    Tema --> Sessao{Sessão restaurada?}
 
-    G[Paleta de cores] -.-> D
-    H[Tipografia] -.-> D
+    Sessao -->|Sim| Home[Home]
+    Sessao -->|Não| Acesso[Boas-vindas e Login]
+    Acesso -->|Autenticar| AuthVM[AuthViewModel]
+    AuthVM --> AuthRepo[AuthRepositorioRemoto]
+    AuthRepo <--> AuthAPI[API de autenticação]
+    AuthVM -->|Login válido| GerenciadorSessao[AuthSessionManager]
+    GerenciadorSessao --> Home
+
+    Home --> Ajuda[Central de Ajuda]
+    Home --> Confirmacao{Confirmar logout?}
+    Confirmacao -->|Cancelar| Home
+    Confirmacao -->|Confirmar| LimparSessao[Limpar sessão local]
+    LimparSessao --> Acesso
+
+    Home --> Destino{Opção do menu}
+    Destino --> Catalogo[Catálogo]
+    Catalogo --> Nav3[Navigation 3: listagens e formulários]
+    Nav3 --> ViewModels[ViewModels e repositórios]
+    Destino --> Telas[Telas dos demais módulos]
+    Telas --> ViewModels
+    ViewModels -->|Quando integrado| API[API REST]
+    Telas -.-> Callbacks[Callbacks do App para alguns fluxos]
 ```
 
-A Home reúne opções de navegação para as funcionalidades do sistema. Atualmente, `App.kt` abre localmente os formulários de Desconto e Estoque; as demais opções são encaminhadas pelo callback `onNavigate` para o módulo hospedeiro.
+A Home envia a opção escolhida ao roteamento interno de `App.kt`. Categorias, Produtos, Descontos e Estoque são exibidos no `CatalogoScreen`, com navegação entre listagens e formulários por Navigation 3. Os demais destinos também são resolvidos pelo `App`, que abre suas telas correspondentes. A autenticação usa a API e mantém a sessão por meio de `AuthSessionManager`; o logout pede confirmação e, quando confirmado, limpa a sessão local. As telas usam ViewModels e repositórios para acessar a API quando essa integração está implementada; callbacks do `App` permitem integrar operações específicas ao módulo hospedeiro.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_requisitos.png" width="25"/> 
@@ -421,10 +440,12 @@ As rotas de negócio exigem autenticação JWT. As rotas de login, status e docu
 
 Com a aplicação da Greenhouse em execução, utilize as seguintes credenciais para login:
 
-```md
-Login: ghseed.admin
-Senha: admin.c0ntr0l3
-```
+> 🔒 **Faça Login**
+>
+>**Login**: ghseed.admin
+>
+>**Senha**: admin.c0ntr0l3
+>
 
 <h2 align="start"> 
   <img src=".github/assets/icon_testes.png" width="25"/> 
