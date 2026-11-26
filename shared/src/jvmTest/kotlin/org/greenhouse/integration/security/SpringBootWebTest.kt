@@ -14,6 +14,7 @@ import org.greenhouse.repository.LeituraIotRepository
 import org.greenhouse.repository.PedidoItemRepository
 import org.greenhouse.repository.PedidoRepository
 import org.greenhouse.repository.ProdutoRepository
+import org.greenhouse.repository.RefreshTokenRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.repository.CompraFornecedorRepository
 import org.greenhouse.repository.CompraItemRepository
@@ -67,6 +68,9 @@ abstract class SpringBootWebTest {
 
     @MockitoBean
     private lateinit var usuarioRepository: UsuarioRepository
+
+    @MockitoBean
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
 
     @MockitoBean
     private lateinit var compraFornecedorRepository: CompraFornecedorRepository
