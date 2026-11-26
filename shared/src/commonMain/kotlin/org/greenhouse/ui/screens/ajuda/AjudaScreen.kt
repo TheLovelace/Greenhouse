@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_voltar
+import org.greenhouse.ui.components.Footer
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.GreenPrimary
@@ -150,7 +151,7 @@ fun AjudaScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(12.dp))
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 12.dp),
         ) {
@@ -158,6 +159,9 @@ fun AjudaScreen(onBack: () -> Unit) {
                 PerguntaFrequenteCard(item)
             }
         }
+
+        Spacer(Modifier.height(12.dp))
+        Footer()
     }
 }
 

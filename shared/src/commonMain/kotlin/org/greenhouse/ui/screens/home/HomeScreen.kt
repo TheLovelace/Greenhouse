@@ -25,6 +25,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
@@ -48,6 +52,7 @@ import greenhouse.shared.generated.resources.icon_funcionario
 import greenhouse.shared.generated.resources.icon_pedido
 import greenhouse.shared.generated.resources.icon_produto
 import org.greenhouse.ui.components.Footer
+import org.greenhouse.ui.components.ModalConfirmacaoLogout
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.GreenPrimary
@@ -102,6 +107,7 @@ fun HomeScreen(
     onLogout: () -> Unit,
 ) {
     val typography = AppTypography()
+    var mostrarConfirmacaoLogout by remember { mutableStateOf(false) }
 
     Column(
         modifier =
@@ -110,7 +116,12 @@ fun HomeScreen(
                 .background(Background)
                 .padding(horizontal = 30.dp, vertical = 30.dp),
     ) {
-        HomeHeader(login = login, profile = profile, onHelp = onHelp, onLogout = onLogout)
+        HomeHeader(
+            login = login,
+            profile = profile,
+            onHelp = onHelp,
+            onLogout = { mostrarConfirmacaoLogout = true },
+        )
 
         Spacer(Modifier.height(36.dp))
 
@@ -201,5 +212,15 @@ fun HomeScreen(
         Spacer(Modifier.height(12.dp))
 
         Footer()
+    }
+
+    if (mostrarConfirmacaoLogout) {
+        ModalConfirmacaoLogout(
+            onDismiss = { mostrarConfirmacaoLogout = false },
+            onConfirm = {
+                mostrarConfirmacaoLogout = false
+                onLogout()
+            },
+        )
     }
 }
