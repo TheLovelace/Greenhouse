@@ -325,6 +325,8 @@ Substitua todos os marcadores por valores locais válidos e não use aspas no ar
   <b>Execução</b>
 </h2>
 
+Para configurar a placa, iniciar o backend com MQTT e conferir as leituras físicas, consulte o [guia do ESP32 da estufa 1](firmware/README.md).
+
 ### Backend local
 
 Em um primeiro terminal, configure `DATABASE_URL` e `JWT_SECRET` conforme a seção anterior e inicie o backend:
