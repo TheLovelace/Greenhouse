@@ -76,7 +76,7 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
 
     @Test
     fun `signin e signup ficam acessiveis sem token e rotas antigas nao sao mais publicas`() {
-        Mockito.doReturn(TokenResponse(token = "test-token", perfil = "ADMIN"))
+        Mockito.doReturn(TokenResponse(token = "test-token", perfil = "ADMIN", login = "admin"))
             .`when`(authService)
             .login(Mockito.any(LoginRequest::class.java) ?: LoginRequest("admin", "senha"))
         Mockito.doNothing()
@@ -85,7 +85,9 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
         Mockito.doNothing()
             .`when`(authService)
             .primeiroAcesso(Mockito.any(PrimeiroAcessoRequest::class.java) ?: PrimeiroAcessoRequest("", "", ""))
-        Mockito.doReturn(TokenResponse(token = "refreshed-token", perfil = "ADMIN", refreshToken = "next-refresh"))
+        Mockito.doReturn(
+            TokenResponse(token = "refreshed-token", perfil = "ADMIN", login = "admin", refreshToken = "next-refresh"),
+        )
             .`when`(authService)
             .refresh(Mockito.any(RefreshTokenRequest::class.java) ?: RefreshTokenRequest(""))
 
@@ -100,7 +102,7 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(signinBody),
             )
-                .andExpect(content().json("""{"token":"test-token","perfil":"ADMIN"}"""))
+                .andExpect(content().json("""{"token":"test-token","perfil":"ADMIN","login":"admin"}"""))
                 .andReturn().response.status
         val signupStatus =
             mockMvc.perform(
@@ -120,7 +122,9 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(refreshBody),
             )
-                .andExpect(content().json("""{"token":"refreshed-token","perfil":"ADMIN","refreshToken":"next-refresh"}"""))
+                .andExpect(
+                    content().json("""{"token":"refreshed-token","perfil":"ADMIN","login":"admin","refreshToken":"next-refresh"}"""),
+                )
                 .andReturn().response.status
         val oldSigninStatus =
             mockMvc.perform(

@@ -229,17 +229,36 @@ Assim, as **camadas do frontend** estão distribuídas da seguinte forma:
 ### Fluxo geral do Frontend
 
 ```mermaid
-flowchart LR
-    A[Módulo da plataforma] --> B[Entrada da aplicação]
-    B --> C[App]
-    C --> D[Theme]
-    D --> E[Telas Compose]
+flowchart TD
+    Plataforma[Módulo de entrada da plataforma] --> App[App compartilhado]
+    App --> Tema[GreenhouseTheme envolve a interface]
+    Tema --> Sessao{Sessão restaurada?}
 
-    G[Paleta de cores] -.-> D
-    H[Tipografia] -.-> D
+    Sessao -->|Sim| Home[Home]
+    Sessao -->|Não| Acesso[Boas-vindas e Login]
+    Acesso -->|Autenticar| AuthVM[AuthViewModel]
+    AuthVM --> AuthRepo[AuthRepositorioRemoto]
+    AuthRepo <--> AuthAPI[API de autenticação]
+    AuthVM -->|Login válido| GerenciadorSessao[AuthSessionManager]
+    GerenciadorSessao --> Home
+
+    Home --> Ajuda[Central de Ajuda]
+    Home --> Confirmacao{Confirmar logout?}
+    Confirmacao -->|Cancelar| Home
+    Confirmacao -->|Confirmar| LimparSessao[Limpar sessão local]
+    LimparSessao --> Acesso
+
+    Home --> Destino{Opção do menu}
+    Destino --> Catalogo[Catálogo]
+    Catalogo --> Nav3[Navigation 3: listagens e formulários]
+    Nav3 --> ViewModels[ViewModels e repositórios]
+    Destino --> Telas[Telas dos demais módulos]
+    Telas --> ViewModels
+    ViewModels -->|Quando integrado| API[API REST]
+    Telas -.-> Callbacks[Callbacks do App para alguns fluxos]
 ```
 
-A Home reúne opções de navegação para as funcionalidades do sistema. Atualmente, `App.kt` abre localmente os formulários de Desconto e Estoque; as demais opções são encaminhadas pelo callback `onNavigate` para o módulo hospedeiro.
+A Home envia a opção escolhida ao roteamento interno de `App.kt`. Categorias, Produtos, Descontos e Estoque são exibidos no `CatalogoScreen`, com navegação entre listagens e formulários por Navigation 3. Os demais destinos também são resolvidos pelo `App`, que abre suas telas correspondentes. A autenticação usa a API e mantém a sessão por meio de `AuthSessionManager`; o logout pede confirmação e, quando confirmado, limpa a sessão local. As telas usam ViewModels e repositórios para acessar a API quando essa integração está implementada; callbacks do `App` permitem integrar operações específicas ao módulo hospedeiro.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_requisitos.png" width="25"/> 
@@ -308,7 +327,7 @@ Substitua todos os marcadores por valores locais válidos e não use aspas no ar
 
 ### Backend local
 
-Com `DATABASE_URL` e `JWT_SECRET` configuradas conforme a seção anterior:
+Em um primeiro terminal, configure `DATABASE_URL` e `JWT_SECRET` conforme a seção anterior e inicie o backend:
 
 PowerShell (Windows):
 
@@ -322,11 +341,11 @@ Bash (macOS/Linux):
 ./gradlew :serverApp:bootRun
 ```
 
-O backend inicia na porta `8080`.
+O backend inicia na porta `8080`. Mantenha esse terminal aberto enquanto usa o frontend.
 
 ### Backend em container de teste
 
-Inicie o Docker Desktop e configure `.env.test.local` na raiz. Depois:
+Como alternativa, inicie o Docker Desktop e configure `.env.test.local` na raiz conforme a seção anterior. Em um terminal:
 
 PowerShell (Windows):
 
@@ -354,9 +373,25 @@ Bash (macOS/Linux):
 ./gradlew :serverApp:stopTest
 ```
 
-Os clientes usam por padrão `http://localhost:8081/api` (Android Emulator: `http://10.0.2.2:8081/api`), alinhado a essa task. Para usar o backend iniciado com `bootRun`, configure `API_URL=http://localhost:8080/api` e, no Android Emulator, `API_URL_ANDROID=http://10.0.2.2:8080/api` antes de compilar ou iniciar o cliente.
+O container expõe o backend em `http://localhost:8081`. Os clientes **não** usam essa porta por padrão: a URL padrão é `http://localhost:8080/api` (Android Emulator: `http://10.0.2.2:8080/api`). Para usar o container, configure a URL correspondente antes de compilar/iniciar o cliente:
+
+PowerShell (Windows):
+
+```powershell
+$env:API_URL = "http://localhost:8081/api"
+$env:API_URL_ANDROID = "http://10.0.2.2:8081/api"
+```
+
+Bash (macOS/Linux):
+
+```bash
+export API_URL="http://localhost:8081/api"
+export API_URL_ANDROID="http://10.0.2.2:8081/api"
+```
 
 ### Aplicações cliente
+
+Em um segundo terminal, escolha o cliente que deseja executar. O comando inicia/builda apenas o frontend; o backend precisa estar rodando separadamente. Para `bootRun`, use a URL padrão na porta `8080`; para `runTest`, configure as URLs para a porta `8081` como mostrado acima.
 
 PowerShell (Windows):
 
@@ -384,7 +419,9 @@ Bash (macOS/Linux):
 ./gradlew devMobile
 ```
 
-Esses comandos executam/buildam somente a aplicação cliente; eles não iniciam o backend. Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
+No Android Emulator, o endereço `10.0.2.2` aponta para o host da máquina. Em um dispositivo físico, configure `API_URL_ANDROID` com um endereço do host acessível pela rede local. As URLs são incorporadas ao código gerado pelo Gradle; se alterá-las, execute novamente o comando do cliente para recompilar.
+
+Para iOS, abra `iosApp/iosApp.xcodeproj` no Xcode em um Mac e execute pelo Xcode.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_doc_api.png" width="25"/> 
@@ -400,6 +437,15 @@ Com o backend local:
 Com o container de teste, use `http://localhost:8081` no lugar de `http://localhost:8080`.
 
 As rotas de negócio exigem autenticação JWT. As rotas de login, status e documentação OpenAPI são públicas. Para testar os endpoints protegidos, autentique-se pelo endpoint de login e informe o token como `Bearer` no Swagger.
+
+Com a aplicação da Greenhouse em execução, utilize as seguintes credenciais para login:
+
+> 🔒 **Faça Login**
+>
+>**Login**: ghseed.admin
+>
+>**Senha**: admin.c0ntr0l3
+>
 
 <h2 align="start"> 
   <img src=".github/assets/icon_testes.png" width="25"/> 

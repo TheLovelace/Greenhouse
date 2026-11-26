@@ -157,6 +157,10 @@ components:
 
     TokenResponse:
       type: object
+      required:
+        - token
+        - perfil
+        - login
       properties:
         token:
           type: string
@@ -164,6 +168,9 @@ components:
         perfil:
           type: string
           example: "FUNCIONARIO"
+        login:
+          type: string
+          example: "luna.leao"
         refreshToken:
           type: string
           nullable: true
