@@ -14,7 +14,9 @@ suspend fun mensagemDeErro(
     mensagemPadrao: String,
 ): String {
     if (erro !is ResponseException) {
-        return "Não foi possível conectar ao servidor. Verifique se o backend está rodando."
+        val detalhe = erro.message?.takeIf { it.isNotBlank() }
+        return detalhe?.let { "Falha na comunicação com a API: $it" }
+            ?: "Falha na comunicação com a API. Confira o endereço configurado e se ela está acessível."
     }
     val mensagemBackend = runCatching { erro.response.body<ErroResposta>().error }.getOrNull()
     return mensagemBackend ?: "$mensagemPadrao (HTTP ${erro.response.status.value})"

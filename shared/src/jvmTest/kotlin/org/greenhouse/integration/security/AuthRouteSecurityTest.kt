@@ -5,7 +5,9 @@ import org.greenhouse.security.LegacyPasswordAuthenticationProvider
 import org.greenhouse.service.AuthService
 import org.greenhouse.service.LoginRequest
 import org.greenhouse.service.PrimeiroAcessoRequest
+import org.greenhouse.service.RefreshTokenRequest
 import org.greenhouse.service.TokenResponse
+import org.greenhouse.service.ValidarPrimeiroAcessoRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -22,7 +24,10 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options
 
 @SpringBootTest(
     classes = [GreenhouseApplication::class],
@@ -50,6 +55,18 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
     private lateinit var authService: AuthService
 
     @Test
+    fun `preflight web autoriza origem localhost para chamada da API`() {
+        mockMvc.perform(
+            options("/api/auth/signin")
+                .header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "authorization,content-type"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+    }
+
+    @Test
     fun `contexto Spring configura AuthenticationManager e PasswordEncoder`() {
         assertNotNull(authenticationManager)
         assertEquals(true, passwordEncoder.matches("senha", passwordEncoder.encode("senha")))
@@ -64,10 +81,18 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
             .login(Mockito.any(LoginRequest::class.java) ?: LoginRequest("admin", "senha"))
         Mockito.doNothing()
             .`when`(authService)
+            .validarPrimeiroAcesso(Mockito.any(ValidarPrimeiroAcessoRequest::class.java) ?: ValidarPrimeiroAcessoRequest(""))
+        Mockito.doNothing()
+            .`when`(authService)
             .primeiroAcesso(Mockito.any(PrimeiroAcessoRequest::class.java) ?: PrimeiroAcessoRequest("", "", ""))
+        Mockito.doReturn(TokenResponse(token = "refreshed-token", perfil = "ADMIN", refreshToken = "next-refresh"))
+            .`when`(authService)
+            .refresh(Mockito.any(RefreshTokenRequest::class.java) ?: RefreshTokenRequest(""))
 
         val signinBody = """{"login":"admin","senhaHash":"senha"}"""
-        val signupBody = """{"cpf":"12345678901","email":"admin@example.com","novaSenha":"senha-segura"}"""
+        val firstAccessCheckBody = """{"login":"admin"}"""
+        val signupBody = """{"login":"admin","cpf":"12345678901","email":"admin@example.com","novaSenha":"senha-segura"}"""
+        val refreshBody = """{"refreshToken":"current-refresh"}"""
 
         val signinStatus =
             mockMvc.perform(
@@ -83,6 +108,20 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(signupBody),
             ).andReturn().response.status
+        val firstAccessCheckStatus =
+            mockMvc.perform(
+                post("/api/auth/first-access/check")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(firstAccessCheckBody),
+            ).andReturn().response.status
+        val refreshStatus =
+            mockMvc.perform(
+                post("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(refreshBody),
+            )
+                .andExpect(content().json("""{"token":"refreshed-token","perfil":"ADMIN","refreshToken":"next-refresh"}"""))
+                .andReturn().response.status
         val oldSigninStatus =
             mockMvc.perform(
                 post("/api/auth/login")
@@ -98,6 +137,8 @@ class AuthRouteSecurityTest : SpringBootWebTest() {
 
         assertEquals(200, signinStatus)
         assertEquals(204, signupStatus)
+        assertEquals(204, firstAccessCheckStatus)
+        assertEquals(200, refreshStatus)
         assertEquals(401, oldSigninStatus)
         assertEquals(401, oldSignupStatus)
     }

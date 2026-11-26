@@ -5,12 +5,15 @@ import org.greenhouse.adapter.BadRequestException
 import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.dto.UsuarioDTO as Usuario
 import org.greenhouse.mapper.UsuarioMapper
+import org.greenhouse.model.RefreshToken
+import org.greenhouse.repository.RefreshTokenRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
 import org.greenhouse.security.LegacyPasswordAuthenticationProvider
 import org.greenhouse.service.AuthService
 import org.greenhouse.service.LoginRequest
 import org.greenhouse.service.PrimeiroAcessoRequest
+import org.greenhouse.service.RefreshTokenRequest
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.ProviderManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -18,15 +21,19 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class AuthServiceTest {
-
     private val usuarioRepository = Mockito.mock(UsuarioRepository::class.java)
+    private val refreshTokenRepository = Mockito.mock(RefreshTokenRepository::class.java)
     private val jwtService = JwtService("test-key-which-is-longer-than-thirty-two-characters", 60_000)
     private val usuarioMapper = UsuarioMapper()
     private val encoder = BCryptPasswordEncoder()
@@ -46,7 +53,60 @@ class AuthServiceTest {
     }
     private val legacyProvider = LegacyPasswordAuthenticationProvider(usuarioRepository, encoder)
     private val authenticationManager: AuthenticationManager = ProviderManager(listOf(legacyProvider, provider))
-    private val service = AuthService(usuarioRepository, jwtService, usuarioMapper, authenticationManager, encoder)
+    private val service =
+        AuthService(
+            usuarioRepository,
+            refreshTokenRepository,
+            jwtService,
+            usuarioMapper,
+            authenticationManager,
+            encoder,
+        )
+
+    @Test
+    fun `login lembrado emite refresh token e persiste somente o hash`() {
+        val password = "senha-atual"
+        Mockito.doReturn(usuarioMapper.toModel(usuario(senhaHash = encoder.encode(password))))
+            .`when`(usuarioRepository)
+            .buscarPorLogin("admin")
+
+        val result = service.login(LoginRequest("admin", password, lembrarDispositivo = true))
+        val savedTokenCaptor = ArgumentCaptor.forClass(RefreshToken::class.java)
+        Mockito.verify(refreshTokenRepository).save(savedTokenCaptor.capture())
+        val savedToken = savedTokenCaptor.value
+
+        assertNotNull(result.refreshToken)
+        assertTrue(savedToken.tokenHash != result.refreshToken)
+        assertTrue(savedToken.tokenHash.length == 64)
+        assertTrue(savedToken.expiraEm.isAfter(Instant.now().plus(29, ChronoUnit.DAYS)))
+    }
+
+    @Test
+    fun `refresh rotaciona token preservando o vencimento absoluto`() {
+        val expiration = Instant.now().plus(20, ChronoUnit.DAYS)
+        val persistedToken =
+            RefreshToken(
+                usuarioId = 7,
+                tokenHash = "hash-antigo",
+                expiraEm = expiration,
+            )
+        Mockito.doReturn(persistedToken)
+            .`when`(refreshTokenRepository)
+            .buscarPorHashParaAtualizacao(Mockito.anyString() ?: "")
+        Mockito.doReturn(java.util.Optional.of(usuarioMapper.toModel(usuario())))
+            .`when`(usuarioRepository)
+            .findById(7L)
+
+        val result = service.refresh(RefreshTokenRequest("refresh-antigo"))
+        val savedTokenCaptor = ArgumentCaptor.forClass(RefreshToken::class.java)
+        Mockito.verify(refreshTokenRepository, Mockito.times(2)).save(savedTokenCaptor.capture())
+        val rotatedToken = savedTokenCaptor.allValues[1]
+
+        assertNotNull(result.refreshToken)
+        assertNotNull(persistedToken.revogadoEm)
+        assertTrue(rotatedToken.tokenHash != result.refreshToken)
+        assertTrue(rotatedToken.expiraEm == expiration)
+    }
 
     @Test
     fun `login legado da conta existente e migra credencial depois do sucesso`() {
@@ -141,7 +201,7 @@ class AuthServiceTest {
         }.`when`(usuarioRepository)
             .concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
 
-        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
+        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha", "admin"))
 
         Mockito.verify(usuarioRepository).concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
         assertTrue(encoder.matches("nova-senha", storedHash ?: ""))
@@ -152,7 +212,7 @@ class AuthServiceTest {
         val senhaMultibyte = "á".repeat(37)
 
         assertThrows(BadRequestException::class.java) {
-            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte, "admin"))
         }
         Mockito.verifyNoInteractions(usuarioRepository)
     }
@@ -170,7 +230,7 @@ class AuthServiceTest {
         }.`when`(usuarioRepository)
             .concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
 
-        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte))
+        service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", senhaMultibyte, "admin"))
 
         Mockito.verify(usuarioRepository).concluirPrimeiroAcesso(eq(7L), Mockito.anyString() ?: "")
         assertTrue(encoder.matches(senhaMultibyte, storedHash ?: ""))
@@ -183,7 +243,7 @@ class AuthServiceTest {
             .buscarPorCpfEEmail("12345678901", "user@example.com")
 
         assertThrows(BadRequestException::class.java) {
-            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha"))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "user@example.com", "nova-senha", "admin"))
         }
         Mockito.verify(usuarioRepository, Mockito.never())
             .concluirPrimeiroAcesso(Mockito.anyLong(), Mockito.anyString() ?: "")
@@ -211,7 +271,7 @@ class AuthServiceTest {
             .buscarPorCpfEEmail("12345678901", "missing@example.com")
 
         assertThrows(NotFoundException::class.java) {
-            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "missing@example.com", "nova-senha"))
+            service.primeiroAcesso(PrimeiroAcessoRequest("12345678901", "missing@example.com", "nova-senha", "admin"))
         }
     }
 

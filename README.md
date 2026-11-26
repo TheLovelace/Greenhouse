@@ -354,6 +354,8 @@ Bash (macOS/Linux):
 ./gradlew :serverApp:stopTest
 ```
 
+Os clientes usam por padrão `http://localhost:8081/api` (Android Emulator: `http://10.0.2.2:8081/api`), alinhado a essa task. Para usar o backend iniciado com `bootRun`, configure `API_URL=http://localhost:8080/api` e, no Android Emulator, `API_URL_ANDROID=http://10.0.2.2:8080/api` antes de compilar ou iniciar o cliente.
+
 ### Aplicações cliente
 
 PowerShell (Windows):

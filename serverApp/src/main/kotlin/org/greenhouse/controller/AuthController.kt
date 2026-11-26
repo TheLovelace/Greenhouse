@@ -1,11 +1,12 @@
 package org.greenhouse.controller
 
 // Trocamos os imports da pasta DTO para a pasta usecase, onde as data classes estão agora
+import org.greenhouse.service.AuthService
 import org.greenhouse.service.LoginRequest
 import org.greenhouse.service.PrimeiroAcessoRequest
+import org.greenhouse.service.RefreshTokenRequest
 import org.greenhouse.service.TokenResponse
-import org.greenhouse.service.AuthService
-
+import org.greenhouse.service.ValidarPrimeiroAcessoRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -17,15 +18,34 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authUseCase: AuthService,
 ) {
-
     @PostMapping("/signin")
-    fun signin(@RequestBody request: LoginRequest): ResponseEntity<TokenResponse> {
+    fun signin(
+        @RequestBody request: LoginRequest,
+    ): ResponseEntity<TokenResponse> {
         val token = authUseCase.login(request)
         return ResponseEntity.ok(token)
     }
 
+    @PostMapping("/refresh")
+    fun refresh(
+        @RequestBody request: RefreshTokenRequest,
+    ): ResponseEntity<TokenResponse> {
+        val token = authUseCase.refresh(request)
+        return ResponseEntity.ok(token)
+    }
+
+    @PostMapping("/first-access/check")
+    fun validarPrimeiroAcesso(
+        @RequestBody request: ValidarPrimeiroAcessoRequest,
+    ): ResponseEntity<Unit> {
+        authUseCase.validarPrimeiroAcesso(request)
+        return ResponseEntity.noContent().build()
+    }
+
     @PostMapping("/signup")
-    fun signup(@RequestBody request: PrimeiroAcessoRequest): ResponseEntity<Unit> {
+    fun signup(
+        @RequestBody request: PrimeiroAcessoRequest,
+    ): ResponseEntity<Unit> {
         authUseCase.primeiroAcesso(request)
         return ResponseEntity.noContent().build()
     }

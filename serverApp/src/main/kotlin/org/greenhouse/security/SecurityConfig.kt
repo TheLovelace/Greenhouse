@@ -44,11 +44,18 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
 
+            .cors { }
+
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 
             .authorizeHttpRequests { auth ->
 
-                auth.requestMatchers("/api/auth/signin", "/api/auth/signup").permitAll()
+                auth.requestMatchers(
+                    "/api/auth/signin",
+                    "/api/auth/first-access/check",
+                    "/api/auth/signup",
+                    "/api/auth/refresh",
+                ).permitAll()
                 auth.requestMatchers("/api/status").permitAll()
                 auth.requestMatchers("/jacoco", "/jacoco/**").permitAll()
 
