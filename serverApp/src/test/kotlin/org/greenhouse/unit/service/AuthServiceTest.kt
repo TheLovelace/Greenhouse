@@ -6,6 +6,7 @@ import org.greenhouse.adapter.NotFoundException
 import org.greenhouse.adapter.ServerException
 import org.greenhouse.mapper.UsuarioMapper
 import org.greenhouse.model.Usuario
+import org.greenhouse.repository.RefreshTokenRepository
 import org.greenhouse.repository.UsuarioRepository
 import org.greenhouse.security.JwtService
 import org.greenhouse.service.AuthService
@@ -49,6 +50,8 @@ import org.springframework.security.crypto.password.PasswordEncoder
 class AuthServiceTest {
     @Mock lateinit var usuarioRepository: UsuarioRepository
 
+    @Mock lateinit var refreshTokenRepository: RefreshTokenRepository
+
     @Mock lateinit var jwtService: JwtService
 
     @Spy var usuarioMapper = UsuarioMapper()
@@ -84,7 +87,11 @@ class AuthServiceTest {
     }
 
     private fun primeiroAcesso(novaSenha: String = senha) =
-            PrimeiroAcessoRequest(cpf = "98765432100", email = "ana@greenhouse.com", novaSenha = novaSenha)
+        PrimeiroAcessoRequest(
+            cpf = "98765432100",
+            email = "ana@greenhouse.com",
+            novaSenha = novaSenha,
+        )
 
     private fun autenticacaoFalhaCom(erro: RuntimeException) {
         `when`(authenticationManager.authenticate(any(Authentication::class.java))).thenThrow(erro)
@@ -180,7 +187,7 @@ class AuthServiceTest {
 
         val erro = assertThrows(NotFoundException::class.java) { service.primeiroAcesso(primeiroAcesso()) }
 
-        assertEquals("Dados de validação incorretos ou usuário não encontrado", erro.message)
+        assertEquals("Não foi possível validar os dados do primeiro acesso", erro.message)
     }
 
     // CT09 - Fluxo de exceção: usuário inativo não conclui o primeiro acesso

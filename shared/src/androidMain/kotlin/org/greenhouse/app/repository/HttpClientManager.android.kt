@@ -14,6 +14,7 @@ actual val API_URL: String = ApiConfig.API_URL_ANDROID
 actual fun createHttpClient() =
     HttpClient(Android) {
         expectSuccess = true
+        install(AuthSessionPlugin)
         install(ContentNegotiation) {
             json(
                 Json {

@@ -14,6 +14,7 @@ actual val API_URL: String = ApiConfig.API_URL
 actual fun createHttpClient() =
     HttpClient(CIO) {
         expectSuccess = true
+        install(AuthSessionPlugin)
         install(ContentNegotiation) {
             json(
                 Json {

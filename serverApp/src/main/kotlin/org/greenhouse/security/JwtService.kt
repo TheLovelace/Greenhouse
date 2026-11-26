@@ -17,6 +17,9 @@ class JwtService(
 ) {
     private val key: SecretKey = io.jsonwebtoken.security.Keys.hmacShaKeyFor(secret.toByteArray(Charsets.UTF_8))
 
+    val accessTokenLifetimeSeconds: Long
+        get() = expirationTime / 1000
+
     fun gerarToken(login: String, perfil: String): String {
         val now = Date()
         val validity = Date(now.time + expirationTime)

@@ -31,7 +31,7 @@ paths:
       tags:
         - Acesso
       summary: Definir senha no primeiro acesso
-      description: Valida CPF e e-mail do funcionário, armazena a senha com BCrypt e conclui o primeiro acesso. A senha deve ter no mínimo 6 caracteres e no máximo 72 bytes em UTF-8; senhas maiores são rejeitadas sem truncamento.
+      description: Valida CPF e e-mail do funcionário; quando o login é enviado, também confirma que corresponde aos mesmos dados. Armazena a senha com BCrypt e conclui o primeiro acesso. A senha deve ter no mínimo 6 caracteres e no máximo 72 bytes em UTF-8; senhas maiores são rejeitadas sem truncamento.
       security: []
       requestBody:
         required: true
@@ -51,6 +51,58 @@ paths:
         '404':
           description: Funcionário não encontrado
 
+  /auth/first-access/check:
+    post:
+      tags:
+        - Acesso
+      summary: Validar login para primeiro acesso
+      description: Confirma que o login pertence a uma conta ativa que ainda não concluiu o primeiro acesso. O CPF e o e-mail cadastrado também são exigidos ao definir a senha.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+              properties:
+                login:
+                  type: string
+                  example: "luna.leao"
+      responses:
+        '204':
+          description: Login elegível para primeiro acesso
+        '404':
+          description: Não foi possível validar o login
+
+  /auth/refresh:
+    post:
+      tags:
+        - Acesso
+      summary: Renova a sessão lembrada
+      description: Rotaciona o refresh token e devolve um novo JWT de acesso. O refresh token expira 30 dias após o login.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Sessão renovada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Refresh token inválido, revogado ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppExceptionError'
+
 components:
   schemas:
     LoginRequest:
@@ -66,6 +118,19 @@ components:
           type: string
           description: Senha em texto fornecida para autenticação; o backend compara credenciais legadas e migra para BCrypt após login válido.
           example: "minha-nova-senha-123"
+        lembrarDispositivo:
+          type: boolean
+          description: Emite um refresh token válido por até 30 dias.
+          default: false
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token de uso único, trocado por um novo a cada renovação.
 
     PrimeiroAcessoRequest:
       type: object
@@ -74,6 +139,10 @@ components:
         - email
         - novaSenha
       properties:
+        login:
+          type: string
+          description: Login (parte antes de @). Quando enviado, deve corresponder ao funcionário identificado por CPF e e-mail.
+          example: "luna.leao"
         cpf:
           type: string
           example: "12345678901"
@@ -95,6 +164,14 @@ components:
         perfil:
           type: string
           example: "FUNCIONARIO"
+        refreshToken:
+          type: string
+          nullable: true
+          description: Emitido somente quando lembrarDispositivo estiver ativado.
+        expiresInSeconds:
+          type: integer
+          format: int64
+          description: Validade do JWT de acesso em segundos.
 
     AppExceptionError:
       type: object

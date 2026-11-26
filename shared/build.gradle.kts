@@ -20,13 +20,13 @@ val gerarApiConfig by tasks.registering {
             .environmentVariable("API_URL")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .orElse("http://localhost:8080/api")
+            .orElse("http://localhost:8081/api")
     val apiUrlAndroid =
         providers
             .environmentVariable("API_URL_ANDROID")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .orElse("http://10.0.2.2:8080/api")
+            .orElse("http://10.0.2.2:8081/api")
     val saida = layout.buildDirectory.dir("generated/apiConfig/commonMain/kotlin")
     inputs.property("apiUrl", apiUrl)
     inputs.property("apiUrlAndroid", apiUrlAndroid)
