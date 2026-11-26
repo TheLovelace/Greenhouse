@@ -10,10 +10,27 @@ import jakarta.persistence.LockModeType
 import java.time.LocalDate
 
 interface FuncionarioRepository : JpaRepository<Funcionario, Long> {
-    @Query("SELECT f FROM Funcionario f")
+    @Query(
+        """
+        SELECT f FROM Funcionario f
+        WHERE NOT EXISTS (
+            SELECT u.id FROM Usuario u
+            WHERE u.funcionarioId = f.id AND u.perfil = 'ADMIN'
+        )
+        """,
+    )
     fun listar(): List<Funcionario>
 
-    @Query("SELECT f FROM Funcionario f WHERE f.nome LIKE CONCAT('%', :nome, '%')")
+    @Query(
+        """
+        SELECT f FROM Funcionario f
+        WHERE f.nome LIKE CONCAT('%', :nome, '%')
+            AND NOT EXISTS (
+                SELECT u.id FROM Usuario u
+                WHERE u.funcionarioId = f.id AND u.perfil = 'ADMIN'
+            )
+        """,
+    )
     fun buscarPorNome(@Param("nome") nome: String): List<Funcionario>
 
     @Query("SELECT f FROM Funcionario f WHERE f.id = :id")

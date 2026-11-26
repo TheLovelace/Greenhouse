@@ -234,7 +234,59 @@ class FuncionarioServiceTest {
         val resultado = service.atualizar(idDoFuncionario, funcionarioRequest(ativo = false))
 
         assertFalse(resultado.ativo, "devolve o funcionário atualizado")
+        verify(usuarioRepository).atualizarLoginPorFuncionario(idDoFuncionario, "ana.lima")
         verify(usuarioRepository).atualizarAtivoPorFuncionario(idDoFuncionario, false)
+    }
+
+    @Test
+    fun `deve atualizar login quando o email do funcionario mudar`() {
+        funcionarioCadastrado()
+        `when`(funcionarioRepository.atualizar(anyLong(), qualquerFuncionario()))
+                .thenReturn(funcionarioSalvo())
+        `when`(usuarioRepository.atualizarLoginPorFuncionario(idDoFuncionario, "nova.conta"))
+                    .thenReturn(1)
+
+        service.atualizar(
+                idDoFuncionario,
+                funcionarioRequest(email = "Nova.Conta@greenhouse.com"),
+        )
+
+        verify(usuarioRepository).atualizarLoginPorFuncionario(idDoFuncionario, "nova.conta")
+    }
+
+    @Test
+    fun `nao deve atualizar email quando funcionario nao tiver usuario associado`() {
+        funcionarioCadastrado()
+        `when`(funcionarioRepository.atualizar(anyLong(), qualquerFuncionario()))
+                .thenReturn(funcionarioSalvo())
+
+        val erro =
+                assertThrows(UnprocessableEntityException::class.java) {
+                    service.atualizar(
+                            idDoFuncionario,
+                            funcionarioRequest(email = "Nova.Conta@greenhouse.com"),
+                    )
+                }
+
+        assertEquals(
+                "Não foi possível atualizar o login: não existe usuário associado ao funcionário",
+                erro.message,
+        )
+    }
+
+    @Test
+    fun `nao deve atualizar funcionario quando o novo login ja pertencer a outro usuario`() {
+        funcionarioCadastrado()
+        `when`(usuarioRepository.buscarPorLogin("ana.lima"))
+                .thenReturn(Usuario(funcionarioId = idDoFuncionario + 1, login = "ana.lima"))
+
+        val erro =
+                assertThrows(UnprocessableEntityException::class.java) {
+                    service.atualizar(idDoFuncionario, funcionarioRequest())
+                }
+
+        assertEquals("Já existe um usuário com o login derivado deste e-mail", erro.message)
+        verify(funcionarioRepository, never()).atualizar(anyLong(), qualquerFuncionario())
     }
 
     // CT12 - Fluxo de exceção: não atualiza funcionário inexistente

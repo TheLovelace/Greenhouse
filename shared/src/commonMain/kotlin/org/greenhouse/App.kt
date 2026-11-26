@@ -26,6 +26,8 @@ import org.greenhouse.app.repository.AuthTokenStorage
 import org.greenhouse.app.repository.CategoriaRepositorioRemoto
 import org.greenhouse.app.repository.DescontoRepositorioRemoto
 import org.greenhouse.app.repository.EstoqueRepositorioRemoto
+import org.greenhouse.app.repository.FormaPagamentoRepositorioRemoto
+import org.greenhouse.app.repository.FuncionarioRepositorioRemoto
 import org.greenhouse.app.repository.ProdutoRepositorioRemoto
 import org.greenhouse.app.repository.createAuthTokenStorage
 import org.greenhouse.app.repository.createHttpClient
@@ -33,6 +35,8 @@ import org.greenhouse.app.viewmodel.AuthViewModel
 import org.greenhouse.app.viewmodel.CategoriaViewModel
 import org.greenhouse.app.viewmodel.DescontoViewModel
 import org.greenhouse.app.viewmodel.EstoqueViewModel
+import org.greenhouse.app.viewmodel.FormaPagamentoViewModel
+import org.greenhouse.app.viewmodel.FuncionarioViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.ui.components.ToastNotification
@@ -46,11 +50,11 @@ import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
 import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
 import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
-import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoCadastro
+import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoGestaoScreen
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
 import org.greenhouse.ui.screens.fornecedor.FornecedorCadastro
 import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroData
-import org.greenhouse.ui.screens.funcionario.FuncionarioCadastro
+import org.greenhouse.ui.screens.funcionario.FuncionarioGestaoScreen
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
 import org.greenhouse.ui.screens.home.HomeDestination
 import org.greenhouse.ui.screens.home.HomeScreen
@@ -85,6 +89,8 @@ fun App(
     val produtoViewModel = viewModel { ProdutoViewModel(ProdutoRepositorioRemoto(httpClient)) }
     val descontoViewModel = viewModel { DescontoViewModel(DescontoRepositorioRemoto(httpClient)) }
     val estoqueViewModel = viewModel { EstoqueViewModel(EstoqueRepositorioRemoto(httpClient)) }
+    val funcionarioViewModel = viewModel { FuncionarioViewModel(FuncionarioRepositorioRemoto(httpClient)) }
+    val formaPagamentoViewModel = viewModel { FormaPagamentoViewModel(FormaPagamentoRepositorioRemoto(httpClient)) }
 
     var entryScreen by remember { mutableStateOf(AppEntryScreen.LOADING) }
     var firstAccessLogin by remember { mutableStateOf("") }
@@ -252,15 +258,23 @@ fun App(
                     )
                 }
                 isFuncionarioCadastroVisible -> {
-                    FuncionarioCadastro(
+                    FuncionarioGestaoScreen(
+                        viewModel = funcionarioViewModel,
                         onBack = { isFuncionarioCadastroVisible = false },
-                        onSave = onSaveFuncionario,
+                        onAfterSave = onSaveFuncionario,
+                        onShowToast = { message, type ->
+                            toastNotification = ToastNotificationData(message, type)
+                        },
                     )
                 }
                 isFormaPagamentoCadastroVisible -> {
-                    FormaPagamentoCadastro(
+                    FormaPagamentoGestaoScreen(
+                        viewModel = formaPagamentoViewModel,
                         onBack = { isFormaPagamentoCadastroVisible = false },
-                        onSave = onSaveFormaPagamento,
+                        onAfterSave = onSaveFormaPagamento,
+                        onShowToast = { message, type ->
+                            toastNotification = ToastNotificationData(message, type)
+                        },
                     )
                 }
                 isFornecedorCadastroVisible -> {

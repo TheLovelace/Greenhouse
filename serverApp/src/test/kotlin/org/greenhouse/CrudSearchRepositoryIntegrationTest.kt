@@ -5,6 +5,7 @@ import org.greenhouse.model.CompraFornecedor
 import org.greenhouse.model.FormaPagamento
 import org.greenhouse.model.Fornecedor
 import org.greenhouse.model.Funcionario
+import org.greenhouse.model.Usuario
 import org.greenhouse.repository.CompraFornecedorRepository
 import org.greenhouse.repository.FormaPagamentoRepository
 import org.greenhouse.repository.FornecedorRepository
@@ -35,6 +36,39 @@ class CrudSearchRepositoryIntegrationTest @Autowired constructor(
         val resultados = funcionarioRepository.buscarPorNome("una")
 
         assertThat(resultados).extracting<String> { it.nome }.containsExactly("Luna Ferreira")
+    }
+
+    @Test
+    fun `funcionario listing excludes admin accounts`() {
+        val admin =
+            entityManager.persistAndFlush(
+                Funcionario(nome = "Ana Administradora", cpf = "12345678903"),
+            )
+        entityManager.persistAndFlush(
+            Usuario(
+                funcionarioId = admin.id!!,
+                login = "ana.admin",
+                senhaHash = "hash",
+                perfil = "ADMIN",
+            ),
+        )
+        val funcionaria =
+            entityManager.persistAndFlush(
+                Funcionario(nome = "Bruna Funcionária", cpf = "12345678904"),
+            )
+        entityManager.persistAndFlush(
+            Usuario(
+                funcionarioId = funcionaria.id!!,
+                login = "bruna.funcionaria",
+                senhaHash = "hash",
+                perfil = "FUNCIONARIO",
+            ),
+        )
+
+        assertThat(funcionarioRepository.listar())
+            .extracting<String> { it.nome }
+            .containsExactly("Bruna Funcionária")
+        assertThat(funcionarioRepository.buscarPorNome("Ana")).isEmpty()
     }
 
     @Test

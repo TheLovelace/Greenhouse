@@ -41,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroForm
@@ -63,15 +62,19 @@ import org.jetbrains.compose.resources.painterResource
 fun FormaPagamentoCadastro(
     onBack: () -> Unit,
     onSave: (FormaPagamentoCadastroData) -> Unit,
+    initialData: FormaPagamentoCadastroData? = null,
+    recordId: Long? = null,
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
+    onFormChanged: () -> Unit = {},
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(FormaPagamentoCadastroForm()) }
+    var form by remember { mutableStateOf(initialData?.toForm() ?: FormaPagamentoCadastroForm()) }
     var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
 
     fun updateForm(updated: FormaPagamentoCadastroForm) {
         form = updated
-        showSuccessMessage = false
+        onFormChanged()
         if (errors.isNotEmpty()) errors = validarFormaPagamentoCadastro(updated)
     }
 
@@ -94,6 +97,7 @@ fun FormaPagamentoCadastro(
             )
             IconButton(
                 onClick = onBack,
+                enabled = !isSaving,
                 modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
             ) {
                 Image(
@@ -115,12 +119,22 @@ fun FormaPagamentoCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Forma de Pagamento",
+                text =
+                    if (recordId == null) {
+                        "Cadastrar Forma de Pagamento"
+                    } else {
+                        "Editar Forma de Pagamento #$recordId"
+                    },
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
 
             Spacer(Modifier.height(24.dp))
+
+            errorMessage?.let {
+                Text(text = it, color = RedPrimary, style = typography.bodyMedium)
+                Spacer(Modifier.height(16.dp))
+            }
 
             FormaPagamentoTextField(
                 label = "Nome",
@@ -129,6 +143,7 @@ fun FormaPagamentoCadastro(
                 placeholder = "Digite o nome da forma de pagamento",
                 error = errors["nome"],
                 required = true,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -140,6 +155,7 @@ fun FormaPagamentoCadastro(
                 placeholder = "Digite uma descrição (opcional)",
                 error = errors["descricao"],
                 minLines = 3,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -154,6 +170,7 @@ fun FormaPagamentoCadastro(
                 error = errors["limiteParcelas"],
                 keyboardType = KeyboardType.Number,
                 required = true,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -167,12 +184,14 @@ fun FormaPagamentoCadastro(
                 placeholder = "Informe o prazo (opcional)",
                 error = errors["prazoEstornoDias"],
                 keyboardType = KeyboardType.Number,
+                enabled = !isSaving,
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = form.ativo,
                     onCheckedChange = { updateForm(form.copy(ativo = it)) },
+                    enabled = !isSaving,
                     colors =
                         CheckboxDefaults.colors(
                             checkedColor = GreenPrimary,
@@ -194,13 +213,14 @@ fun FormaPagamentoCadastro(
                         FormaPagamentoSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Gravar" else "Salvar alterações",
                             onClick = {
                                 val validationErrors = validarFormaPagamentoCadastro(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toFormaPagamentoCadastroDataOrNull()?.let {
                                         onSave(it)
-                                        showSuccessMessage = true
                                     }
                                 }
                             },
@@ -208,10 +228,16 @@ fun FormaPagamentoCadastro(
                         FormaPagamentoClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
                             onClick = {
-                                form = FormaPagamentoCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
+                                if (recordId != null) {
+                                    onBack()
+                                } else {
+                                    form = FormaPagamentoCadastroForm()
+                                    errors = emptyMap()
+                                    onFormChanged()
+                                }
                             },
                         )
                     }
@@ -220,13 +246,14 @@ fun FormaPagamentoCadastro(
                         FormaPagamentoSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Gravar" else "Salvar alterações",
                             onClick = {
                                 val validationErrors = validarFormaPagamentoCadastro(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toFormaPagamentoCadastroDataOrNull()?.let {
                                         onSave(it)
-                                        showSuccessMessage = true
                                     }
                                 }
                             },
@@ -234,41 +261,23 @@ fun FormaPagamentoCadastro(
                         FormaPagamentoClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
                             onClick = {
-                                form = FormaPagamentoCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
+                                if (recordId != null) {
+                                    onBack()
+                                } else {
+                                    form = FormaPagamentoCadastroForm()
+                                    errors = emptyMap()
+                                    onFormChanged()
+                                }
                             },
                         )
                     }
                 }
             }
 
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Forma de pagamento cadastrada com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun CadastroSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -282,6 +291,7 @@ private fun FormaPagamentoTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     required: Boolean = false,
     minLines: Int = 1,
+    enabled: Boolean = true,
 ) {
     val typography = AppTypography()
     Column {
@@ -299,6 +309,7 @@ private fun FormaPagamentoTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = placeholder, color = Gray, style = typography.bodyMedium) },
             isError = error != null,
@@ -334,15 +345,18 @@ private fun FormaPagamentoTextField(
 private fun FormaPagamentoSaveButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    enabled: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary, contentColor = White),
     ) {
-        Text("Gravar", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
 
@@ -350,15 +364,27 @@ private fun FormaPagamentoSaveButton(
 private fun FormaPagamentoClearButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    enabled: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, GreenPrimary),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
-        Text("Limpar campos", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
+
+private fun FormaPagamentoCadastroData.toForm() =
+    FormaPagamentoCadastroForm(
+        nome = nome,
+        ativo = ativo,
+        descricao = descricao.orEmpty(),
+        limiteParcelas = limiteParcelas.toString(),
+        prazoEstornoDias = prazoEstornoDias?.toString().orEmpty(),
+    )
