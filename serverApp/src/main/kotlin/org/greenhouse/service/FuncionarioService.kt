@@ -29,16 +29,7 @@ class FuncionarioService(
     @Transactional
     fun criar(funcionario: FuncionarioRequestDTO): FuncionarioResponseDTO {
         validar(funcionario)
-        val email = funcionario.email
-            ?: throw UnprocessableEntityException("E-mail válido é obrigatório para criar um funcionário")
-        if (email.length > 150 || !email.matches(emailRegex)) {
-            throw UnprocessableEntityException("E-mail inválido")
-        }
-
-        val login = email.substringBefore('@').lowercase(Locale.ROOT)
-        if (login.length > 100) {
-            throw UnprocessableEntityException("A parte do e-mail antes de @ excede o limite do login")
-        }
+        val login = derivarLogin(funcionario.email, "E-mail válido é obrigatório para criar um funcionário")
 
         if (usuarioRepository.buscarPorLogin(login) != null) {
             throw UnprocessableEntityException("Já existe um usuário com o login derivado deste e-mail")
@@ -76,12 +67,29 @@ class FuncionarioService(
     @Transactional
     fun atualizar(id: Long, funcionario: FuncionarioRequestDTO): FuncionarioResponseDTO {
         val idValidado = validarId(id)
-        if (funcionarioRepository.buscarPorId(idValidado) == null) {
-            throw NotFoundException("Funcionário não encontrado")
-        }
+        val funcionarioAtual =
+            funcionarioRepository.buscarPorId(idValidado)
+                ?: throw NotFoundException("Funcionário não encontrado")
         validar(funcionario)
 
-        return atualizarFuncionario(idValidado, funcionarioMapper.toModel(funcionario, idValidado))
+        val emailFoiAlterado = funcionario.email != funcionarioAtual.email
+        val login =
+            funcionario.email?.let {
+                derivarLogin(it, "E-mail válido é obrigatório para atualizar um funcionário")
+            }
+        if (login != null) {
+            val usuarioComLogin = usuarioRepository.buscarPorLogin(login)
+            if (usuarioComLogin != null && usuarioComLogin.funcionarioId != idValidado) {
+                throw UnprocessableEntityException("Já existe um usuário com o login derivado deste e-mail")
+            }
+        }
+
+        return atualizarFuncionario(
+            idValidado,
+            funcionarioMapper.toModel(funcionario, idValidado),
+            login,
+            emailFoiAlterado && login != null,
+        )
     }
 
     @Transactional
@@ -94,11 +102,41 @@ class FuncionarioService(
         atualizarFuncionario(idValidado, funcionarioInativado)
     }
 
-    private fun atualizarFuncionario(id: Long, funcionario: Funcionario): FuncionarioResponseDTO {
+    private fun atualizarFuncionario(
+        id: Long,
+        funcionario: Funcionario,
+        login: String? = null,
+        exigirSincronizacaoLogin: Boolean = false,
+    ): FuncionarioResponseDTO {
         val atualizado = funcionarioRepository.atualizar(id, funcionario)
             ?: throw NotFoundException("Funcionário não encontrado")
+        if (login != null) {
+            val usuariosAtualizados = usuarioRepository.atualizarLoginPorFuncionario(id, login)
+            if (exigirSincronizacaoLogin && usuariosAtualizados == 0) {
+                throw UnprocessableEntityException(
+                    "Não foi possível atualizar o login: não existe usuário associado ao funcionário",
+                )
+            }
+        }
         usuarioRepository.atualizarAtivoPorFuncionario(id, funcionario.ativo)
         return funcionarioMapper.toResponseDto(atualizado)
+    }
+
+    private fun derivarLogin(
+        email: String?,
+        mensagemEmailObrigatorio: String,
+    ): String {
+        val emailValidado = email
+            ?: throw UnprocessableEntityException(mensagemEmailObrigatorio)
+        if (emailValidado.length > 150 || !emailValidado.matches(emailRegex)) {
+            throw UnprocessableEntityException("E-mail inválido")
+        }
+
+        val login = emailValidado.substringBefore('@').lowercase(Locale.ROOT)
+        if (login.length > 100) {
+            throw UnprocessableEntityException("A parte do e-mail antes de @ excede o limite do login")
+        }
+        return login
     }
 
     private fun validar(funcionario: FuncionarioRequestDTO) {

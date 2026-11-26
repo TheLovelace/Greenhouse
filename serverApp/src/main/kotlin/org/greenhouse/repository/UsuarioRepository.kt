@@ -60,4 +60,12 @@ interface UsuarioRepository : JpaRepository<Usuario, Long> {
         @Param("funcionarioId") funcionarioId: Long,
         @Param("ativo") ativo: Boolean,
     ): Int
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Usuario u SET u.login = :login WHERE u.funcionarioId = :funcionarioId")
+    fun atualizarLoginPorFuncionario(
+        @Param("funcionarioId") funcionarioId: Long,
+        @Param("login") login: String,
+    ): Int
 }

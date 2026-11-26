@@ -41,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroForm
@@ -62,15 +61,19 @@ import org.jetbrains.compose.resources.painterResource
 fun FuncionarioCadastro(
     onBack: () -> Unit,
     onSave: (FuncionarioCadastroData) -> Unit,
+    initialData: FuncionarioCadastroData? = null,
+    recordId: Long? = null,
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
+    onFormChanged: () -> Unit = {},
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(FuncionarioCadastroForm()) }
+    var form by remember { mutableStateOf(initialData?.toForm() ?: FuncionarioCadastroForm()) }
     var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
 
     fun updateForm(updated: FuncionarioCadastroForm) {
         form = updated
-        showSuccessMessage = false
+        onFormChanged()
         if (errors.isNotEmpty()) errors = validarFuncionarioCadastro(updated)
     }
 
@@ -93,6 +96,7 @@ fun FuncionarioCadastro(
             )
             IconButton(
                 onClick = onBack,
+                enabled = !isSaving,
                 modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
             ) {
                 Image(
@@ -114,12 +118,17 @@ fun FuncionarioCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Funcionário",
+                text = if (recordId == null) "Cadastrar Funcionário" else "Editar Funcionário #$recordId",
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
 
             Spacer(Modifier.height(24.dp))
+
+            errorMessage?.let {
+                Text(text = it, color = RedPrimary, style = typography.bodyMedium)
+                Spacer(Modifier.height(16.dp))
+            }
 
             FuncionarioTextField(
                 label = "Nome",
@@ -128,6 +137,7 @@ fun FuncionarioCadastro(
                 placeholder = "Digite o nome do funcionário",
                 error = errors["nome"],
                 required = true,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -140,6 +150,7 @@ fun FuncionarioCadastro(
                 error = errors["cpf"],
                 keyboardType = KeyboardType.Number,
                 required = true,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -152,7 +163,17 @@ fun FuncionarioCadastro(
                 error = errors["email"],
                 keyboardType = KeyboardType.Email,
                 required = true,
+                enabled = !isSaving,
             )
+
+            if (recordId != null) {
+                Text(
+                    text = "O login será atualizado para a parte do e-mail antes de @.",
+                    color = TextPrimary,
+                    style = typography.bodySmall,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -163,6 +184,7 @@ fun FuncionarioCadastro(
                 placeholder = "Informe o telefone (opcional)",
                 error = errors["telefone"],
                 keyboardType = KeyboardType.Phone,
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -173,6 +195,7 @@ fun FuncionarioCadastro(
                 onValueChange = { updateForm(form.copy(cargo = it)) },
                 placeholder = "Informe o cargo (opcional)",
                 error = errors["cargo"],
+                enabled = !isSaving,
             )
 
             Spacer(Modifier.height(16.dp))
@@ -184,12 +207,14 @@ fun FuncionarioCadastro(
                 placeholder = "Ex.: 1990-05-21",
                 error = errors["dataDeNascimento"],
                 keyboardType = KeyboardType.Number,
+                enabled = !isSaving,
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = form.ativo,
                     onCheckedChange = { updateForm(form.copy(ativo = it)) },
+                    enabled = !isSaving,
                     colors =
                         CheckboxDefaults.colors(
                             checkedColor = GreenPrimary,
@@ -211,13 +236,14 @@ fun FuncionarioCadastro(
                         FuncionarioSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Gravar" else "Salvar alterações",
                             onClick = {
                                 val validationErrors = validarFuncionarioCadastro(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toFuncionarioCadastroDataOrNull()?.let {
                                         onSave(it)
-                                        showSuccessMessage = true
                                     }
                                 }
                             },
@@ -225,10 +251,16 @@ fun FuncionarioCadastro(
                         FuncionarioClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
                             onClick = {
-                                form = FuncionarioCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
+                                if (recordId != null) {
+                                    onBack()
+                                } else {
+                                    form = FuncionarioCadastroForm()
+                                    errors = emptyMap()
+                                    onFormChanged()
+                                }
                             },
                         )
                     }
@@ -237,13 +269,14 @@ fun FuncionarioCadastro(
                         FuncionarioSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Gravar" else "Salvar alterações",
                             onClick = {
                                 val validationErrors = validarFuncionarioCadastro(form)
                                 errors = validationErrors
                                 if (validationErrors.isEmpty()) {
                                     form.toFuncionarioCadastroDataOrNull()?.let {
                                         onSave(it)
-                                        showSuccessMessage = true
                                     }
                                 }
                             },
@@ -251,41 +284,23 @@ fun FuncionarioCadastro(
                         FuncionarioClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            enabled = !isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
                             onClick = {
-                                form = FuncionarioCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
+                                if (recordId != null) {
+                                    onBack()
+                                } else {
+                                    form = FuncionarioCadastroForm()
+                                    errors = emptyMap()
+                                    onFormChanged()
+                                }
                             },
                         )
                     }
                 }
             }
 
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                CadastroSuccessMessage("Funcionário cadastrado com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun CadastroSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -298,6 +313,7 @@ private fun FuncionarioTextField(
     error: String?,
     keyboardType: KeyboardType = KeyboardType.Text,
     required: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val typography = AppTypography()
     Column {
@@ -315,6 +331,7 @@ private fun FuncionarioTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = placeholder, color = Gray, style = typography.bodyMedium) },
             isError = error != null,
@@ -349,15 +366,18 @@ private fun FuncionarioTextField(
 private fun FuncionarioSaveButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    enabled: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary, contentColor = White),
     ) {
-        Text("Gravar", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
 
@@ -365,15 +385,29 @@ private fun FuncionarioSaveButton(
 private fun FuncionarioClearButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    enabled: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, GreenPrimary),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
-        Text("Limpar campos", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
+
+private fun FuncionarioCadastroData.toForm() =
+    FuncionarioCadastroForm(
+        nome = nome,
+        cpf = cpf,
+        telefone = telefone.orEmpty(),
+        email = email,
+        cargo = cargo.orEmpty(),
+        ativo = ativo,
+        dataDeNascimento = dataDeNascimento.orEmpty(),
+    )

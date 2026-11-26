@@ -94,6 +94,9 @@ class FuncionarioProvisioningTest {
         Mockito.doAnswer { invocation -> invocation.getArgument<FuncionarioModel>(1) }
             .`when`(repository)
             .atualizar(Mockito.eq(42L), Mockito.any(FuncionarioModel::class.java) ?: FuncionarioModel())
+        Mockito.doReturn(1)
+            .`when`(usuarioRepository)
+            .atualizarLoginPorFuncionario(42L, "funcionario")
 
         val resultado =
             service.atualizar(
