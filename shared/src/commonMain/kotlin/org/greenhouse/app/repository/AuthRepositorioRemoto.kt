@@ -102,6 +102,7 @@ private data class FirstAccessRequest(
 private data class AuthTokenResponse(
     val token: String,
     val perfil: String,
+    val login: String,
     val refreshToken: String? = null,
     val expiresInSeconds: Long = 86_400,
 ) {
@@ -111,5 +112,6 @@ private data class AuthTokenResponse(
             profile = perfil,
             refreshToken = refreshToken,
             expiresInSeconds = expiresInSeconds,
+            login = login,
         )
 }

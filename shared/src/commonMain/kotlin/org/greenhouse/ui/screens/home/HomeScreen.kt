@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -52,7 +51,6 @@ import org.greenhouse.ui.components.Footer
 import org.greenhouse.ui.theme.AppTypography
 import org.greenhouse.ui.theme.Background
 import org.greenhouse.ui.theme.GreenPrimary
-import org.greenhouse.ui.theme.RedPrimary
 import org.greenhouse.ui.theme.Surface
 import org.greenhouse.ui.theme.TextPrimary
 import org.jetbrains.compose.resources.DrawableResource
@@ -98,6 +96,9 @@ private val homeMenuItems =
 @Composable
 fun HomeScreen(
     onNavigate: (HomeDestination) -> Unit,
+    login: String,
+    profile: String,
+    onHelp: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val typography = AppTypography()
@@ -109,27 +110,9 @@ fun HomeScreen(
                 .background(Background)
                 .padding(horizontal = 30.dp, vertical = 30.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            Button(
-                onClick = onLogout,
-                modifier = Modifier.heightIn(min = 48.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, RedPrimary.copy(alpha = 0.55f)),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFE5E5),
-                        contentColor = RedPrimary,
-                    ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-            ) {
-                Text("Sair", style = typography.titleMedium)
-            }
-        }
+        HomeHeader(login = login, profile = profile, onHelp = onHelp, onLogout = onLogout)
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(36.dp))
 
         Text(
             text =

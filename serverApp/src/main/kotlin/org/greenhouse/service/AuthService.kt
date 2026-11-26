@@ -62,6 +62,7 @@ class AuthService(
         return TokenResponse(
             token = tokenReal,
             perfil = usuario.perfil,
+            login = usuario.login,
             refreshToken = refreshToken,
             expiresInSeconds = jwtService.accessTokenLifetimeSeconds,
         )
@@ -102,6 +103,7 @@ class AuthService(
         return TokenResponse(
             token = jwtService.gerarToken(usuario.login, usuario.perfil),
             perfil = usuario.perfil,
+            login = usuario.login,
             refreshToken = nextRefreshToken,
             expiresInSeconds = jwtService.accessTokenLifetimeSeconds,
         )
@@ -225,6 +227,7 @@ data class PrimeiroAcessoRequest(
 data class TokenResponse(
     val token: String,
     val perfil: String,
+    val login: String,
     val refreshToken: String? = null,
     val expiresInSeconds: Long = 86_400,
 )

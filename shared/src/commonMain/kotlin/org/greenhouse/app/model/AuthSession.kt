@@ -8,4 +8,5 @@ data class AuthSession(
     val profile: String,
     val refreshToken: String? = null,
     val expiresInSeconds: Long = 86_400,
+    val login: String = "",
 )

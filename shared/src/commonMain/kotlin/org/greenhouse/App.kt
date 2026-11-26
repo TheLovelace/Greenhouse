@@ -44,6 +44,7 @@ import org.greenhouse.ui.components.ToastNotificationData
 import org.greenhouse.ui.components.ToastNotificationType
 import org.greenhouse.ui.navigation.ModulosRotas
 import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
+import org.greenhouse.ui.screens.ajuda.AjudaScreen
 import org.greenhouse.ui.screens.catalogo.CatalogoScreen
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
@@ -94,6 +95,7 @@ fun App(
 
     var entryScreen by remember { mutableStateOf(AppEntryScreen.LOADING) }
     var firstAccessLogin by remember { mutableStateOf("") }
+    var isHelpVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         AuthSessionManager.configure(authTokenStorage, authRepositorio::renovar)
         try {
@@ -109,7 +111,10 @@ fun App(
     LaunchedEffect(authSession) {
         when {
             authSession != null -> entryScreen = AppEntryScreen.HOME
-            entryScreen == AppEntryScreen.HOME -> entryScreen = AppEntryScreen.LOGIN
+            else -> {
+                isHelpVisible = false
+                if (entryScreen == AppEntryScreen.HOME) entryScreen = AppEntryScreen.LOGIN
+            }
         }
     }
 
@@ -220,6 +225,9 @@ fun App(
                         errorMessage = authViewModel.errorMessage,
                     )
                 }
+                isHelpVisible && authSession != null -> {
+                    AjudaScreen(onBack = { isHelpVisible = false })
+                }
                 isCatalogoVisible -> {
                     CatalogoScreen(
                         principalViewModel = principalViewModel,
@@ -292,7 +300,11 @@ fun App(
                 else ->
                     HomeScreen(
                         onNavigate = ::openDestination,
+                        login = authSession?.login.orEmpty(),
+                        profile = authSession?.profile.orEmpty(),
+                        onHelp = { isHelpVisible = true },
                         onLogout = {
+                            isHelpVisible = false
                             coroutineScope.launch {
                                 try {
                                     AuthSessionManager.logout()
