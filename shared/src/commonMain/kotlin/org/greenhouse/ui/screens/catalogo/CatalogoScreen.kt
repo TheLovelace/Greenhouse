@@ -34,30 +34,40 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import greenhouse.shared.generated.resources.Res
+import greenhouse.shared.generated.resources.icon_alerta
 import greenhouse.shared.generated.resources.icon_categoria
 import greenhouse.shared.generated.resources.icon_desconto
+import greenhouse.shared.generated.resources.icon_especie
 import greenhouse.shared.generated.resources.icon_estoque
 import greenhouse.shared.generated.resources.icon_home
 import greenhouse.shared.generated.resources.icon_produto
 import greenhouse.shared.generated.resources.icon_voltar
 import kotlinx.coroutines.launch
+import org.greenhouse.app.viewmodel.AlertaViewModel
 import org.greenhouse.app.viewmodel.CategoriaViewModel
 import org.greenhouse.app.viewmodel.DescontoViewModel
+import org.greenhouse.app.viewmodel.EspecieViewModel
 import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.ui.components.FormularioListagemBottomBar
 import org.greenhouse.ui.components.MostrarMensagem
 import org.greenhouse.ui.components.ToastNotificationType
+import org.greenhouse.ui.navigation.AlertaRotas
 import org.greenhouse.ui.navigation.CategoriaRotas
 import org.greenhouse.ui.navigation.DescontoRotas
+import org.greenhouse.ui.navigation.EspecieRotas
 import org.greenhouse.ui.navigation.EstoqueRotas
 import org.greenhouse.ui.navigation.ModulosRotas
 import org.greenhouse.ui.navigation.ProdutoRotas
+import org.greenhouse.ui.screens.alerta.AlertaEdicao
+import org.greenhouse.ui.screens.alerta.AlertaLista
 import org.greenhouse.ui.screens.categoria.CategoriaFormulario
 import org.greenhouse.ui.screens.categoria.CategoriaListagem
 import org.greenhouse.ui.screens.desconto.DescontoEdicao
 import org.greenhouse.ui.screens.desconto.DescontoLista
+import org.greenhouse.ui.screens.especie.EspecieEdicao
+import org.greenhouse.ui.screens.especie.EspecieLista
 import org.greenhouse.ui.screens.estoque.EstoqueEdicao
 import org.greenhouse.ui.screens.estoque.EstoqueLista
 import org.greenhouse.ui.screens.produto.ProdutoFormulario
@@ -79,6 +89,8 @@ fun CatalogoScreen(
     produtoViewModel: ProdutoViewModel,
     descontoViewModel: DescontoViewModel,
     estoqueViewModel: EstoqueViewModel,
+    especieViewModel: EspecieViewModel,
+    alertaViewModel: AlertaViewModel,
     onShowToast: (String, ToastNotificationType) -> Unit,
     onVoltarHome: () -> Unit,
 ) {
@@ -89,17 +101,24 @@ fun CatalogoScreen(
     MostrarMensagem(snackbar, produtoViewModel.mensagem)
     MostrarMensagem(snackbar, descontoViewModel.mensagem)
     MostrarMensagem(snackbar, estoqueViewModel.mensagem)
+    MostrarMensagem(snackbar, especieViewModel.mensagem)
+    MostrarMensagem(snackbar, alertaViewModel.mensagem)
 
     val moduloAtual = principalViewModel.backStackModulos.last()
     val emCategorias = moduloAtual == ModulosRotas.categorias
     val emProdutos = moduloAtual == ModulosRotas.produtos
     val emDescontos = moduloAtual == ModulosRotas.descontos
+    val emEstoque = moduloAtual == ModulosRotas.estoque
+    val emEspecies = moduloAtual == ModulosRotas.especies
+    val emAlertas = moduloAtual == ModulosRotas.alertas
     val emListagem =
         when (moduloAtual) {
             ModulosRotas.categorias -> categoriaViewModel.backStack.last() == CategoriaRotas.listagem
             ModulosRotas.produtos -> produtoViewModel.backStack.last() == ProdutoRotas.listagem
             ModulosRotas.descontos -> descontoViewModel.backStack.last() == DescontoRotas.listagem
             ModulosRotas.estoque -> estoqueViewModel.backStack.last() == EstoqueRotas.listagem
+            ModulosRotas.especies -> especieViewModel.backStack.last() == EspecieRotas.listagem
+            ModulosRotas.alertas -> alertaViewModel.backStack.last() == AlertaRotas.listagem
         }
     val tituloModulo =
         when (moduloAtual) {
@@ -107,6 +126,8 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> "Gestão de Produtos"
             ModulosRotas.descontos -> "Gestão de Descontos"
             ModulosRotas.estoque -> "Gestão de Estoque"
+            ModulosRotas.especies -> "Gestão de Espécies"
+            ModulosRotas.alertas -> "Gestão de Alertas IoT"
         }
 
     fun abrirListagemAtual() {
@@ -115,6 +136,8 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> produtoViewModel.irParaListagem()
             ModulosRotas.descontos -> descontoViewModel.irParaListagem()
             ModulosRotas.estoque -> estoqueViewModel.irParaListagem()
+            ModulosRotas.especies -> especieViewModel.irParaListagem()
+            ModulosRotas.alertas -> alertaViewModel.irParaListagem()
         }
     }
 
@@ -124,6 +147,8 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> produtoViewModel.irParaFormulario()
             ModulosRotas.descontos -> descontoViewModel.novo()
             ModulosRotas.estoque -> estoqueViewModel.novo()
+            ModulosRotas.especies -> especieViewModel.novo()
+            ModulosRotas.alertas -> alertaViewModel.novo()
         }
     }
 
@@ -149,8 +174,16 @@ fun CatalogoScreen(
                     principalViewModel.abrirModulo(ModulosRotas.descontos)
                     scope.launch { drawerState.close() }
                 }
-                ItemGaveta("Estoque", Res.drawable.icon_estoque, moduloAtual == ModulosRotas.estoque) {
+                ItemGaveta("Estoque", Res.drawable.icon_estoque, emEstoque) {
                     principalViewModel.abrirModulo(ModulosRotas.estoque)
+                    scope.launch { drawerState.close() }
+                }
+                ItemGaveta("Espécies", Res.drawable.icon_especie, emEspecies) {
+                    principalViewModel.abrirModulo(ModulosRotas.especies)
+                    scope.launch { drawerState.close() }
+                }
+                ItemGaveta("Alertas", Res.drawable.icon_alerta, emAlertas) {
+                    principalViewModel.abrirModulo(ModulosRotas.alertas)
                     scope.launch { drawerState.close() }
                 }
             }
@@ -175,7 +208,9 @@ fun CatalogoScreen(
                                     emCategorias -> categoriaViewModel.irParaListagem()
                                     emProdutos -> produtoViewModel.irParaListagem()
                                     emDescontos -> descontoViewModel.irParaListagem()
-                                    else -> estoqueViewModel.irParaListagem()
+                                    emEstoque -> estoqueViewModel.irParaListagem()
+                                    emEspecies -> especieViewModel.irParaListagem()
+                                    emAlertas -> alertaViewModel.irParaListagem()
                                 }
                             },
                         ) {
@@ -213,6 +248,20 @@ fun CatalogoScreen(
                             EstoquesScreen(
                                 padding = paddingIt,
                                 viewModel = estoqueViewModel,
+                                onShowToast = onShowToast,
+                            )
+                        }
+                        entry<ModulosRotas.especies> {
+                            EspeciesScreen(
+                                padding = paddingIt,
+                                viewModel = especieViewModel,
+                                onShowToast = onShowToast,
+                            )
+                        }
+                        entry<ModulosRotas.alertas> {
+                            AlertasScreen(
+                                padding = paddingIt,
+                                viewModel = alertaViewModel,
                                 onShowToast = onShowToast,
                             )
                         }
@@ -323,6 +372,91 @@ private fun EstoquesScreen(
                 }
                 entry<EstoqueRotas.formulario> {
                     EstoqueEdicao(
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+            },
+    )
+}
+
+@Composable
+private fun EspeciesScreen(
+    padding: PaddingValues,
+    viewModel: EspecieViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
+) {
+    val especies by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
+
+    NavDisplay(
+        backStack = viewModel.backStack,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<EspecieRotas.listagem> {
+                    EspecieLista(
+                        especies = especies,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onDelete = { especie ->
+                            viewModel.excluir(especie) { mensagem ->
+                                onShowToast(mensagem, ToastNotificationType.DESTRUCTIVE)
+                            }
+                        },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+                entry<EspecieRotas.formulario> {
+                    EspecieEdicao(
+                        viewModel = viewModel,
+                        onBack = viewModel::irParaListagem,
+                        onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+            },
+    )
+}
+
+@Composable
+private fun AlertasScreen(
+    padding: PaddingValues,
+    viewModel: AlertaViewModel,
+    onShowToast: (String, ToastNotificationType) -> Unit,
+) {
+    val alertas by viewModel.lista.collectAsState()
+    LaunchedEffect(Unit) { viewModel.carregar() }
+
+    NavDisplay(
+        backStack = viewModel.backStack,
+        entryProvider =
+            entryProvider<NavKey> {
+                entry<AlertaRotas.listagem> {
+                    AlertaLista(
+                        alertas = alertas,
+                        onBack = viewModel::irParaListagem,
+                        onCreate = viewModel::novo,
+                        onEdit = viewModel::editar,
+                        onToggleStatus = { alerta ->
+                            viewModel.alternarStatus(alerta) { mensagem ->
+                                onShowToast(
+                                    mensagem,
+                                    if (alerta.ativo) ToastNotificationType.DESTRUCTIVE else ToastNotificationType.SUCCESS,
+                                )
+                            }
+                        },
+                        padding = padding,
+                        embedded = true,
+                    )
+                }
+                entry<AlertaRotas.formulario> {
+                    AlertaEdicao(
                         viewModel = viewModel,
                         onBack = viewModel::irParaListagem,
                         onSuccess = { mensagem -> onShowToast(mensagem, ToastNotificationType.SUCCESS) },

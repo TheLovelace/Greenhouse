@@ -20,20 +20,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.greenhouse.app.repository.AlertaRepositorioRemoto
 import org.greenhouse.app.repository.AuthRepositorioRemoto
 import org.greenhouse.app.repository.AuthSessionManager
 import org.greenhouse.app.repository.AuthTokenStorage
 import org.greenhouse.app.repository.CategoriaRepositorioRemoto
 import org.greenhouse.app.repository.DescontoRepositorioRemoto
+import org.greenhouse.app.repository.EspecieRepositorioRemoto
 import org.greenhouse.app.repository.EstoqueRepositorioRemoto
 import org.greenhouse.app.repository.FormaPagamentoRepositorioRemoto
 import org.greenhouse.app.repository.FuncionarioRepositorioRemoto
 import org.greenhouse.app.repository.ProdutoRepositorioRemoto
 import org.greenhouse.app.repository.createAuthTokenStorage
 import org.greenhouse.app.repository.createHttpClient
+import org.greenhouse.app.viewmodel.AlertaViewModel
 import org.greenhouse.app.viewmodel.AuthViewModel
 import org.greenhouse.app.viewmodel.CategoriaViewModel
 import org.greenhouse.app.viewmodel.DescontoViewModel
+import org.greenhouse.app.viewmodel.EspecieViewModel
 import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.app.viewmodel.FormaPagamentoViewModel
 import org.greenhouse.app.viewmodel.FuncionarioViewModel
@@ -43,14 +47,12 @@ import org.greenhouse.ui.components.ToastNotification
 import org.greenhouse.ui.components.ToastNotificationData
 import org.greenhouse.ui.components.ToastNotificationType
 import org.greenhouse.ui.navigation.ModulosRotas
-import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
 import org.greenhouse.ui.screens.ajuda.AjudaScreen
 import org.greenhouse.ui.screens.catalogo.CatalogoScreen
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
 import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
-import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
 import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoGestaoScreen
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
 import org.greenhouse.ui.screens.fornecedor.FornecedorCadastro
@@ -90,6 +92,8 @@ fun App(
     val produtoViewModel = viewModel { ProdutoViewModel(ProdutoRepositorioRemoto(httpClient)) }
     val descontoViewModel = viewModel { DescontoViewModel(DescontoRepositorioRemoto(httpClient)) }
     val estoqueViewModel = viewModel { EstoqueViewModel(EstoqueRepositorioRemoto(httpClient)) }
+    val especieViewModel = viewModel { EspecieViewModel(EspecieRepositorioRemoto(httpClient)) }
+    val alertaViewModel = viewModel { AlertaViewModel(AlertaRepositorioRemoto(httpClient)) }
     val funcionarioViewModel = viewModel { FuncionarioViewModel(FuncionarioRepositorioRemoto(httpClient)) }
     val formaPagamentoViewModel = viewModel { FormaPagamentoViewModel(FormaPagamentoRepositorioRemoto(httpClient)) }
 
@@ -120,8 +124,6 @@ fun App(
 
     var toastNotification by remember { mutableStateOf<ToastNotificationData?>(null) }
     var isCatalogoVisible by remember { mutableStateOf(false) }
-    var isAlertaCadastroVisible by remember { mutableStateOf(false) }
-    var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
     var isCompraFornecedorCadastroVisible by remember { mutableStateOf(false) }
     var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
@@ -131,8 +133,6 @@ fun App(
 
     fun closeScreens() {
         isCatalogoVisible = false
-        isAlertaCadastroVisible = false
-        isEspecieCadastroVisible = false
         isClienteCadastroVisible = false
         isCompraFornecedorCadastroVisible = false
         isFuncionarioCadastroVisible = false
@@ -153,8 +153,8 @@ fun App(
             HomeDestination.PRODUTOS -> openCatalogo(ModulosRotas.produtos)
             HomeDestination.DESCONTOS -> openCatalogo(ModulosRotas.descontos)
             HomeDestination.ESTOQUE -> openCatalogo(ModulosRotas.estoque)
-            HomeDestination.ALERTAS -> isAlertaCadastroVisible = true
-            HomeDestination.ESPECIES -> isEspecieCadastroVisible = true
+            HomeDestination.ESPECIES -> openCatalogo(ModulosRotas.especies)
+            HomeDestination.ALERTAS -> openCatalogo(ModulosRotas.alertas)
             HomeDestination.CLIENTES -> isClienteCadastroVisible = true
             HomeDestination.COMPRAS -> isCompraFornecedorCadastroVisible = true
             HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
@@ -235,22 +235,12 @@ fun App(
                         produtoViewModel = produtoViewModel,
                         descontoViewModel = descontoViewModel,
                         estoqueViewModel = estoqueViewModel,
+                        especieViewModel = especieViewModel,
+                        alertaViewModel = alertaViewModel,
                         onShowToast = { message, type ->
                             toastNotification = ToastNotificationData(message, type)
                         },
                         onVoltarHome = { isCatalogoVisible = false },
-                    )
-                }
-                isAlertaCadastroVisible -> {
-                    CadastrarAlertaIotScreen(
-                        onBackClick = { isAlertaCadastroVisible = false },
-                        onSalvarClick = { _, _, _, _, _, _, _, _ -> isAlertaCadastroVisible = false },
-                    )
-                }
-                isEspecieCadastroVisible -> {
-                    CadastrarEspecieScreen(
-                        onBackClick = { isEspecieCadastroVisible = false },
-                        onSalvarClick = { _ -> isEspecieCadastroVisible = false },
                     )
                 }
                 isClienteCadastroVisible -> {
