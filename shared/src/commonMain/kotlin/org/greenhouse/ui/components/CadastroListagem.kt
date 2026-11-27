@@ -94,6 +94,7 @@ fun CadastroListagem(
     iconeAcaoPrincipal: DrawableResource = Res.drawable.icon_editar,
     rotuloAcaoDestrutiva: String = "Inativar",
     mostrarAcaoDestrutiva: (CadastroListagemItem) -> Boolean = { it.ativo },
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
     var busca by remember { mutableStateOf("") }
@@ -122,18 +123,19 @@ fun CadastroListagem(
     ) {
         val compactLayout = maxWidth < 600.dp
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
-                Text(titulo, color = TextPrimary, style = typography.titleMedium)
-                IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).size(48.dp)) {
-                    Image(
-                        painter = painterResource(Res.drawable.icon_voltar),
-                        contentDescription = "Voltar",
-                        modifier = Modifier.size(32.dp),
-                    )
+            if (!embedded) {
+                Box(modifier = Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                    Text(titulo, color = TextPrimary, style = typography.titleMedium)
+                    IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart).size(48.dp)) {
+                        Image(
+                            painter = painterResource(Res.drawable.icon_voltar),
+                            contentDescription = "Voltar",
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
                 }
+                Spacer(Modifier.height(20.dp))
             }
-
-            Spacer(Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -226,7 +228,7 @@ fun CadastroListagem(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = PaddingValues(bottom = 92.dp),
+                        contentPadding = PaddingValues(bottom = if (embedded) 16.dp else 92.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         items(registrosFiltrados, key = { it.id }) { registro ->
@@ -246,25 +248,27 @@ fun CadastroListagem(
             }
         }
 
-        FloatingActionButton(
-            onClick = { if (!isProcessando) onCreate() },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 48.dp),
-            shape = RoundedCornerShape(18.dp),
-            containerColor = GreenPrimary,
-            contentColor = Color.White,
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = if (compactLayout) 0.dp else 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        if (!embedded) {
+            FloatingActionButton(
+                onClick = { if (!isProcessando) onCreate() },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 10.dp, bottom = 48.dp),
+                shape = RoundedCornerShape(18.dp),
+                containerColor = GreenPrimary,
+                contentColor = Color.White,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_adicionar_light),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                )
-                if (!compactLayout) {
-                    Text("Cadastrar", color = TextSecondary, style = typography.labelLarge)
+                Row(
+                    modifier = Modifier.padding(horizontal = if (compactLayout) 0.dp else 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_adicionar_light),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    if (!compactLayout) {
+                        Text("Cadastrar", color = TextSecondary, style = typography.labelLarge)
+                    }
                 }
             }
         }

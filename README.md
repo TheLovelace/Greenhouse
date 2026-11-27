@@ -258,7 +258,7 @@ flowchart TD
     Telas -.-> Callbacks[Callbacks do App para alguns fluxos]
 ```
 
-A Home envia a opção escolhida ao roteamento interno de `App.kt`. Categorias, Produtos, Descontos e Estoque são exibidos no `CatalogoScreen`, com navegação entre listagens e formulários por Navigation 3. Os demais destinos também são resolvidos pelo `App`, que abre suas telas correspondentes. A autenticação usa a API e mantém a sessão por meio de `AuthSessionManager`; o logout pede confirmação e, quando confirmado, limpa a sessão local. As telas usam ViewModels e repositórios para acessar a API quando essa integração está implementada; callbacks do `App` permitem integrar operações específicas ao módulo hospedeiro.
+A Home envia a opção escolhida ao roteamento interno de `App.kt`. Categorias, Produtos, Descontos, Estoque, Funcionários, Fornecedores, Formas de pagamento e Compras são exibidos no `CatalogoScreen`, com navegação por módulos e acesso à listagem e ao formulário. Compras também mantém a tela de detalhes e as ações de recebimento e cancelamento. A autenticação usa a API e mantém a sessão por meio de `AuthSessionManager`; o logout pede confirmação e, quando confirmado, limpa a sessão local. As telas usam ViewModels e repositórios remotos quando a integração está implementada; callbacks do `App` continuam disponíveis para fluxos específicos.
 
 <h2 align="start"> 
   <img src=".github/assets/icon_requisitos.png" width="25"/> 

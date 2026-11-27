@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,7 @@ fun CompraFornecedorGestaoScreen(
     onBack: () -> Unit,
     onAfterSave: (CompraFornecedorCadastroData) -> Unit,
     onShowToast: (String, ToastNotificationType) -> Unit,
+    embedded: Boolean = false,
 ) {
     val compras by viewModel.lista.collectAsState()
     val compra = viewModel.compraSelecionada
@@ -83,6 +85,7 @@ fun CompraFornecedorGestaoScreen(
                 isSaving = viewModel.isSalvando,
                 errorMessage = viewModel.mensagemErro,
                 onFormChanged = viewModel::limparErro,
+                embedded = embedded,
             )
         }
         compra != null -> {
@@ -92,6 +95,7 @@ fun CompraFornecedorGestaoScreen(
                 mensagemErro = viewModel.mensagemErro,
                 onBack = viewModel::voltarParaListagem,
                 onEdit = viewModel::editar,
+                embedded = embedded,
                 onAtualizarStatus = { status ->
                     viewModel.atualizarStatus(status) { atualizado ->
                         if (atualizado == StatusCompraCadastro.RECEBIDA) {
@@ -128,6 +132,7 @@ fun CompraFornecedorGestaoScreen(
                 rotuloAcaoPrincipal = "Consultar",
                 iconeAcaoPrincipal = Res.drawable.icon_pesquisa,
                 rotuloAcaoDestrutiva = "Excluir",
+                embedded = embedded,
             )
         }
     }
@@ -140,6 +145,7 @@ private fun CompraFornecedorDetalhes(
     mensagemErro: String?,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    embedded: Boolean,
     onAtualizarStatus: (StatusCompraCadastro) -> Unit,
 ) {
     val typography = AppTypography()
@@ -153,19 +159,22 @@ private fun CompraFornecedorDetalhes(
                 .padding(horizontal = 24.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
-            Text("Compras", color = TextPrimary, style = typography.titleMedium)
-            IconButton(
-                onClick = onBack,
-                enabled = !isProcessando,
-                modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_voltar),
-                    contentDescription = "Voltar",
-                    modifier = Modifier.size(32.dp),
-                )
+        if (!embedded) {
+            Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) {
+                Text("Compras", color = TextPrimary, style = typography.titleMedium)
+                IconButton(
+                    onClick = onBack,
+                    enabled = !isProcessando,
+                    modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_voltar),
+                        contentDescription = "Voltar",
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
             }
+            Spacer(Modifier.height(24.dp))
         }
         Column(
             modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth().padding(vertical = 24.dp),

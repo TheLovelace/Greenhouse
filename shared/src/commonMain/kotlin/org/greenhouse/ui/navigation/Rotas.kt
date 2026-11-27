@@ -17,6 +17,18 @@ sealed interface ModulosRotas : NavKey {
 
     @Serializable
     object estoque : ModulosRotas
+
+    @Serializable
+    object funcionarios : ModulosRotas
+
+    @Serializable
+    object fornecedores : ModulosRotas
+
+    @Serializable
+    object formasPagamento : ModulosRotas
+
+    @Serializable
+    object compras : ModulosRotas
 }
 
 sealed interface CategoriaRotas : NavKey {

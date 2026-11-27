@@ -52,14 +52,10 @@ import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
 import org.greenhouse.ui.screens.catalogo.CatalogoScreen
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
-import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorGestaoScreen
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
 import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
-import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoGestaoScreen
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
-import org.greenhouse.ui.screens.fornecedor.FornecedorGestaoScreen
 import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroData
-import org.greenhouse.ui.screens.funcionario.FuncionarioGestaoScreen
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
 import org.greenhouse.ui.screens.home.HomeDestination
 import org.greenhouse.ui.screens.home.HomeScreen
@@ -129,10 +125,6 @@ fun App(
     var isAlertaCadastroVisible by remember { mutableStateOf(false) }
     var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
-    var isCompraFornecedorGestaoVisible by remember { mutableStateOf(false) }
-    var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
-    var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
-    var isFornecedorGestaoVisible by remember { mutableStateOf(false) }
     var isPedidoCadastroVisible by remember { mutableStateOf(false) }
 
     fun closeScreens() {
@@ -140,10 +132,6 @@ fun App(
         isAlertaCadastroVisible = false
         isEspecieCadastroVisible = false
         isClienteCadastroVisible = false
-        isCompraFornecedorGestaoVisible = false
-        isFuncionarioCadastroVisible = false
-        isFormaPagamentoCadastroVisible = false
-        isFornecedorGestaoVisible = false
         isPedidoCadastroVisible = false
     }
 
@@ -159,13 +147,13 @@ fun App(
             HomeDestination.PRODUTOS -> openCatalogo(ModulosRotas.produtos)
             HomeDestination.DESCONTOS -> openCatalogo(ModulosRotas.descontos)
             HomeDestination.ESTOQUE -> openCatalogo(ModulosRotas.estoque)
+            HomeDestination.FUNCIONARIOS -> openCatalogo(ModulosRotas.funcionarios)
+            HomeDestination.FORNECEDORES -> openCatalogo(ModulosRotas.fornecedores)
+            HomeDestination.FORMAS_PAGAMENTO -> openCatalogo(ModulosRotas.formasPagamento)
+            HomeDestination.COMPRAS -> openCatalogo(ModulosRotas.compras)
             HomeDestination.ALERTAS -> isAlertaCadastroVisible = true
             HomeDestination.ESPECIES -> isEspecieCadastroVisible = true
             HomeDestination.CLIENTES -> isClienteCadastroVisible = true
-            HomeDestination.COMPRAS -> isCompraFornecedorGestaoVisible = true
-            HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
-            HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
-            HomeDestination.FORNECEDORES -> isFornecedorGestaoVisible = true
             HomeDestination.PEDIDOS -> isPedidoCadastroVisible = true
         }
     }
@@ -241,9 +229,17 @@ fun App(
                         produtoViewModel = produtoViewModel,
                         descontoViewModel = descontoViewModel,
                         estoqueViewModel = estoqueViewModel,
+                        funcionarioViewModel = funcionarioViewModel,
+                        fornecedorViewModel = fornecedorViewModel,
+                        formaPagamentoViewModel = formaPagamentoViewModel,
+                        compraFornecedorViewModel = compraFornecedorViewModel,
                         onShowToast = { message, type ->
                             toastNotification = ToastNotificationData(message, type)
                         },
+                        onSaveFuncionario = onSaveFuncionario,
+                        onSaveFornecedor = onSaveFornecedor,
+                        onSaveFormaPagamento = onSaveFormaPagamento,
+                        onSaveCompraFornecedor = onSaveCompraFornecedor,
                         onVoltarHome = { isCatalogoVisible = false },
                     )
                 }
@@ -263,46 +259,6 @@ fun App(
                     ClienteCadastro(
                         onBack = { isClienteCadastroVisible = false },
                         onSave = onSaveCliente,
-                    )
-                }
-                isCompraFornecedorGestaoVisible -> {
-                    CompraFornecedorGestaoScreen(
-                        viewModel = compraFornecedorViewModel,
-                        onBack = { isCompraFornecedorGestaoVisible = false },
-                        onAfterSave = onSaveCompraFornecedor,
-                        onShowToast = { message, type ->
-                            toastNotification = ToastNotificationData(message, type)
-                        },
-                    )
-                }
-                isFuncionarioCadastroVisible -> {
-                    FuncionarioGestaoScreen(
-                        viewModel = funcionarioViewModel,
-                        onBack = { isFuncionarioCadastroVisible = false },
-                        onAfterSave = onSaveFuncionario,
-                        onShowToast = { message, type ->
-                            toastNotification = ToastNotificationData(message, type)
-                        },
-                    )
-                }
-                isFormaPagamentoCadastroVisible -> {
-                    FormaPagamentoGestaoScreen(
-                        viewModel = formaPagamentoViewModel,
-                        onBack = { isFormaPagamentoCadastroVisible = false },
-                        onAfterSave = onSaveFormaPagamento,
-                        onShowToast = { message, type ->
-                            toastNotification = ToastNotificationData(message, type)
-                        },
-                    )
-                }
-                isFornecedorGestaoVisible -> {
-                    FornecedorGestaoScreen(
-                        viewModel = fornecedorViewModel,
-                        onBack = { isFornecedorGestaoVisible = false },
-                        onAfterSave = onSaveFornecedor,
-                        onShowToast = { message, type ->
-                            toastNotification = ToastNotificationData(message, type)
-                        },
                     )
                 }
                 isPedidoCadastroVisible -> {

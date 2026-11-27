@@ -25,6 +25,7 @@ fun FornecedorGestaoScreen(
     onBack: () -> Unit,
     onAfterSave: (FornecedorCadastroData) -> Unit,
     onShowToast: (String, ToastNotificationType) -> Unit,
+    embedded: Boolean = false,
 ) {
     val fornecedores by viewModel.lista.collectAsState()
     LaunchedEffect(viewModel) {
@@ -56,6 +57,7 @@ fun FornecedorGestaoScreen(
             isSaving = viewModel.isSalvando,
             errorMessage = viewModel.mensagemErro,
             onFormChanged = viewModel::limparErro,
+            embedded = embedded,
         )
         dadosParaInativar?.let { dados ->
             CadastroConfirmacao(
@@ -107,6 +109,7 @@ fun FornecedorGestaoScreen(
             onBuscaRemota = viewModel::pesquisar,
             rotuloAcaoDestrutiva = "Excluir",
             mostrarAcaoDestrutiva = { true },
+            embedded = embedded,
         )
     }
 }

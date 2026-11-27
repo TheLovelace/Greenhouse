@@ -3,11 +3,16 @@
 package org.greenhouse.ui.screens.catalogo
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -37,6 +42,10 @@ import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_categoria
 import greenhouse.shared.generated.resources.icon_desconto
 import greenhouse.shared.generated.resources.icon_estoque
+import greenhouse.shared.generated.resources.icon_compra
+import greenhouse.shared.generated.resources.icon_forma_pagamento
+import greenhouse.shared.generated.resources.icon_fornecedor
+import greenhouse.shared.generated.resources.icon_funcionario
 import greenhouse.shared.generated.resources.icon_home
 import greenhouse.shared.generated.resources.icon_produto
 import greenhouse.shared.generated.resources.icon_voltar
@@ -44,16 +53,29 @@ import kotlinx.coroutines.launch
 import org.greenhouse.app.viewmodel.CategoriaViewModel
 import org.greenhouse.app.viewmodel.DescontoViewModel
 import org.greenhouse.app.viewmodel.EstoqueViewModel
+import org.greenhouse.app.viewmodel.CompraFornecedorViewModel
+import org.greenhouse.app.viewmodel.FormaPagamentoViewModel
+import org.greenhouse.app.viewmodel.FornecedorViewModel
+import org.greenhouse.app.viewmodel.FuncionarioViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
 import org.greenhouse.ui.components.FormularioListagemBottomBar
 import org.greenhouse.ui.components.MostrarMensagem
 import org.greenhouse.ui.components.ToastNotificationType
+import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorGestaoScreen
+import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
+import org.greenhouse.ui.screens.compraFornecedor.model.StatusCompraCadastro
 import org.greenhouse.ui.navigation.CategoriaRotas
 import org.greenhouse.ui.navigation.DescontoRotas
 import org.greenhouse.ui.navigation.EstoqueRotas
 import org.greenhouse.ui.navigation.ModulosRotas
 import org.greenhouse.ui.navigation.ProdutoRotas
+import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoGestaoScreen
+import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
+import org.greenhouse.ui.screens.fornecedor.FornecedorGestaoScreen
+import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroData
+import org.greenhouse.ui.screens.funcionario.FuncionarioGestaoScreen
+import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
 import org.greenhouse.ui.screens.categoria.CategoriaFormulario
 import org.greenhouse.ui.screens.categoria.CategoriaListagem
 import org.greenhouse.ui.screens.desconto.DescontoEdicao
@@ -79,7 +101,15 @@ fun CatalogoScreen(
     produtoViewModel: ProdutoViewModel,
     descontoViewModel: DescontoViewModel,
     estoqueViewModel: EstoqueViewModel,
+    funcionarioViewModel: FuncionarioViewModel,
+    fornecedorViewModel: FornecedorViewModel,
+    formaPagamentoViewModel: FormaPagamentoViewModel,
+    compraFornecedorViewModel: CompraFornecedorViewModel,
     onShowToast: (String, ToastNotificationType) -> Unit,
+    onSaveFuncionario: (FuncionarioCadastroData) -> Unit,
+    onSaveFornecedor: (FornecedorCadastroData) -> Unit,
+    onSaveFormaPagamento: (FormaPagamentoCadastroData) -> Unit,
+    onSaveCompraFornecedor: (CompraFornecedorCadastroData) -> Unit,
     onVoltarHome: () -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -94,12 +124,34 @@ fun CatalogoScreen(
     val emCategorias = moduloAtual == ModulosRotas.categorias
     val emProdutos = moduloAtual == ModulosRotas.produtos
     val emDescontos = moduloAtual == ModulosRotas.descontos
+    val emFuncionarios = moduloAtual == ModulosRotas.funcionarios
+    val emFornecedores = moduloAtual == ModulosRotas.fornecedores
+    val emFormasPagamento = moduloAtual == ModulosRotas.formasPagamento
+    val emCompras = moduloAtual == ModulosRotas.compras
     val emListagem =
         when (moduloAtual) {
             ModulosRotas.categorias -> categoriaViewModel.backStack.last() == CategoriaRotas.listagem
             ModulosRotas.produtos -> produtoViewModel.backStack.last() == ProdutoRotas.listagem
             ModulosRotas.descontos -> descontoViewModel.backStack.last() == DescontoRotas.listagem
             ModulosRotas.estoque -> estoqueViewModel.backStack.last() == EstoqueRotas.listagem
+            ModulosRotas.funcionarios -> !funcionarioViewModel.exibindoFormulario.value
+            ModulosRotas.fornecedores -> !fornecedorViewModel.exibindoFormulario
+            ModulosRotas.formasPagamento -> !formaPagamentoViewModel.exibindoFormulario.value
+            ModulosRotas.compras -> !compraFornecedorViewModel.exibindoFormulario
+        }
+    val emListagemPrincipal =
+        emListagem &&
+            !(emCompras && compraFornecedorViewModel.compraSelecionada != null)
+    val formularioSelecionado =
+        when (moduloAtual) {
+            ModulosRotas.categorias -> categoriaViewModel.backStack.last() == CategoriaRotas.formulario
+            ModulosRotas.produtos -> produtoViewModel.backStack.last() == ProdutoRotas.formulario
+            ModulosRotas.descontos -> descontoViewModel.backStack.last() is DescontoRotas.formulario
+            ModulosRotas.estoque -> estoqueViewModel.backStack.last() is EstoqueRotas.formulario
+            ModulosRotas.funcionarios -> funcionarioViewModel.exibindoFormulario.value
+            ModulosRotas.fornecedores -> fornecedorViewModel.exibindoFormulario
+            ModulosRotas.formasPagamento -> formaPagamentoViewModel.exibindoFormulario.value
+            ModulosRotas.compras -> compraFornecedorViewModel.exibindoFormulario
         }
     val tituloModulo =
         when (moduloAtual) {
@@ -107,6 +159,10 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> "Gestão de Produtos"
             ModulosRotas.descontos -> "Gestão de Descontos"
             ModulosRotas.estoque -> "Gestão de Estoque"
+            ModulosRotas.funcionarios -> "Gestão de Funcionários"
+            ModulosRotas.fornecedores -> "Gestão de Fornecedores"
+            ModulosRotas.formasPagamento -> "Gestão de Formas de Pagamento"
+            ModulosRotas.compras -> "Gestão de Compras"
         }
 
     fun abrirListagemAtual() {
@@ -115,6 +171,10 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> produtoViewModel.irParaListagem()
             ModulosRotas.descontos -> descontoViewModel.irParaListagem()
             ModulosRotas.estoque -> estoqueViewModel.irParaListagem()
+            ModulosRotas.funcionarios -> funcionarioViewModel.voltarParaListagem()
+            ModulosRotas.fornecedores -> fornecedorViewModel.voltarParaListagem()
+            ModulosRotas.formasPagamento -> formaPagamentoViewModel.voltarParaListagem()
+            ModulosRotas.compras -> compraFornecedorViewModel.voltarParaListagem()
         }
     }
 
@@ -124,6 +184,18 @@ fun CatalogoScreen(
             ModulosRotas.produtos -> produtoViewModel.irParaFormulario()
             ModulosRotas.descontos -> descontoViewModel.novo()
             ModulosRotas.estoque -> estoqueViewModel.novo()
+            ModulosRotas.funcionarios -> if (!funcionarioViewModel.exibindoFormulario.value) funcionarioViewModel.novo()
+            ModulosRotas.fornecedores -> if (!fornecedorViewModel.exibindoFormulario) fornecedorViewModel.novo()
+            ModulosRotas.formasPagamento -> if (!formaPagamentoViewModel.exibindoFormulario.value) formaPagamentoViewModel.novo()
+            ModulosRotas.compras -> {
+                if (!compraFornecedorViewModel.exibindoFormulario) {
+                    if (compraFornecedorViewModel.compraSelecionada == null) {
+                        compraFornecedorViewModel.novo()
+                    } else if (compraFornecedorViewModel.compraSelecionada?.status == StatusCompraCadastro.PEDIDA) {
+                        compraFornecedorViewModel.editar()
+                    }
+                }
+            }
         }
     }
 
@@ -131,27 +203,45 @@ fun CatalogoScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(drawerContainerColor = Background) {
-                Text(
-                    "Módulos do catálogo",
-                    color = TextPrimary,
-                    style = AppTypography().titleMedium,
-                    modifier = Modifier.padding(16.dp),
-                )
-                ItemGaveta("Categorias", Res.drawable.icon_categoria, emCategorias) {
-                    principalViewModel.abrirModulo(ModulosRotas.categorias)
-                    scope.launch { drawerState.close() }
-                }
-                ItemGaveta("Produtos", Res.drawable.icon_produto, emProdutos) {
-                    principalViewModel.abrirModulo(ModulosRotas.produtos)
-                    scope.launch { drawerState.close() }
-                }
-                ItemGaveta("Descontos", Res.drawable.icon_desconto, emDescontos) {
-                    principalViewModel.abrirModulo(ModulosRotas.descontos)
-                    scope.launch { drawerState.close() }
-                }
-                ItemGaveta("Estoque", Res.drawable.icon_estoque, moduloAtual == ModulosRotas.estoque) {
-                    principalViewModel.abrirModulo(ModulosRotas.estoque)
-                    scope.launch { drawerState.close() }
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Text(
+                        "Módulos do sistema",
+                        color = TextPrimary,
+                        style = AppTypography().titleMedium,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    ItemGaveta("Categorias", Res.drawable.icon_categoria, emCategorias) {
+                        principalViewModel.abrirModulo(ModulosRotas.categorias)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Produtos", Res.drawable.icon_produto, emProdutos) {
+                        principalViewModel.abrirModulo(ModulosRotas.produtos)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Descontos", Res.drawable.icon_desconto, emDescontos) {
+                        principalViewModel.abrirModulo(ModulosRotas.descontos)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Estoque", Res.drawable.icon_estoque, moduloAtual == ModulosRotas.estoque) {
+                        principalViewModel.abrirModulo(ModulosRotas.estoque)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Funcionários", Res.drawable.icon_funcionario, emFuncionarios) {
+                        principalViewModel.abrirModulo(ModulosRotas.funcionarios)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Fornecedores", Res.drawable.icon_fornecedor, emFornecedores) {
+                        principalViewModel.abrirModulo(ModulosRotas.fornecedores)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Formas de pagamento", Res.drawable.icon_forma_pagamento, emFormasPagamento) {
+                        principalViewModel.abrirModulo(ModulosRotas.formasPagamento)
+                        scope.launch { drawerState.close() }
+                    }
+                    ItemGaveta("Compras", Res.drawable.icon_compra, emCompras) {
+                        principalViewModel.abrirModulo(ModulosRotas.compras)
+                        scope.launch { drawerState.close() }
+                    }
                 }
             }
         },
@@ -171,10 +261,14 @@ fun CatalogoScreen(
                         IconButton(
                             onClick = {
                                 when {
-                                    emListagem -> onVoltarHome()
+                                    emListagemPrincipal -> onVoltarHome()
                                     emCategorias -> categoriaViewModel.irParaListagem()
                                     emProdutos -> produtoViewModel.irParaListagem()
                                     emDescontos -> descontoViewModel.irParaListagem()
+                                    emFuncionarios -> funcionarioViewModel.voltarParaListagem()
+                                    emFornecedores -> fornecedorViewModel.voltarParaListagem()
+                                    emFormasPagamento -> formaPagamentoViewModel.voltarParaListagem()
+                                    emCompras -> compraFornecedorViewModel.voltarParaListagem()
                                     else -> estoqueViewModel.irParaListagem()
                                 }
                             },
@@ -189,7 +283,7 @@ fun CatalogoScreen(
             },
             bottomBar = {
                 FormularioListagemBottomBar(
-                    formularioSelecionado = !emListagem,
+                    formularioSelecionado = formularioSelecionado,
                     onFormulario = ::abrirFormularioAtual,
                     onListagem = ::abrirListagemAtual,
                 )
@@ -215,6 +309,50 @@ fun CatalogoScreen(
                                 viewModel = estoqueViewModel,
                                 onShowToast = onShowToast,
                             )
+                        }
+                        entry<ModulosRotas.funcionarios> {
+                            Box(Modifier.fillMaxSize().padding(paddingIt)) {
+                                FuncionarioGestaoScreen(
+                                    viewModel = funcionarioViewModel,
+                                    onBack = onVoltarHome,
+                                    onAfterSave = onSaveFuncionario,
+                                    onShowToast = onShowToast,
+                                    embedded = true,
+                                )
+                            }
+                        }
+                        entry<ModulosRotas.fornecedores> {
+                            Box(Modifier.fillMaxSize().padding(paddingIt)) {
+                                FornecedorGestaoScreen(
+                                    viewModel = fornecedorViewModel,
+                                    onBack = onVoltarHome,
+                                    onAfterSave = onSaveFornecedor,
+                                    onShowToast = onShowToast,
+                                    embedded = true,
+                                )
+                            }
+                        }
+                        entry<ModulosRotas.formasPagamento> {
+                            Box(Modifier.fillMaxSize().padding(paddingIt)) {
+                                FormaPagamentoGestaoScreen(
+                                    viewModel = formaPagamentoViewModel,
+                                    onBack = onVoltarHome,
+                                    onAfterSave = onSaveFormaPagamento,
+                                    onShowToast = onShowToast,
+                                    embedded = true,
+                                )
+                            }
+                        }
+                        entry<ModulosRotas.compras> {
+                            Box(Modifier.fillMaxSize().padding(paddingIt)) {
+                                CompraFornecedorGestaoScreen(
+                                    viewModel = compraFornecedorViewModel,
+                                    onBack = onVoltarHome,
+                                    onAfterSave = onSaveCompraFornecedor,
+                                    onShowToast = onShowToast,
+                                    embedded = true,
+                                )
+                            }
                         }
                     },
             )

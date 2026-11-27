@@ -19,6 +19,7 @@ fun FormaPagamentoGestaoScreen(
     onBack: () -> Unit,
     onAfterSave: (FormaPagamentoCadastroData) -> Unit,
     onShowToast: (String, ToastNotificationType) -> Unit,
+    embedded: Boolean = false,
 ) {
     val formasPagamento by viewModel.lista.collectAsState()
     val exibindoFormulario = viewModel.exibindoFormulario.value
@@ -42,6 +43,7 @@ fun FormaPagamentoGestaoScreen(
             isSaving = viewModel.isSalvando.value,
             errorMessage = viewModel.mensagemErro.value,
             onFormChanged = viewModel::limparErro,
+            embedded = embedded,
         )
     } else {
         CadastroListagem(
@@ -77,6 +79,7 @@ fun FormaPagamentoGestaoScreen(
                     }
                 }
             },
+            embedded = embedded,
         )
     }
 }

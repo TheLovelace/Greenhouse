@@ -66,6 +66,7 @@ fun FuncionarioCadastro(
     isSaving: Boolean = false,
     errorMessage: String? = null,
     onFormChanged: () -> Unit = {},
+    embedded: Boolean = false,
 ) {
     val typography = AppTypography()
     var form by remember { mutableStateOf(initialData?.toForm() ?: FuncionarioCadastroForm()) }
@@ -85,29 +86,30 @@ fun FuncionarioCadastro(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 20.dp),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Funcionários",
-                color = TextPrimary,
-                style = typography.titleMedium,
-            )
-            IconButton(
-                onClick = onBack,
-                enabled = !isSaving,
-                modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        if (!embedded) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.icon_voltar),
-                    contentDescription = "Voltar",
-                    modifier = Modifier.size(32.dp),
+                Text(
+                    text = "Funcionários",
+                    color = TextPrimary,
+                    style = typography.titleMedium,
                 )
+                IconButton(
+                    onClick = onBack,
+                    enabled = !isSaving,
+                    modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.icon_voltar),
+                        contentDescription = "Voltar",
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
             }
+            Spacer(Modifier.height(24.dp))
         }
-
-        Spacer(Modifier.height(24.dp))
 
         Column(
             modifier =
