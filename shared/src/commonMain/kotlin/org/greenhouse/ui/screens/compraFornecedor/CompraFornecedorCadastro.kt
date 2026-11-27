@@ -26,11 +26,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -47,7 +42,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
 import greenhouse.shared.generated.resources.icon_adicionar
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_excluir
 import greenhouse.shared.generated.resources.icon_voltar
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
@@ -75,15 +69,20 @@ import org.jetbrains.compose.resources.painterResource
 fun CompraFornecedorCadastro(
     onBack: () -> Unit,
     onSave: (CompraFornecedorCadastroData) -> Unit,
+    initialForm: CompraFornecedorCadastroForm = CompraFornecedorCadastroForm(),
+    recordId: Long? = null,
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
+    onFormChanged: () -> Unit = {},
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(CompraFornecedorCadastroForm()) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
+    var form by remember(recordId) { mutableStateOf(initialForm) }
+    var errors by remember(recordId) { mutableStateOf(emptyMap<String, String>()) }
 
     fun updateForm(updatedForm: CompraFornecedorCadastroForm) {
+        if (isSaving) return
         form = updatedForm
-        showSuccessMessage = false
+        onFormChanged()
         if (errors.isNotEmpty()) {
             errors = validarCompraFornecedorCadastro(updatedForm)
         }
@@ -96,6 +95,15 @@ fun CompraFornecedorCadastro(
         val novosItens = form.itens.toMutableList()
         novosItens[index] = itemAtualizado
         updateForm(form.copy(itens = novosItens))
+    }
+
+    fun cancelarOuLimpar() {
+        if (recordId != null) {
+            onBack()
+        } else {
+            errors = emptyMap()
+            updateForm(initialForm)
+        }
     }
 
     Column(
@@ -117,6 +125,7 @@ fun CompraFornecedorCadastro(
             )
             IconButton(
                 onClick = onBack,
+                enabled = !isSaving,
                 modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
             ) {
                 Image(
@@ -138,7 +147,7 @@ fun CompraFornecedorCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Compra de Fornecedor",
+                text = if (recordId == null) "Cadastrar Compra de Fornecedor" else "Editar compra #$recordId",
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -280,11 +289,7 @@ fun CompraFornecedorCadastro(
 
             Spacer(Modifier.height(16.dp))
 
-            StatusCompraField(
-                status = form.status,
-                onStatusChange = { updateForm(form.copy(status = it)) },
-                typography = typography,
-            )
+            Text("Status: ${form.status.label()}", color = TextPrimary, style = typography.bodyMedium)
 
             Spacer(Modifier.height(16.dp))
 
@@ -417,29 +422,32 @@ fun CompraFornecedorCadastro(
 
             Spacer(Modifier.height(24.dp))
 
+            errorMessage?.let {
+                Text(it, color = RedPrimary, style = typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+            }
+
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 if (maxWidth < 340.dp) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         CompraSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            isSaving = isSaving,
                             onClick = {
                                 saveCompraForm(
                                     form = form,
                                     onSave = onSave,
                                     onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
                                 )
                             },
                         )
                         CompraClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                form = CompraFornecedorCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            isSaving = isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
+                            onClick = ::cancelarOuLimpar,
                         )
                     }
                 } else {
@@ -447,53 +455,26 @@ fun CompraFornecedorCadastro(
                         CompraSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            isSaving = isSaving,
                             onClick = {
                                 saveCompraForm(
                                     form = form,
                                     onSave = onSave,
                                     onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
                                 )
                             },
                         )
                         CompraClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = CompraFornecedorCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            isSaving = isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
+                            onClick = ::cancelarOuLimpar,
                         )
                     }
                 }
             }
-
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                CompraSuccessMessage("Formulário validado com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun CompraSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -542,58 +523,6 @@ private fun CompraTextField(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun StatusCompraField(
-    status: StatusCompraCadastro,
-    onStatusChange: (StatusCompraCadastro) -> Unit,
-    typography: androidx.compose.material3.Typography,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column {
-        RequiredLabel("Status", required = true, typography = typography)
-        Spacer(Modifier.height(6.dp))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-        ) {
-            OutlinedTextField(
-                value = status.label(),
-                onValueChange = {},
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                shape = RoundedCornerShape(12.dp),
-                colors =
-                    androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedContainerColor = Surface,
-                        unfocusedContainerColor = Surface,
-                        focusedBorderColor = GreenSecondary,
-                        unfocusedBorderColor = GreenPrimary,
-                    ),
-                textStyle = typography.bodyMedium,
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                StatusCompraCadastro.entries.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option.label(), color = TextPrimary, style = typography.bodyMedium) },
-                        onClick = {
-                            onStatusChange(option)
-                            expanded = false
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun FieldError(error: String?) {
     if (error != null) {
@@ -628,15 +557,17 @@ private fun RequiredLabel(
 private fun CompraSaveButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    isSaving: Boolean,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
+        enabled = !isSaving,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary, contentColor = White),
     ) {
-        Text("Gravar", style = typography.bodyMedium)
+        Text(if (isSaving) "Gravando..." else "Gravar", style = typography.bodyMedium)
     }
 }
 
@@ -644,16 +575,19 @@ private fun CompraSaveButton(
 private fun CompraClearButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    isSaving: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = !isSaving,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, GreenPrimary),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
-        Text("Limpar campos", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
 
@@ -661,19 +595,15 @@ private fun saveCompraForm(
     form: CompraFornecedorCadastroForm,
     onSave: (CompraFornecedorCadastroData) -> Unit,
     onValidationErrors: (Map<String, String>) -> Unit,
-    onSaved: () -> Unit,
 ) {
     val validationErrors = validarCompraFornecedorCadastro(form)
     onValidationErrors(validationErrors)
     if (validationErrors.isEmpty()) {
-        form.toCompraFornecedorCadastroDataOrNull()?.let { data ->
-            onSave(data)
-            onSaved()
-        }
+        form.toCompraFornecedorCadastroDataOrNull()?.let(onSave)
     }
 }
 
-private fun StatusCompraCadastro.label(): String =
+internal fun StatusCompraCadastro.label(): String =
     when (this) {
         StatusCompraCadastro.PEDIDA -> "Pedida"
         StatusCompraCadastro.RECEBIDA -> "Recebida"

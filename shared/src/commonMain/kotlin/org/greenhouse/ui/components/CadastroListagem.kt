@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,10 +57,10 @@ import org.greenhouse.ui.theme.GreenPrimary
 import org.greenhouse.ui.theme.GreenSecondary
 import org.greenhouse.ui.theme.PinkSecondary
 import org.greenhouse.ui.theme.RedPrimary
-import org.greenhouse.ui.theme.Surface
 import org.greenhouse.ui.theme.TextPrimary
 import org.greenhouse.ui.theme.TextSecondary
 import org.greenhouse.ui.theme.White
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 data class CadastroListagemItem(
@@ -67,15 +68,9 @@ data class CadastroListagemItem(
     val titulo: String,
     val detalhes: List<String>,
     val ativo: Boolean,
+    val status: String = if (ativo) "Ativo" else "Inativo",
+    val corStatus: Color = if (ativo) GreenSecondary else RedPrimary,
 )
-
-private enum class FiltroCadastro(
-    val label: String,
-) {
-    TODOS("Todos"),
-    ATIVOS("Ativos"),
-    INATIVOS("Inativos"),
-}
 
 @Composable
 fun CadastroListagem(
@@ -92,28 +87,30 @@ fun CadastroListagem(
     onCreate: () -> Unit,
     onEdit: (Long) -> Unit,
     onDeactivate: (Long) -> Unit,
+    buscaRemota: String? = null,
+    onBuscaRemota: (String) -> Unit = {},
+    filtrosStatus: Map<String, String> = mapOf("Ativos" to "Ativo", "Inativos" to "Inativo"),
+    rotuloAcaoPrincipal: String = "Editar",
+    iconeAcaoPrincipal: DrawableResource = Res.drawable.icon_editar,
+    rotuloAcaoDestrutiva: String = "Inativar",
+    mostrarAcaoDestrutiva: (CadastroListagemItem) -> Boolean = { it.ativo },
 ) {
     val typography = AppTypography()
     var busca by remember { mutableStateOf("") }
-    var filtro by remember { mutableStateOf(FiltroCadastro.TODOS) }
+    var filtro by remember { mutableStateOf<String?>(null) }
     var filtroExpandido by remember { mutableStateOf(false) }
-    var registroParaInativar by remember { mutableStateOf<CadastroListagemItem?>(null) }
+    var registroParaConfirmar by remember { mutableStateOf<CadastroListagemItem?>(null) }
 
     val registrosFiltrados =
         registros.filter { registro ->
             val termo = busca.trim()
             val correspondeBusca =
-                termo.isEmpty() ||
+                buscaRemota != null ||
+                    termo.isEmpty() ||
                     registro.id.toString().contains(termo, ignoreCase = true) ||
                     registro.titulo.contains(termo, ignoreCase = true) ||
                     registro.detalhes.any { it.contains(termo, ignoreCase = true) }
-            val correspondeFiltro =
-                when (filtro) {
-                    FiltroCadastro.TODOS -> true
-                    FiltroCadastro.ATIVOS -> registro.ativo
-                    FiltroCadastro.INATIVOS -> !registro.ativo
-                }
-            correspondeBusca && correspondeFiltro
+            correspondeBusca && (filtro == null || filtro == registro.status)
         }
 
     BoxWithConstraints(
@@ -144,8 +141,10 @@ fun CadastroListagem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 OutlinedTextField(
-                    value = busca,
-                    onValueChange = { busca = it },
+                    value = buscaRemota ?: busca,
+                    onValueChange = { termo ->
+                        if (buscaRemota == null) busca = termo else onBuscaRemota(termo)
+                    },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text(placeholderBusca, color = TextPrimary.copy(alpha = 0.65f)) },
                     leadingIcon = {
@@ -183,11 +182,11 @@ fun CadastroListagem(
                         )
                     }
                     DropdownMenu(expanded = filtroExpandido, onDismissRequest = { filtroExpandido = false }) {
-                        FiltroCadastro.entries.forEach { opcao ->
+                        (mapOf("Todos" to null) + filtrosStatus).forEach { (rotulo, status) ->
                             DropdownMenuItem(
-                                text = { Text(opcao.label, color = TextPrimary) },
+                                text = { Text(rotulo, color = TextPrimary) },
                                 onClick = {
-                                    filtro = opcao
+                                    filtro = status
                                     filtroExpandido = false
                                 },
                             )
@@ -227,7 +226,7 @@ fun CadastroListagem(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 92.dp),
+                        contentPadding = PaddingValues(bottom = 92.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         items(registrosFiltrados, key = { it.id }) { registro ->
@@ -235,7 +234,11 @@ fun CadastroListagem(
                                 registro = registro,
                                 isProcessando = isProcessando,
                                 onEdit = { onEdit(registro.id) },
-                                onDeactivate = { registroParaInativar = registro },
+                                onDeactivate = { registroParaConfirmar = registro },
+                                rotuloAcaoPrincipal = rotuloAcaoPrincipal,
+                                iconeAcaoPrincipal = iconeAcaoPrincipal,
+                                rotuloAcaoDestrutiva = rotuloAcaoDestrutiva,
+                                mostrarAcaoDestrutiva = mostrarAcaoDestrutiva(registro),
                             )
                         }
                     }
@@ -267,29 +270,47 @@ fun CadastroListagem(
         }
     }
 
-    registroParaInativar?.let { registro ->
-        AlertDialog(
-            onDismissRequest = { registroParaInativar = null },
-            title = { Text("Inativar registro?") },
-            text = { Text(mensagemInativacao(registro)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDeactivate(registro.id)
-                        registroParaInativar = null
-                    },
-                    enabled = !isProcessando,
-                ) {
-                    Text("Inativar", color = RedPrimary)
-                }
+    registroParaConfirmar?.let { registro ->
+        CadastroConfirmacao(
+            titulo = "$rotuloAcaoDestrutiva registro?",
+            mensagem = mensagemInativacao(registro),
+            rotuloConfirmar = rotuloAcaoDestrutiva,
+            onConfirm = {
+                onDeactivate(registro.id)
+                registroParaConfirmar = null
             },
-            dismissButton = {
-                TextButton(onClick = { registroParaInativar = null }) {
-                    Text("Cancelar", color = GreenPrimary)
-                }
-            },
+            onDismiss = { registroParaConfirmar = null },
+            isProcessando = isProcessando,
         )
     }
+}
+
+@Composable
+internal fun CadastroConfirmacao(
+    titulo: String,
+    mensagem: String,
+    rotuloConfirmar: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    isProcessando: Boolean = false,
+    destrutiva: Boolean = true,
+    rotuloCancelar: String = "Cancelar",
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(titulo) },
+        text = { Text(mensagem) },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isProcessando) {
+                Text(rotuloConfirmar, color = if (destrutiva) RedPrimary else GreenPrimary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(rotuloCancelar, color = GreenPrimary)
+            }
+        },
+    )
 }
 
 @Composable
@@ -298,6 +319,10 @@ private fun CadastroRegistroCard(
     isProcessando: Boolean,
     onEdit: () -> Unit,
     onDeactivate: () -> Unit,
+    rotuloAcaoPrincipal: String,
+    iconeAcaoPrincipal: DrawableResource,
+    rotuloAcaoDestrutiva: String,
+    mostrarAcaoDestrutiva: Boolean,
 ) {
     val typography = AppTypography()
     Card(
@@ -312,16 +337,16 @@ private fun CadastroRegistroCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(registro.titulo, color = TextPrimary, style = typography.titleMedium)
+                Text(registro.titulo, modifier = Modifier.weight(1f), color = TextPrimary, style = typography.titleMedium)
                 Card(
                     shape = RoundedCornerShape(50),
-                    colors = CardDefaults.cardColors(containerColor = if (registro.ativo) GreenSecondary else RedPrimary),
+                    colors = CardDefaults.cardColors(containerColor = registro.corStatus),
                 ) {
                     Text(
-                        text = if (registro.ativo) "Ativo" else "Inativo",
+                        text = registro.status,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         color = White,
                         style = typography.labelMedium,
@@ -347,13 +372,18 @@ private fun CadastroRegistroCard(
                     border = BorderStroke(1.dp, GreenPrimary),
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.icon_editar),
+                        painter = painterResource(iconeAcaoPrincipal),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                     )
-                    Text("Editar", modifier = Modifier.padding(start = 6.dp), color = GreenPrimary, style = typography.labelLarge)
+                    Text(
+                        rotuloAcaoPrincipal,
+                        modifier = Modifier.padding(start = 6.dp),
+                        color = GreenPrimary,
+                        style = typography.labelLarge,
+                    )
                 }
-                if (registro.ativo) {
+                if (mostrarAcaoDestrutiva) {
                     Button(
                         onClick = onDeactivate,
                         enabled = !isProcessando,
@@ -365,7 +395,7 @@ private fun CadastroRegistroCard(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
                         )
-                        Text("Inativar", modifier = Modifier.padding(start = 6.dp), color = White, style = typography.labelLarge)
+                        Text(rotuloAcaoDestrutiva, modifier = Modifier.padding(start = 6.dp), color = White, style = typography.labelLarge)
                     }
                 }
             }

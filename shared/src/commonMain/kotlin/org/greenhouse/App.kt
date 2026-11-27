@@ -24,18 +24,22 @@ import org.greenhouse.app.repository.AuthRepositorioRemoto
 import org.greenhouse.app.repository.AuthSessionManager
 import org.greenhouse.app.repository.AuthTokenStorage
 import org.greenhouse.app.repository.CategoriaRepositorioRemoto
+import org.greenhouse.app.repository.CompraFornecedorRepositorioRemoto
 import org.greenhouse.app.repository.DescontoRepositorioRemoto
 import org.greenhouse.app.repository.EstoqueRepositorioRemoto
 import org.greenhouse.app.repository.FormaPagamentoRepositorioRemoto
+import org.greenhouse.app.repository.FornecedorRepositorioRemoto
 import org.greenhouse.app.repository.FuncionarioRepositorioRemoto
 import org.greenhouse.app.repository.ProdutoRepositorioRemoto
 import org.greenhouse.app.repository.createAuthTokenStorage
 import org.greenhouse.app.repository.createHttpClient
 import org.greenhouse.app.viewmodel.AuthViewModel
 import org.greenhouse.app.viewmodel.CategoriaViewModel
+import org.greenhouse.app.viewmodel.CompraFornecedorViewModel
 import org.greenhouse.app.viewmodel.DescontoViewModel
 import org.greenhouse.app.viewmodel.EstoqueViewModel
 import org.greenhouse.app.viewmodel.FormaPagamentoViewModel
+import org.greenhouse.app.viewmodel.FornecedorViewModel
 import org.greenhouse.app.viewmodel.FuncionarioViewModel
 import org.greenhouse.app.viewmodel.PrincipalViewModel
 import org.greenhouse.app.viewmodel.ProdutoViewModel
@@ -43,17 +47,17 @@ import org.greenhouse.ui.components.ToastNotification
 import org.greenhouse.ui.components.ToastNotificationData
 import org.greenhouse.ui.components.ToastNotificationType
 import org.greenhouse.ui.navigation.ModulosRotas
-import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
 import org.greenhouse.ui.screens.ajuda.AjudaScreen
+import org.greenhouse.ui.screens.alerta.CadastrarAlertaIotScreen
 import org.greenhouse.ui.screens.catalogo.CatalogoScreen
 import org.greenhouse.ui.screens.cliente.ClienteCadastro
 import org.greenhouse.ui.screens.cliente.model.ClienteCadastroData
-import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorCadastro
+import org.greenhouse.ui.screens.compraFornecedor.CompraFornecedorGestaoScreen
 import org.greenhouse.ui.screens.compraFornecedor.model.CompraFornecedorCadastroData
 import org.greenhouse.ui.screens.especie.CadastrarEspecieScreen
 import org.greenhouse.ui.screens.formaPagamento.FormaPagamentoGestaoScreen
 import org.greenhouse.ui.screens.formaPagamento.model.FormaPagamentoCadastroData
-import org.greenhouse.ui.screens.fornecedor.FornecedorCadastro
+import org.greenhouse.ui.screens.fornecedor.FornecedorGestaoScreen
 import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroData
 import org.greenhouse.ui.screens.funcionario.FuncionarioGestaoScreen
 import org.greenhouse.ui.screens.funcionario.model.FuncionarioCadastroData
@@ -92,6 +96,8 @@ fun App(
     val estoqueViewModel = viewModel { EstoqueViewModel(EstoqueRepositorioRemoto(httpClient)) }
     val funcionarioViewModel = viewModel { FuncionarioViewModel(FuncionarioRepositorioRemoto(httpClient)) }
     val formaPagamentoViewModel = viewModel { FormaPagamentoViewModel(FormaPagamentoRepositorioRemoto(httpClient)) }
+    val fornecedorViewModel = viewModel { FornecedorViewModel(FornecedorRepositorioRemoto(httpClient)) }
+    val compraFornecedorViewModel = viewModel { CompraFornecedorViewModel(CompraFornecedorRepositorioRemoto(httpClient)) }
 
     var entryScreen by remember { mutableStateOf(AppEntryScreen.LOADING) }
     var firstAccessLogin by remember { mutableStateOf("") }
@@ -123,10 +129,10 @@ fun App(
     var isAlertaCadastroVisible by remember { mutableStateOf(false) }
     var isEspecieCadastroVisible by remember { mutableStateOf(false) }
     var isClienteCadastroVisible by remember { mutableStateOf(false) }
-    var isCompraFornecedorCadastroVisible by remember { mutableStateOf(false) }
+    var isCompraFornecedorGestaoVisible by remember { mutableStateOf(false) }
     var isFuncionarioCadastroVisible by remember { mutableStateOf(false) }
     var isFormaPagamentoCadastroVisible by remember { mutableStateOf(false) }
-    var isFornecedorCadastroVisible by remember { mutableStateOf(false) }
+    var isFornecedorGestaoVisible by remember { mutableStateOf(false) }
     var isPedidoCadastroVisible by remember { mutableStateOf(false) }
 
     fun closeScreens() {
@@ -134,10 +140,10 @@ fun App(
         isAlertaCadastroVisible = false
         isEspecieCadastroVisible = false
         isClienteCadastroVisible = false
-        isCompraFornecedorCadastroVisible = false
+        isCompraFornecedorGestaoVisible = false
         isFuncionarioCadastroVisible = false
         isFormaPagamentoCadastroVisible = false
-        isFornecedorCadastroVisible = false
+        isFornecedorGestaoVisible = false
         isPedidoCadastroVisible = false
     }
 
@@ -156,10 +162,10 @@ fun App(
             HomeDestination.ALERTAS -> isAlertaCadastroVisible = true
             HomeDestination.ESPECIES -> isEspecieCadastroVisible = true
             HomeDestination.CLIENTES -> isClienteCadastroVisible = true
-            HomeDestination.COMPRAS -> isCompraFornecedorCadastroVisible = true
+            HomeDestination.COMPRAS -> isCompraFornecedorGestaoVisible = true
             HomeDestination.FUNCIONARIOS -> isFuncionarioCadastroVisible = true
             HomeDestination.FORMAS_PAGAMENTO -> isFormaPagamentoCadastroVisible = true
-            HomeDestination.FORNECEDORES -> isFornecedorCadastroVisible = true
+            HomeDestination.FORNECEDORES -> isFornecedorGestaoVisible = true
             HomeDestination.PEDIDOS -> isPedidoCadastroVisible = true
         }
     }
@@ -259,10 +265,14 @@ fun App(
                         onSave = onSaveCliente,
                     )
                 }
-                isCompraFornecedorCadastroVisible -> {
-                    CompraFornecedorCadastro(
-                        onBack = { isCompraFornecedorCadastroVisible = false },
-                        onSave = onSaveCompraFornecedor,
+                isCompraFornecedorGestaoVisible -> {
+                    CompraFornecedorGestaoScreen(
+                        viewModel = compraFornecedorViewModel,
+                        onBack = { isCompraFornecedorGestaoVisible = false },
+                        onAfterSave = onSaveCompraFornecedor,
+                        onShowToast = { message, type ->
+                            toastNotification = ToastNotificationData(message, type)
+                        },
                     )
                 }
                 isFuncionarioCadastroVisible -> {
@@ -285,10 +295,14 @@ fun App(
                         },
                     )
                 }
-                isFornecedorCadastroVisible -> {
-                    FornecedorCadastro(
-                        onBack = { isFornecedorCadastroVisible = false },
-                        onSave = onSaveFornecedor,
+                isFornecedorGestaoVisible -> {
+                    FornecedorGestaoScreen(
+                        viewModel = fornecedorViewModel,
+                        onBack = { isFornecedorGestaoVisible = false },
+                        onAfterSave = onSaveFornecedor,
+                        onShowToast = { message, type ->
+                            toastNotification = ToastNotificationData(message, type)
+                        },
                     )
                 }
                 isPedidoCadastroVisible -> {

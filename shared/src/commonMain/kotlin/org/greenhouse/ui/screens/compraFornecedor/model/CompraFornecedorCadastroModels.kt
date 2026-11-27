@@ -1,5 +1,8 @@
 package org.greenhouse.ui.screens.compraFornecedor.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class StatusCompraCadastro {
     PEDIDA,
     RECEBIDA,

@@ -41,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import greenhouse.shared.generated.resources.Res
-import greenhouse.shared.generated.resources.icon_confirmar
 import greenhouse.shared.generated.resources.icon_voltar
 import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroData
 import org.greenhouse.ui.screens.fornecedor.model.FornecedorCadastroForm
@@ -64,17 +63,31 @@ import org.jetbrains.compose.resources.painterResource
 fun FornecedorCadastro(
     onBack: () -> Unit,
     onSave: (FornecedorCadastroData) -> Unit,
+    initialForm: FornecedorCadastroForm = FornecedorCadastroForm(),
+    recordId: Long? = null,
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
+    onFormChanged: () -> Unit = {},
 ) {
     val typography = AppTypography()
-    var form by remember { mutableStateOf(FornecedorCadastroForm()) }
-    var errors by remember { mutableStateOf(emptyMap<String, String>()) }
-    var showSuccessMessage by remember { mutableStateOf(false) }
+    var form by remember(recordId) { mutableStateOf(initialForm) }
+    var errors by remember(recordId) { mutableStateOf(emptyMap<String, String>()) }
 
     fun updateForm(updatedForm: FornecedorCadastroForm) {
+        if (isSaving) return
         form = updatedForm
-        showSuccessMessage = false
+        onFormChanged()
         if (errors.isNotEmpty()) {
             errors = validarFornecedorCadastro(updatedForm)
+        }
+    }
+
+    fun cancelarOuLimpar() {
+        if (recordId != null) {
+            onBack()
+        } else {
+            errors = emptyMap()
+            updateForm(initialForm)
         }
     }
 
@@ -97,6 +110,7 @@ fun FornecedorCadastro(
             )
             IconButton(
                 onClick = onBack,
+                enabled = !isSaving,
                 modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
             ) {
                 Image(
@@ -118,7 +132,7 @@ fun FornecedorCadastro(
                     .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = "Cadastrar Fornecedor",
+                text = if (recordId == null) "Cadastrar Fornecedor" else "Editar fornecedor #$recordId",
                 color = TextPrimary,
                 style = typography.headlineLarge,
             )
@@ -255,29 +269,32 @@ fun FornecedorCadastro(
 
             Spacer(Modifier.height(24.dp))
 
+            errorMessage?.let {
+                Text(it, color = RedPrimary, style = typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+            }
+
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 if (maxWidth < 340.dp) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         FornecedorSaveButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
+                            isSaving = isSaving,
                             onClick = {
                                 saveFornecedorForm(
                                     form = form,
                                     onSave = onSave,
                                     onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
                                 )
                             },
                         )
                         FornecedorClearButton(
                             modifier = Modifier.fillMaxWidth(),
                             typography = typography,
-                            onClick = {
-                                form = FornecedorCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            isSaving = isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
+                            onClick = ::cancelarOuLimpar,
                         )
                     }
                 } else {
@@ -285,53 +302,26 @@ fun FornecedorCadastro(
                         FornecedorSaveButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
+                            isSaving = isSaving,
                             onClick = {
                                 saveFornecedorForm(
                                     form = form,
                                     onSave = onSave,
                                     onValidationErrors = { errors = it },
-                                    onSaved = { showSuccessMessage = true },
                                 )
                             },
                         )
                         FornecedorClearButton(
                             modifier = Modifier.width(160.dp),
                             typography = typography,
-                            onClick = {
-                                form = FornecedorCadastroForm()
-                                errors = emptyMap()
-                                showSuccessMessage = false
-                            },
+                            isSaving = isSaving,
+                            text = if (recordId == null) "Limpar campos" else "Cancelar",
+                            onClick = ::cancelarOuLimpar,
                         )
                     }
                 }
             }
-
-            if (showSuccessMessage) {
-                Spacer(Modifier.height(16.dp))
-                FornecedorSuccessMessage("Formulário validado com sucesso!")
-            }
         }
-    }
-}
-
-@Composable
-private fun FornecedorSuccessMessage(message: String) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(GreenSecondary.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.icon_confirmar),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(text = message, color = GreenPrimary, style = AppTypography().bodyMedium)
     }
 }
 
@@ -396,15 +386,17 @@ private fun FornecedorTextField(
 private fun FornecedorSaveButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    isSaving: Boolean,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
+        enabled = !isSaving,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary, contentColor = White),
     ) {
-        Text("Gravar", style = typography.bodyMedium)
+        Text(if (isSaving) "Gravando..." else "Gravar", style = typography.bodyMedium)
     }
 }
 
@@ -412,16 +404,19 @@ private fun FornecedorSaveButton(
 private fun FornecedorClearButton(
     modifier: Modifier,
     typography: androidx.compose.material3.Typography,
+    isSaving: Boolean,
+    text: String,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = !isSaving,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, GreenPrimary),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
-        Text("Limpar campos", style = typography.bodyMedium)
+        Text(text, style = typography.bodyMedium)
     }
 }
 
@@ -429,14 +424,10 @@ private fun saveFornecedorForm(
     form: FornecedorCadastroForm,
     onSave: (FornecedorCadastroData) -> Unit,
     onValidationErrors: (Map<String, String>) -> Unit,
-    onSaved: () -> Unit,
 ) {
     val validationErrors = validarFornecedorCadastro(form)
     onValidationErrors(validationErrors)
     if (validationErrors.isEmpty()) {
-        form.toFornecedorCadastroDataOrNull()?.let { data ->
-            onSave(data)
-            onSaved()
-        }
+        form.toFornecedorCadastroDataOrNull()?.let(onSave)
     }
 }
